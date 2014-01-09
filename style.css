@@ -1,0 +1,36 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+button {
+    margin: 0;
+    padding: 0;
+}
+
+#filebar {
+    display: flex;
+    flex: none;
+}
+
+#toolbar {
+    display: flex;
+    flex: none;
+}
+
+#naclContainer {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+}
+
+#naclPlugin {
+    flex: 1;
+}
