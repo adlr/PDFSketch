@@ -44,6 +44,7 @@
 #include "ppapi/cpp/var_array_buffer.h"
 #include "ppapi/c/ppb_image_data.h"
 
+#include "page_view.h"
 #include "root_view.h"
 
 using std::vector;
@@ -115,15 +116,17 @@ class PDFSketchInstance;
 class PDFRenderer : public pdfsketch::RootViewDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
-      : doc_(NULL), instance_(instance), graphics_(NULL) {
+      : page_view_(NULL), doc_(NULL), instance_(instance), graphics_(NULL) {
     printf("got a new PDFRenderer going\n");
     root_view_.SetDelegate(this);
   }
   void SetPDF(const char* doc, size_t doc_len) {
-    if (doc_)
-      delete doc_;
-    doc_ = new poppler::SimpleDocument(doc, doc_len);
+    //if (doc_)
+    //  delete doc_;
+    //doc_ = new poppler::SimpleDocument(doc, doc_len);
     //Render();
+    page_view_ = new pdfsketch::PageView(doc, doc_len);
+    root_view_.AddSubview(page_view_);
   }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
@@ -139,6 +142,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
 
  private:
   pdfsketch::RootView root_view_;
+  pdfsketch::PageView* page_view_;
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;

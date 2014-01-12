@@ -60,7 +60,8 @@ PEXE=pdfsketch.pexe
 SOURCES=\
 	pdfsketch.cc \
 	view.cc \
-	root_view.cc
+	root_view.cc \
+	page_view.cc
 
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PEXE)

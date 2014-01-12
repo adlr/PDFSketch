@@ -1,5 +1,8 @@
 // Copyright stuff
 
+#ifndef PDFSKETCH_VIEW_H__
+#define PDFSKETCH_VIEW_H__
+
 #include <vector>
 
 #include <cairo.h>
@@ -31,14 +34,17 @@ struct Size {
 };
 
 struct Rect {
+  Rect() {}
+  Rect(double x, double y, double width, double height)
+      : origin_(x, y), size_(width, height) {}
   explicit Rect(const Point& origin)
       : origin_(origin) {}
   explicit Rect(const Size& size)
       : size_(size) {}
   Rect(const Point& origin, const Size& size)
       : origin_(origin), size_(size) {}
-  //Rect Intersect(const Rect& that);
-  //bool Intersects(const Rect& that) const {}
+  Rect Intersect(const Rect& that) const;
+  bool Intersects(const Rect& that) const;
   Rect TranslatedBy(double x, double y) const {
     return Rect(origin_.TranslatedBy(x, y), size_);
   }
@@ -51,7 +57,17 @@ struct Rect {
 
 class View {
  public:
-  View() {}
+  View()
+      : scale_(1.0),
+        top_fixed_to_top_(true),
+        bot_fixed_to_top_(true),
+        left_fixed_to_left_(true),
+        right_fixed_to_left_(true),
+        top_child_(NULL),
+        bottom_child_(NULL),
+        parent_(NULL),
+        lower_sibling_(NULL),
+        upper_sibling_(NULL) {}
   virtual ~View() {}
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);
   virtual void SetNeedsDisplayInRect(const Rect& rect);
@@ -100,3 +116,5 @@ class View {
 };
 
 }  // namespace pdfsketch
+
+#endif  // PDFSKETCH_VIEW_H__

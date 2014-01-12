@@ -6,6 +6,48 @@
 
 namespace pdfsketch {
 
+Rect Rect::Intersect(const Rect& that) const {
+  // Based on http://svn.gna.org/svn/gnustep/libs/java/trunk/Java/gnu/gnustep/base/NSRect.java
+  double maxX1 = origin_.x_ + size_.width_;
+  double maxY1 = origin_.y_ + size_.height_;
+  double maxX2 = that.origin_.x_ + that.size_.width_;
+  double maxY2 = that.origin_.y_ + that.size_.height_;
+
+  if ((maxX1 <= that.origin_.x_) || (maxX2 <= origin_.x_) || (maxY1 <= that.origin_.y_) 
+      || (maxY2 <= origin_.y_)) {
+    return Rect();
+  } else {
+    float newX, newY, newWidth, newHeight;
+
+    if (that.origin_.x_ <= origin_.x_)
+      newX = origin_.x_;
+    else
+      newX = that.origin_.x_;
+    
+    if (that.origin_.y_ <= origin_.y_)
+      newY = origin_.y_;
+    else
+      newY = that.origin_.y_;
+    
+    if (maxX2 >= maxX1)
+      newWidth = size_.width_;
+    else
+      newWidth = maxX2 - newX;
+    
+    if (maxY2 >= maxY1)
+      newHeight = size_.height_;
+    else
+      newHeight = maxY2 - newY;
+    
+    return Rect(newX, newY, newWidth, newHeight);
+  }
+}
+bool Rect::Intersects(const Rect& that) const {
+  // todo: optimize
+  Rect intersect = Intersect(that);
+  return intersect.size_.width_ > 0 && intersect.size_.height_ > 0;
+}
+
 void View::AddSubview(View* subview) {
   if (subview->parent_) {
     printf("%s: Subview has parent already!\n", __func__);
@@ -17,6 +59,7 @@ void View::AddSubview(View* subview) {
   if (top_child_)
     top_child_->upper_sibling_ = subview;
   top_child_ = subview;
+
   if (!bottom_child_)
     bottom_child_ = top_child_;
 }
@@ -31,10 +74,12 @@ void View::SetNeedsDisplayInRect(const Rect& rect) {
 
 void View::DrawRect(cairo_t* ctx, const Rect& rect) {
   // Draw each child
-  /*
+  printf("View::Draw\n");
   for (View* child = bottom_child_; child; child = child->upper_sibling_) {
     Rect intersect_parent = child->Frame().Intersect(rect);
-    if (!intersect.size_.width_ || !intersect.size_.height_) {
+    printf("checking child for draw\n");
+    if (!intersect_parent.size_.width_ || !intersect_parent.size_.height_) {
+      printf("no intersection\n");
       continue;  // No intersection
     }
     cairo_save(ctx);
@@ -47,12 +92,12 @@ void View::DrawRect(cairo_t* ctx, const Rect& rect) {
     child->DrawRect(ctx, intersect_child);
     cairo_restore(ctx);
   }
-  */
 }
 
 void View::Resize(const Size& size) {
   double x_delta = size.width_ - size_.width_;
   double y_delta = size.height_ - size_.height_;
+  size_ = size;
 
   // Update subview frames
   for (View* child = top_child_; child; child = child->lower_sibling_) {
