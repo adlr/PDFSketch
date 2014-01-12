@@ -44,7 +44,7 @@
 #include "ppapi/cpp/var_array_buffer.h"
 #include "ppapi/c/ppb_image_data.h"
 
-//#include "render_thread.h"
+#include "root_view.h"
 
 using std::vector;
 
@@ -112,31 +112,42 @@ void ShowPDF(const char* orig, size_t orig_length, pp::Instance* inst) {
 
 class PDFSketchInstance;
 
-class PDFRenderer {
+class PDFRenderer : public pdfsketch::RootViewDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
       : doc_(NULL), instance_(instance), graphics_(NULL) {
     printf("got a new PDFRenderer going\n");
+    root_view_.SetDelegate(this);
   }
   void SetPDF(const char* doc, size_t doc_len) {
     if (doc_)
       delete doc_;
     doc_ = new poppler::SimpleDocument(doc, doc_len);
-    Render();
+    //Render();
   }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
     size_ = size;
-    if (doc_)
-      Render();
+    //if (doc_)
+    //  Render();
+    root_view_.Resize(pdfsketch::Size(size_.width(), size_.height()));
   }
   void Render();
 
+  virtual cairo_t* AllocateCairo();
+  virtual void FlushCairo();
+
  private:
+  pdfsketch::RootView root_view_;
+
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
   pp::Size size_;
   pp::Graphics2D* graphics_;
+
+  pp::ImageData* image_data_;
+  cairo_surface_t* surface_;
+  cairo_t* cr_;
 };
 
 /// The Instance class.  One of these exists for each instance of your NaCl
@@ -258,6 +269,44 @@ class PDFSketchInstance : public pp::Instance {
   PDFRenderer* renderer_;
   pp::Graphics2D graphics_;
 };
+
+cairo_t* PDFRenderer::AllocateCairo() {
+  if (cr_) {
+    printf("Already have Cairo!\n");
+    return NULL;
+  }
+  if (image_data_) {
+    printf("Bug: image_data_ already allocated\n");
+    return NULL;
+  }
+  image_data_ = new pp::ImageData(instance_,
+                                  PP_IMAGEDATAFORMAT_BGRA_PREMUL,
+                                  size_,
+                                  true);
+  surface_ =
+      cairo_image_surface_create_for_data((unsigned char*)image_data_->data(),
+                                          CAIRO_FORMAT_ARGB32,
+                                          size_.width(),
+                                          size_.height(),
+                                          image_data_->stride());
+  cr_ = cairo_create(surface_);
+  return cr_;
+}
+
+void PDFRenderer::FlushCairo() {
+  cairo_destroy(cr_);
+  cr_ = NULL;
+  cairo_surface_finish(surface_);
+  cairo_surface_destroy(surface_);
+  surface_ = NULL;
+
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      instance_->callback_factory_.NewCallback(
+          &PDFSketchInstance::Paint, *image_data_));
+  delete image_data_;
+  image_data_ = NULL;
+}
 
 void PDFRenderer::Render() {
   pp::ImageData image_data(instance_,
