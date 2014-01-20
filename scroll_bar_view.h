@@ -18,7 +18,9 @@ class ScrollBarView : public View {
  public:
   ScrollBarView(bool vertical)
       : vertical_(vertical),
-        delegate_(NULL) {}
+        delegate_(NULL),
+        drag_start_pos_(0.0),
+        drag_start_show_min_(0.0) {}
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void SetDocSize(double min, double max) {
     doc_min_ = min;
@@ -44,6 +46,9 @@ class ScrollBarView : public View {
   double show_size_;
   double show_min_;
   ScrollBarDelegate* delegate_;
+
+  double drag_start_pos_;
+  double drag_start_show_min_;
 };
 
 }  // namespace pdfsketch
