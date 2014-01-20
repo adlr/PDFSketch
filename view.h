@@ -45,6 +45,7 @@ struct Rect {
       : origin_(origin), size_(size) {}
   Rect Intersect(const Rect& that) const;
   bool Intersects(const Rect& that) const;
+  bool Contains(const Point& point) const;
   Rect TranslatedBy(double x, double y) const {
     return Rect(origin_.TranslatedBy(x, y), size_);
   }
@@ -53,6 +54,24 @@ struct Rect {
   }
   Point origin_;
   Size size_;
+};
+
+class View;
+
+class MouseInputEvent {
+ public:
+  enum Type {
+    DOWN, DRAG, UP, MOVE
+  };
+  MouseInputEvent(Point position, Type type)
+      : position_(position), type_(type) {}
+  void UpdateToSubview(View* subview);
+  void UpdateFromSubview(View* subview);
+  const Point& position() const { return position_; }
+
+ private:
+  Point position_;
+  Type type_;
 };
 
 class View {
@@ -74,6 +93,7 @@ class View {
   void SetNeedsDisplay() {
     SetNeedsDisplayInRect(Bounds());
   }
+  View* Superview() const { return parent_; }
   void AddSubview(View* subview);
   Rect Bounds() const { return Rect(size_); }
   Rect Frame() const {
@@ -82,10 +102,21 @@ class View {
   virtual void Resize(const Size& size);
   void SetFrame(const Rect& frame);
 
+  // Returns the consumer of the event, or NULL if none.
+  // The consumer will get the rest of the drag.
+  virtual View* OnMouseDown(const MouseInputEvent& event); // passes to subviews
+  virtual void OnMouseDrag(const MouseInputEvent& event) {}
+  virtual void OnMouseUp(const MouseInputEvent& event) {}
+
+  // Button is up here. Returns true if consumed.
+  virtual bool OnMouseMove(const MouseInputEvent& event) {return true;}
+
   // You must pass in a direct subview of this.
-  Point ConvertPointFromSubview(const View& subview, const Point& point);
-  Size ConvertSizeFromSubview(const View& subview, const Size& size);
-  Rect ConvertRectFromSubview(const View& subview, const Rect& rect) {
+  Point ConvertPointToSubview(const View& subview, Point point) const;
+
+  Point ConvertPointFromSubview(const View& subview, const Point& point) const;
+  Size ConvertSizeFromSubview(const View& subview, const Size& size) const;
+  Rect ConvertRectFromSubview(const View& subview, const Rect& rect) const {
     return Rect(ConvertPointFromSubview(subview, rect.origin_),
                 ConvertSizeFromSubview(subview, rect.size_));
   }

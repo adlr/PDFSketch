@@ -45,7 +45,7 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
 CXXFLAGS := -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
-LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat
+LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat -lnacl_io
 
 #
 # Disable DOS PATH warning when using Cygwin based tools Windows
@@ -61,7 +61,8 @@ SOURCES=\
 	pdfsketch.cc \
 	view.cc \
 	root_view.cc \
-	page_view.cc
+	page_view.cc \
+	scroll_bar_view.cc
 
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PEXE)

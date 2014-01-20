@@ -52,4 +52,47 @@ void RootView::Resize(const Size& size) {
   SetNeedsDisplay();
 }
 
+void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
+  switch (event.GetType()) {
+    default:
+      return;
+    case PP_INPUTEVENT_TYPE_MOUSEDOWN: {
+      pp::MouseInputEvent mouse_evt(event);
+      pp::Point mouse_pos = mouse_evt.GetPosition();
+      MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+                          MouseInputEvent::DOWN);
+      down_mouse_handler_ = OnMouseDown(evt);
+      return;
+    }
+    case PP_INPUTEVENT_TYPE_MOUSEUP: {
+      if (!down_mouse_handler_)
+        return;
+      pp::MouseInputEvent mouse_evt(event);
+      pp::Point mouse_pos = mouse_evt.GetPosition();
+      MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+                          MouseInputEvent::UP);
+      evt.UpdateToSubview(down_mouse_handler_);
+      down_mouse_handler_->OnMouseUp(evt);
+      return;
+    }
+    case PP_INPUTEVENT_TYPE_MOUSEMOVE: {
+      pp::MouseInputEvent mouse_evt(event);
+      pp::Point mouse_pos = mouse_evt.GetPosition();
+      if (mouse_evt.GetButton() == PP_INPUTEVENT_MOUSEBUTTON_LEFT) {
+        if (!down_mouse_handler_)
+          return;
+        MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+                            MouseInputEvent::DRAG);
+        evt.UpdateToSubview(down_mouse_handler_);
+        down_mouse_handler_->OnMouseDrag(evt);
+      } else {
+        MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+                            MouseInputEvent::MOVE);
+        OnMouseMove(evt);
+      }
+      return;
+    }
+  }
+}
+
 }  // namespace pdfsketch

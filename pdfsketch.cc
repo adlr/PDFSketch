@@ -46,6 +46,7 @@
 
 #include "page_view.h"
 #include "root_view.h"
+#include "scroll_bar_view.h"
 
 using std::vector;
 
@@ -116,9 +117,12 @@ class PDFSketchInstance;
 class PDFRenderer : public pdfsketch::RootViewDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
-      : page_view_(NULL), doc_(NULL), instance_(instance), graphics_(NULL) {
+      : page_view_(NULL),
+        scroll_bar_view_(true),
+        doc_(NULL), instance_(instance), graphics_(NULL) {
     printf("got a new PDFRenderer going\n");
     root_view_.SetDelegate(this);
+    root_view_.AddSubview(&scroll_bar_view_);
   }
   void SetPDF(const char* doc, size_t doc_len) {
     //if (doc_)
@@ -134,8 +138,13 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     //if (doc_)
     //  Render();
     root_view_.Resize(pdfsketch::Size(size_.width(), size_.height()));
+    double width = 15.0;
+    scroll_bar_view_.SetFrame(pdfsketch::Rect(size_.width() - width, 0.0, width, size_.height()));
   }
   void Render();
+  void HandleInputEvent(const pp::InputEvent& event) {
+    root_view_.HandlePepperInputEvent(event);
+  }
 
   virtual cairo_t* AllocateCairo();
   virtual void FlushCairo();
@@ -143,6 +152,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
  private:
   pdfsketch::RootView root_view_;
   pdfsketch::PageView* page_view_;
+  pdfsketch::ScrollBarView scroll_bar_view_;
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
@@ -174,6 +184,7 @@ class PDFSketchInstance : public pp::Instance {
     printf("init called\n");
     renderer_ = new PDFRenderer(this);
     render_thread_.Start();
+    RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE);
     return true;
   }
 
@@ -214,6 +225,16 @@ class PDFSketchInstance : public pp::Instance {
 
   void SetSize(int32_t result, const pp::Size& size) {
     renderer_->SetSize(size);
+  }
+
+  virtual bool HandleInputEvent(const pp::InputEvent& event) {
+    render_thread_.message_loop().PostWork(
+        callback_factory_.NewCallback(&PDFSketchInstance::HandleInputEventThread,
+                                      event));
+    return true;
+  }
+  virtual void HandleInputEventThread(int32_t result, const pp::InputEvent& event) {
+    renderer_->HandleInputEvent(event);
   }
 
   virtual void HandleMessage(const pp::Var& var_message) {

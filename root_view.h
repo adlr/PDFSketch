@@ -5,6 +5,7 @@
 
 #include <ppapi/utility/completion_callback_factory.h>
 #include <ppapi/cpp/message_loop.h>
+#include <ppapi/cpp/input_event.h>
 
 #include "view.h"
 
@@ -18,7 +19,10 @@ class RootViewDelegate {
 
 class RootView : public View {
  public:
-  RootView() : draw_requested_(false), callback_factory_(this) {}
+  RootView()
+      : draw_requested_(false),
+        callback_factory_(this),
+        down_mouse_handler_(NULL) {}
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);
   virtual void SetNeedsDisplayInRect(const Rect& rect);
   void SetDelegate(RootViewDelegate* delegate) {
@@ -26,11 +30,13 @@ class RootView : public View {
   }
   virtual void Resize(const Size& size);
   void HandleDrawRequest(int32_t result);
+  void HandlePepperInputEvent(const pp::InputEvent& event);
 
  private:
   RootViewDelegate* delegate_;
   bool draw_requested_;
   pp::CompletionCallbackFactory<RootView> callback_factory_;
+  View* down_mouse_handler_;
 };
 
 }  // namespace pdfsketch

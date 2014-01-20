@@ -48,6 +48,19 @@ bool Rect::Intersects(const Rect& that) const {
   return intersect.size_.width_ > 0 && intersect.size_.height_ > 0;
 }
 
+bool Rect::Contains(const Point& point) const {
+  return origin_.x_ <= point.x_ && point.x_ < (origin_.x_ + size_.width_) &&
+      origin_.y_ <= point.y_ && point.y_ < (origin_.y_ + size_.height_);
+}
+
+void MouseInputEvent::UpdateToSubview(View* subview) {
+  position_ = subview->Superview()->ConvertPointToSubview(*subview, position_);
+}
+
+void MouseInputEvent::UpdateFromSubview(View* subview) {
+  position_ = subview->Superview()->ConvertPointFromSubview(*subview, position_);
+}
+
 void View::AddSubview(View* subview) {
   if (subview->parent_) {
     printf("%s: Subview has parent already!\n", __func__);
@@ -129,13 +142,39 @@ void View::SetFrame(const Rect& frame) {
     Resize(new_size);
 }
 
-Point View::ConvertPointFromSubview(const View& subview, const Point& point) {
+View* View::OnMouseDown(const MouseInputEvent& event) {
+  // send to subviews
+  for (View* child = top_child_; child; child = child->lower_sibling_) {
+    View* ret = NULL;
+    if (child->Frame().Contains(event.position())) {
+      MouseInputEvent child_evt(event);
+      child_evt.UpdateToSubview(child);
+      ret = child->OnMouseDown(child_evt);
+    }
+    if (ret)
+      return ret;
+  }
+  return NULL;
+}
+
+Point View::ConvertPointFromSubview(const View& subview, const Point& point) const {
   return Point(point.x_ * subview.scale_, point.y_ * subview.scale_).
       TranslatedBy(subview.origin_.x_, subview.origin_.y_);
 }
-Size View::ConvertSizeFromSubview(const View& subview, const Size& size) {
+Size View::ConvertSizeFromSubview(const View& subview, const Size& size) const {
   return size.ScaledBy(subview.scale_);
 }
 
+Point View::ConvertPointToSubview(const View& subview, Point point) const {
+  if (subview.Superview() != this) {
+    if (!subview.Superview()) {
+      printf("Missing superview\n");
+      return Point();
+    }
+    point = subview.Superview()->ConvertPointToSubview(subview, point);
+  }
+  Point temp = point.TranslatedBy(-subview.origin_.x_, -subview.origin_.y_);
+  return Point(temp.x_ / subview.scale_, temp.y_ / subview.scale_);
+}
 
 }  // namespace pdfsketch

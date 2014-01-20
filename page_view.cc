@@ -14,6 +14,7 @@ PageView::PageView(const char* pdf_doc, size_t pdf_doc_length)
   right_fixed_to_left_ = false;
   size_ = Size(doc_.GetPageWidth(1), doc_.GetPageHeight(1));
 }
+
 void PageView::DrawRect(cairo_t* cr, const Rect& rect) {
   printf("PageView::Draw called %f %f\n", size_.width_, size_.height_);
   if (doc_.GetPageWidth(1) < 1 || doc_.GetPageHeight(1) < 1) {
