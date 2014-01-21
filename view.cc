@@ -87,12 +87,9 @@ void View::SetNeedsDisplayInRect(const Rect& rect) {
 
 void View::DrawRect(cairo_t* ctx, const Rect& rect) {
   // Draw each child
-  printf("View::Draw\n");
   for (View* child = bottom_child_; child; child = child->upper_sibling_) {
     Rect intersect_parent = child->Frame().Intersect(rect);
-    printf("checking child for draw\n");
     if (!intersect_parent.size_.width_ || !intersect_parent.size_.height_) {
-      printf("no intersection\n");
       continue;  // No intersection
     }
     cairo_save(ctx);

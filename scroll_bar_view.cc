@@ -26,18 +26,30 @@ void ScrollBarView::DrawRect(cairo_t* cr, const Rect& rect) {
   start_pix = static_cast<int>(start_pix);
   end_pix = static_cast<int>(end_pix);
 
+  cairo_save(cr);
   cairo_set_line_width(cr, 1.0);
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
   if (vertical_) {
+    cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+    cairo_move_to(cr, 0.5, end_pix - 0.5);
+    cairo_line_to(cr, size_.width_ - 0.5, end_pix - 0.5);
+    cairo_line_to(cr, size_.width_ - 0.5, start_pix + 0.5);
+    cairo_stroke(cr);
+
+    cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
     cairo_move_to(cr, 0.5, end_pix - 0.5);
     cairo_line_to(cr, 0.5, start_pix + 0.5);
     cairo_line_to(cr, size_.width_ - 0.5, start_pix + 0.5);
+    cairo_stroke(cr);
   } else {
+    // todo: use a cairo_transform rather than this code
     cairo_move_to(cr, end_pix - 0.5, 0.5);
     cairo_line_to(cr, start_pix + 0.5, 0.5);
     cairo_line_to(cr, start_pix + 0.5, size_.width_ - 0.5);
+    cairo_stroke(cr);
   }
-  cairo_stroke(cr);
+  cairo_restore(cr);
 }
 
 View* ScrollBarView::OnMouseDown(const MouseInputEvent& event) {
