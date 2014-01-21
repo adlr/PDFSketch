@@ -3,6 +3,8 @@
 #ifndef PDFSKETCH_DOCUMENT_VIEW_H__
 #define PDFSKETCH_DOCUMENT_VIEW_H__
 
+#include <stdlib.h>
+
 #include "scroll_bar_view.h"
 #include "view.h"
 
@@ -12,7 +14,7 @@ class DocumentView : public View {
  public:
   DocumentView() {}
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);
-}
+};
 
 }  // namespace pdfsketch
 

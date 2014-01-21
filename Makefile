@@ -62,7 +62,9 @@ SOURCES=\
 	view.cc \
 	root_view.cc \
 	page_view.cc \
-	scroll_bar_view.cc
+	scroll_bar_view.cc \
+	scroll_view.cc \
+	document_view.cc
 
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PEXE)

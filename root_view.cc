@@ -48,6 +48,7 @@ void RootView::HandleDrawRequest(int32_t result) {
 }
 
 void RootView::Resize(const Size& size) {
+  printf("root view resize to: %f %f\n", size.width_, size.height_);
   View::Resize(size);
   SetNeedsDisplay();
 }

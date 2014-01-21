@@ -120,18 +120,15 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
       : page_view_(NULL),
-        scroll_bar_view_(true),
         doc_(NULL), instance_(instance), graphics_(NULL) {
     printf("got a new PDFRenderer going\n");
     root_view_.SetDelegate(this);
 
-    scroll_bar_view_.SetDocSize(50.0, 250.0);
-    scroll_bar_view_.SetShowMin(50.0);
-    scroll_bar_view_.SetShowSize(100.0);
-
     root_view_.AddSubview(&scroll_view_);
-    document_view_.Resize(Size(800.0, 2000.0));
-    root_view_.SetDocumentView(&document_view_);
+    document_view_.Resize(pdfsketch::Size(800.0, 2000.0));
+    scroll_view_.SetDocumentView(&document_view_);
+    scroll_view_.SetResizeParams(true, false, true, false);
+    scroll_view_.SetFrame(root_view_.Frame());
   }
   void SetPDF(const char* doc, size_t doc_len) {
     //if (doc_)

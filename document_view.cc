@@ -2,11 +2,15 @@
 
 #include "document_view.h"
 
+#include <stdio.h>
+
+#include <cairo.h>
+
 namespace pdfsketch {
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
   double border = 15.0;
-  cairo_set_line_width(2.0);
+  cairo_set_line_width(cr, 2.0);
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
   cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
   for (int i = 0; i < 3; i++) {

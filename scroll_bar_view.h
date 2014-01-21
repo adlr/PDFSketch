@@ -11,12 +11,12 @@ class ScrollBarView;
 
 class ScrollBarDelegate {
  public:
-  virtual void ScrollBarMovedTo(ScrollBarView* scroll_bar, double position) = 0;
+  virtual void ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) = 0;
 };
 
 class ScrollBarView : public View {
  public:
-  static const double kThickness = 10.0;
+  static const double kThickness;
 
   ScrollBarView(bool vertical)
       : vertical_(vertical),

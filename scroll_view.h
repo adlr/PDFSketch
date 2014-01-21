@@ -8,11 +8,17 @@
 
 namespace pdfsketch {
 
-class ScrollView : public View {
+class ScrollView : public View,
+                   public ScrollBarDelegate {
  public:
   ScrollView();
   // Adds document as a subview of this:
   void SetDocumentView(View* document);
+
+  virtual void Resize(const Size& size);
+
+  // ScrollBarDelegate method:
+  virtual void ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min);
 
  private:
   void RepositionSubviews();
@@ -24,7 +30,7 @@ class ScrollView : public View {
   bool v_visible_;
 
   View clip_view_;
-}
+};
 
 }  // namespace pdfsketch
 

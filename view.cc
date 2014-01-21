@@ -88,11 +88,11 @@ void View::RemoveSubview(View* subview) {
   if (prev_upper)
     prev_upper->lower_sibling_ = prev_lower;
   if (prev_lower)
-    prev_lower->upper_sibling = prev_upper;
+    prev_lower->upper_sibling_ = prev_upper;
   if (top_child_ == subview)
     top_child_ = prev_lower;
-  if (bottom_child == subview)
-    bottom_child = prev_upper;
+  if (bottom_child_ == subview)
+    bottom_child_ = prev_upper;
   subview->upper_sibling_ = subview->lower_sibling_ = NULL;
 }
 
@@ -112,6 +112,8 @@ void View::DrawRect(cairo_t* ctx, const Rect& rect) {
       continue;  // No intersection
     }
     cairo_save(ctx);
+    intersect_parent.CairoRectangle(ctx);
+    cairo_clip(ctx);
     cairo_translate(ctx, child->origin_.x_, child->origin_.y_);
     cairo_scale(ctx, child->scale_, child->scale_);
     Rect intersect_child =

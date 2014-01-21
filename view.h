@@ -3,6 +3,8 @@
 #ifndef PDFSKETCH_VIEW_H__
 #define PDFSKETCH_VIEW_H__
 
+#include <stdio.h>
+#include <string>
 #include <vector>
 
 #include <cairo.h>
@@ -58,8 +60,14 @@ struct Rect {
                 size_.width_ - 2.0 * inset,
                 size_.height_ - 2.0 * inset);
   }
-  void CairoRectangle(cairo_t* cr) {
-    cairo_rectangle(cr, origin_.x_, origin_.y_, size_.width, size_.height_);
+  std::string String() const {
+    char buf[100];
+    snprintf(buf, sizeof(buf), "[%f,%f,%f,%f]",
+             origin_.x_, origin_.y_, size_.width_, size_.height_);
+    return std::string(buf);
+  }
+  void CairoRectangle(cairo_t* cr) const {
+    cairo_rectangle(cr, origin_.x_, origin_.y_, size_.width_, size_.height_);
   }
   Point origin_;
   Size size_;
@@ -106,10 +114,22 @@ class View {
   void AddSubview(View* subview);
   void RemoveSubview(View* subview);
   Rect Bounds() const { return Rect(size_); }
+  Size size() const { return size_; }
   Rect Frame() const {
     return Rect(origin_, size_.ScaledBy(scale_));
   }
   virtual void Resize(const Size& size);
+  void SetResizeParams(bool top_fixed_to_top,
+                       bool bot_fixed_to_top,
+                       bool left_fixed_to_left,
+                       bool right_fixed_to_left) {
+    top_fixed_to_top_ = top_fixed_to_top;
+    bot_fixed_to_top_ = bot_fixed_to_top;
+    left_fixed_to_left_ = left_fixed_to_left;
+    right_fixed_to_left_ = right_fixed_to_left;
+  }
+
+  void SetOrigin(const Point& origin) { origin_ = origin; }
   void SetFrame(const Rect& frame);
 
   // Returns the consumer of the event, or NULL if none.

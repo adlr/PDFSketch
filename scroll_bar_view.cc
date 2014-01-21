@@ -30,25 +30,27 @@ void ScrollBarView::DrawRect(cairo_t* cr, const Rect& rect) {
   cairo_set_line_width(cr, 1.0);
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
   cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
-  if (vertical_) {
-    cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
-    cairo_move_to(cr, 0.5, end_pix - 0.5);
-    cairo_line_to(cr, size_.width_ - 0.5, end_pix - 0.5);
-    cairo_line_to(cr, size_.width_ - 0.5, start_pix + 0.5);
-    cairo_stroke(cr);
-
-    cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
-    cairo_move_to(cr, 0.5, end_pix - 0.5);
-    cairo_line_to(cr, 0.5, start_pix + 0.5);
-    cairo_line_to(cr, size_.width_ - 0.5, start_pix + 0.5);
-    cairo_stroke(cr);
-  } else {
-    // todo: use a cairo_transform rather than this code
-    cairo_move_to(cr, end_pix - 0.5, 0.5);
-    cairo_line_to(cr, start_pix + 0.5, 0.5);
-    cairo_line_to(cr, start_pix + 0.5, size_.width_ - 0.5);
-    cairo_stroke(cr);
+  double width = size_.width_;
+  if (!vertical_) {
+    // swap x and y axes when drawing
+    cairo_matrix_t swap = {
+      0.0, 1.0, 1.0, 0.0, 0.0, 0.0
+    };
+    cairo_transform(cr, &swap);
+    width = size_.height_;
   }
+
+  cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+  cairo_move_to(cr, 0.5, end_pix - 0.5);
+  cairo_line_to(cr, width - 0.5, end_pix - 0.5);
+  cairo_line_to(cr, width - 0.5, start_pix + 0.5);
+  cairo_stroke(cr);
+
+  cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
+  cairo_move_to(cr, 0.5, end_pix - 0.5);
+  cairo_line_to(cr, 0.5, start_pix + 0.5);
+  cairo_line_to(cr, width - 0.5, start_pix + 0.5);
+  cairo_stroke(cr);
   cairo_restore(cr);
 }
 
@@ -69,9 +71,14 @@ void ScrollBarView::OnMouseDrag(const MouseInputEvent& event) {
   if (show_min_ + show_size_ > doc_max_)
     show_min_ = doc_max_ - show_size_;
 
+  if (delegate_)
+    delegate_->ScrollBarMovedTo(this, show_min_);
+
   SetNeedsDisplay();
 }
 
 void ScrollBarView::OnMouseUp(const MouseInputEvent& event) {}
+
+const double ScrollBarView::kThickness = 15.0;
 
 }  // namespace pdfsketch
