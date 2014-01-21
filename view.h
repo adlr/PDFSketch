@@ -52,6 +52,15 @@ struct Rect {
   Rect ScaledBy(double scale) const {
     return Rect(origin_, size_.ScaledBy(scale));
   }
+  Rect InsetBy(double inset) const {
+    return Rect(origin_.x_ + inset,
+                origin_.y_ + inset,
+                size_.width_ - 2.0 * inset,
+                size_.height_ - 2.0 * inset);
+  }
+  void CairoRectangle(cairo_t* cr) {
+    cairo_rectangle(cr, origin_.x_, origin_.y_, size_.width, size_.height_);
+  }
   Point origin_;
   Size size_;
 };
@@ -95,6 +104,7 @@ class View {
   }
   View* Superview() const { return parent_; }
   void AddSubview(View* subview);
+  void RemoveSubview(View* subview);
   Rect Bounds() const { return Rect(size_); }
   Rect Frame() const {
     return Rect(origin_, size_.ScaledBy(scale_));

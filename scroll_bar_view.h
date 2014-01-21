@@ -16,6 +16,8 @@ class ScrollBarDelegate {
 
 class ScrollBarView : public View {
  public:
+  static const double kThickness = 10.0;
+
   ScrollBarView(bool vertical)
       : vertical_(vertical),
         delegate_(NULL),

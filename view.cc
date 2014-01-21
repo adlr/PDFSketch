@@ -77,6 +77,25 @@ void View::AddSubview(View* subview) {
     bottom_child_ = top_child_;
 }
 
+void View::RemoveSubview(View* subview) {
+  if (this != subview->parent_) {
+    printf("Removing view from non-parent!\n");
+    return;
+  }
+  View* prev_upper = subview->upper_sibling_;
+  View* prev_lower = subview->lower_sibling_;
+  subview->parent_ = NULL;
+  if (prev_upper)
+    prev_upper->lower_sibling_ = prev_lower;
+  if (prev_lower)
+    prev_lower->upper_sibling = prev_upper;
+  if (top_child_ == subview)
+    top_child_ = prev_lower;
+  if (bottom_child == subview)
+    bottom_child = prev_upper;
+  subview->upper_sibling_ = subview->lower_sibling_ = NULL;
+}
+
 void View::SetNeedsDisplayInRect(const Rect& rect) {
   if (!parent_) {
     printf("%s: Missing parent!\n", __func__);

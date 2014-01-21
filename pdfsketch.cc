@@ -44,9 +44,11 @@
 #include "ppapi/cpp/var_array_buffer.h"
 #include "ppapi/c/ppb_image_data.h"
 
+#include "document_view.h"
 #include "page_view.h"
 #include "root_view.h"
 #include "scroll_bar_view.h"
+#include "scroll_view.h"
 
 using std::vector;
 
@@ -127,7 +129,9 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     scroll_bar_view_.SetShowMin(50.0);
     scroll_bar_view_.SetShowSize(100.0);
 
-    root_view_.AddSubview(&scroll_bar_view_);
+    root_view_.AddSubview(&scroll_view_);
+    document_view_.Resize(Size(800.0, 2000.0));
+    root_view_.SetDocumentView(&document_view_);
   }
   void SetPDF(const char* doc, size_t doc_len) {
     //if (doc_)
@@ -143,8 +147,6 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     //if (doc_)
     //  Render();
     root_view_.Resize(pdfsketch::Size(size_.width(), size_.height()));
-    double width = 15.0;
-    scroll_bar_view_.SetFrame(pdfsketch::Rect(size_.width() - width, 0.0, width, size_.height()));
   }
   void Render();
   void HandleInputEvent(const pp::InputEvent& event) {
@@ -157,7 +159,8 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
  private:
   pdfsketch::RootView root_view_;
   pdfsketch::PageView* page_view_;
-  pdfsketch::ScrollBarView scroll_bar_view_;
+  pdfsketch::ScrollView scroll_view_;
+  pdfsketch::DocumentView document_view_;
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
