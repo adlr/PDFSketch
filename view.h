@@ -91,6 +91,11 @@ class MouseInputEvent {
   Type type_;
 };
 
+class ViewDelegate {
+ public:
+  virtual void ViewFrameChanged(View* view, const Rect& frame) = 0;
+};
+
 class View {
  public:
   View()
@@ -118,7 +123,7 @@ class View {
   Rect Frame() const {
     return Rect(origin_, size_.ScaledBy(scale_));
   }
-  virtual void Resize(const Size& size);
+  virtual void Resize(const Size& size);  // Resizes subviews
   void SetResizeParams(bool top_fixed_to_top,
                        bool bot_fixed_to_top,
                        bool left_fixed_to_left,
@@ -131,6 +136,8 @@ class View {
 
   void SetOrigin(const Point& origin) { origin_ = origin; }
   void SetFrame(const Rect& frame);
+  void SetSize(const Size& size);  // does not resize subviews
+  void SetScale(double scale);
 
   // Returns the consumer of the event, or NULL if none.
   // The consumer will get the rest of the drag.
@@ -149,6 +156,10 @@ class View {
   Rect ConvertRectFromSubview(const View& subview, const Rect& rect) const {
     return Rect(ConvertPointFromSubview(subview, rect.origin_),
                 ConvertSizeFromSubview(subview, rect.size_));
+  }
+
+  void SetDelegate(ViewDelegate* delegate) {
+    delegate_ = delegate;
   }
 
  protected:
@@ -174,6 +185,8 @@ class View {
   View* parent_;
   View* lower_sibling_;
   View* upper_sibling_;
+
+  ViewDelegate* delegate_;
 };
 
 }  // namespace pdfsketch

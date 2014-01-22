@@ -9,7 +9,8 @@
 namespace pdfsketch {
 
 class ScrollView : public View,
-                   public ScrollBarDelegate {
+                   public ScrollBarDelegate,
+                   public ViewDelegate {
  public:
   ScrollView();
   // Adds document as a subview of this:
@@ -19,6 +20,9 @@ class ScrollView : public View,
 
   // ScrollBarDelegate method:
   virtual void ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min);
+
+  // ViewDelegate method
+  virtual void ViewFrameChanged(View* view, const Rect& frame);
 
  private:
   void RepositionSubviews();

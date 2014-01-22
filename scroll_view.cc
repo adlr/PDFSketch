@@ -25,6 +25,7 @@ void ScrollView::SetDocumentView(View* document) {
     return;
   }
   document_ = document;
+  document_->SetDelegate(this);
   clip_view_.AddSubview(document);
   document->SetOrigin(Point());
   h_scroller_.SetDocSize(0.0, document_->size().width_);
@@ -106,7 +107,7 @@ void ScrollView::RepositionSubviews() {
 
 void ScrollView::Resize(const Size& size) {
   printf("scroll view: resize to: %f x %f\n", size.width_, size.height_);
-  size_ = size;
+  SetSize(size);
   RepositionSubviews();
 }
 
@@ -123,6 +124,11 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
   document_->SetFrame(doc_frame);
   printf("doc height: %f bot: %f\n", document_->size().height_,
          clip_view_.size().height_ + show_min);
+}
+
+void ScrollView::ViewFrameChanged(View* view, const Rect& frame) {
+  if (view == document_)
+    RepositionSubviews();
 }
 
 }  // namespace pdfsketch

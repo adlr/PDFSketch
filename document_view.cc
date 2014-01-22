@@ -25,7 +25,7 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
     max_page_width = std::max(max_page_width, size.width_);
     total_height += size.height_ + kSpacing;
   }
-  size_ = Size(max_page_width + 2 * kSpacing, total_height);
+  SetSize(Size(max_page_width + 2 * kSpacing, total_height));
 
   SetNeedsDisplay();
 }

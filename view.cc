@@ -128,7 +128,7 @@ void View::DrawRect(cairo_t* ctx, const Rect& rect) {
 void View::Resize(const Size& size) {
   double x_delta = size.width_ - size_.width_;
   double y_delta = size.height_ - size_.height_;
-  size_ = size;
+  SetSize(size);
 
   // Update subview frames
   for (View* child = top_child_; child; child = child->lower_sibling_) {
@@ -158,6 +158,20 @@ void View::SetFrame(const Rect& frame) {
   Size new_size = frame.size_.ScaledBy(1 / scale_);
   if (new_size != size_)
     Resize(new_size);
+  if (delegate_)
+    delegate_->ViewFrameChanged(this, frame);
+}
+
+void View::SetSize(const Size& size) {
+  size_ = size;
+  if (delegate_)
+    delegate_->ViewFrameChanged(this, Frame());
+}
+
+void View::SetScale(double scale) {
+  scale_ = scale;
+  if (delegate_)
+    delegate_->ViewFrameChanged(this, Frame());
 }
 
 View* View::OnMouseDown(const MouseInputEvent& event) {

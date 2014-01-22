@@ -12,7 +12,7 @@ PageView::PageView(const char* pdf_doc, size_t pdf_doc_length)
   bot_fixed_to_top_ = false;
   left_fixed_to_left_ = true;
   right_fixed_to_left_ = false;
-  size_ = Size(doc_.GetPageWidth(1), doc_.GetPageHeight(1));
+  SetSize(Size(doc_.GetPageWidth(1), doc_.GetPageHeight(1)));
 }
 
 void PageView::DrawRect(cairo_t* cr, const Rect& rect) {
