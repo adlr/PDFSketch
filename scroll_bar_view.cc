@@ -67,9 +67,12 @@ void ScrollBarView::OnMouseDrag(const MouseInputEvent& event) {
       (vertical_ ? size_.height_ : size_.width_);
 
   // clamp show_min_ to reasonable range
+  printf("scroller drag: min %f, doc min %f max %f show size %f\n",
+         show_min_, doc_min_, doc_max_, show_size_);
   show_min_ = std::max(show_min_, doc_min_);
-  if (show_min_ + show_size_ > doc_max_)
+  if (show_min_ + show_size_ > doc_max_) {
     show_min_ = doc_max_ - show_size_;
+  }
 
   if (delegate_)
     delegate_->ScrollBarMovedTo(this, show_min_);

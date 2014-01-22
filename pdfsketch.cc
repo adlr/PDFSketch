@@ -135,8 +135,9 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     //  delete doc_;
     //doc_ = new poppler::SimpleDocument(doc, doc_len);
     //Render();
-    page_view_ = new pdfsketch::PageView(doc, doc_len);
-    root_view_.AddSubview(page_view_);
+    //page_view_ = new pdfsketch::PageView(doc, doc_len);
+    //root_view_.AddSubview(page_view_);
+    document_view_.LoadFromPDF(doc, doc_len);
   }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);

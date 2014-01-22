@@ -36,6 +36,11 @@ void ScrollView::RepositionSubviews() {
     // nothing to really do
     return;
   }
+
+  // todo: update doc size w/ event, not every call here
+  h_scroller_.SetDocSize(0.0, document_->size().width_);
+  v_scroller_.SetDocSize(0.0, document_->size().height_);
+
   bool use_h = false;
   bool use_v = false;
 
@@ -69,6 +74,10 @@ void ScrollView::RepositionSubviews() {
       RemoveSubview(&v_scroller_);
     }
   }
+  h_scroller_.SetShowSize(size_.width_ -
+                          (use_v ? ScrollBarView::kThickness : 0.0));
+  v_scroller_.SetShowSize(size_.height_ -
+                          (use_h ? ScrollBarView::kThickness : 0.0));
 
   Rect h_scroller_frame =
       Rect(0.0, size_.height_ - ScrollBarView::kThickness,
@@ -81,9 +90,6 @@ void ScrollView::RepositionSubviews() {
            size_.height_ - (use_h ? ScrollBarView::kThickness : 0.0));
   v_scroller_.SetFrame(v_scroller_frame);
 
-  h_scroller_.SetShowSize(size_.width_ - ScrollBarView::kThickness);
-  v_scroller_.SetShowSize(size_.height_ - ScrollBarView::kThickness);
-
   printf("v scroll frame: %s\n", v_scroller_.Frame().String().c_str());
 
   h_visible_ = use_h;
@@ -92,8 +98,8 @@ void ScrollView::RepositionSubviews() {
   Rect clip_frame =
       Rect(0.0,
            0.0,
-           size_.width_ - (use_h ? ScrollBarView::kThickness : 0.0),
-           size_.height_ - (use_v ? ScrollBarView::kThickness : 0.0));
+           size_.width_ - (use_v ? ScrollBarView::kThickness : 0.0),
+           size_.height_ - (use_h ? ScrollBarView::kThickness : 0.0));
   clip_view_.SetFrame(clip_frame);
   SetNeedsDisplay();
 }
@@ -115,6 +121,8 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
     doc_frame.origin_.y_ = -show_min;
   }
   document_->SetFrame(doc_frame);
+  printf("doc height: %f bot: %f\n", document_->size().height_,
+         clip_view_.size().height_ + show_min);
 }
 
 }  // namespace pdfsketch

@@ -9,6 +9,7 @@ namespace pdfsketch {
 
 void RootView::DrawRect(cairo_t* cr, const Rect& rect) {
   View::DrawRect(cr, rect);
+  /*
   for (int i = 0; i < 4; i++) {
     double x_pos = 0.0, y_pos = 0.0;
     switch (i) {
@@ -26,6 +27,7 @@ void RootView::DrawRect(cairo_t* cr, const Rect& rect) {
     cairo_arc(cr, x_pos, y_pos, 10.0, 0.0, 2 * M_PI);
   }
   cairo_stroke(cr);
+  */
 }
 
 void RootView::SetNeedsDisplayInRect(const Rect& rect) {
