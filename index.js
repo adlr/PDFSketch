@@ -62,6 +62,8 @@ function onProgressMessage(event) {
 }
 
 window.onload = function() {
+    console.log(chrome.runtime.getURL('datafile.txt'));
+
     var plugin = window.document.createElement('embed');
     HelloTutorialModule = plugin;
     plugin.addEventListener('load', onPluginLoaded);

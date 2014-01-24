@@ -45,7 +45,7 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
 CXXFLAGS := -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
-LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat -lnacl_io
+LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat 
 
 #
 # Disable DOS PATH warning when using Cygwin based tools Windows
@@ -53,7 +53,7 @@ LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lppapi -lppapi_cpp $(shell PKG_
 CYGWIN ?= nodosfilewarning
 export CYGWIN
 
-OBJECTS=\
+BCOBJECTS=\
 	pdfsketch.bc
 PEXE=pdfsketch.pexe
 
@@ -66,17 +66,29 @@ SOURCES=\
 	scroll_view.cc \
 	document_view.cc
 
+OBJECTS=\
+	pdfsketch.o \
+	view.o \
+	root_view.o \
+	page_view.o \
+	scroll_bar_view.o \
+	scroll_view.o \
+	document_view.o
+
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PEXE)
 
 clean:
-	$(RM) $(PEXE) $(OBJECTS)
+	$(RM) $(PEXE) $(OBJECTS) $(BCOBJECTS)
 
-pdfsketch.bc: $(SOURCES)
-	$(CXX) -o $@ $(SOURCES) -O2 $(CXXFLAGS) $(LDFLAGS)
+%.o: %.cc
+	$(CXX) -c -o $@ $< -O2 $(CXXFLAGS)
 
-$(PEXE): $(OBJECTS)
-	$(FINALIZE) -o $@ $(OBJECTS)
+pdfsketch.bc: $(OBJECTS)
+	$(CXX) -o $@ $(OBJECTS) -O2 $(CXXFLAGS) $(LDFLAGS)
+
+$(PEXE): $(BCOBJECTS)
+	$(FINALIZE) -o $@ $(BCOBJECTS)
 
 #
 # Makefile target to run the SDK's simple HTTP server and serve this example.
