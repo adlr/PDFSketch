@@ -47,6 +47,10 @@ function openPDF() {
     });
 }
 
+function exportPDF() {
+    HelloTutorialModule.postMessage('exportPDF');
+}
+
 gZoom = 1.0;
 
 function zoomIn() {
@@ -93,6 +97,7 @@ window.onload = function() {
     parentDiv.insertBefore(plugin, parentDiv.firstChild);
 
     document.getElementById('buttonOpen').onclick = openPDF;
+    document.getElementById('buttonExportPDF').onclick = exportPDF;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;
 }

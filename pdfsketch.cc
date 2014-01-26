@@ -187,6 +187,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     return ret;
   }
 
+  void ExportPDF();
   int SetupFS() {
     printf("calling umount\n");
     int ret = umount("/");
@@ -374,6 +375,14 @@ class PDFSketchInstance : public pp::Instance {
     graphics_.Flush(pp::CompletionCallback(MyCompletionCallback, NULL));
   }
 
+  void SendPDFOut(int32_t result, const vector<char>& out) {
+    pp::VarArrayBuffer out_var(out.size());
+    char* out_var_buf = (char*)out_var.Map();
+    memcpy(out_var_buf, &out[0], out.size());
+    out_var.Unmap();
+    PostMessage(out_var);
+  }
+
  private:
   void SetPDF(int32_t result, const pp::Var& doc) {
     printf("SEtPDF called\n");
@@ -387,6 +396,10 @@ class PDFSketchInstance : public pp::Instance {
 
   void SetZoom(int32_t result, const double& zoom) {
     renderer_->SetZoom(zoom);
+  }
+
+  void ExportPDF(int32_t result) {
+    renderer_->ExportPDF();
   }
 
   void SetSize(int32_t result, const pp::Size& size) {
@@ -452,6 +465,10 @@ class PDFSketchInstance : public pp::Instance {
           callback_factory_.NewCallback(&PDFSketchInstance::SetZoom,
                                         atof(message.c_str() +
                                              sizeof(kZoomPrefix) - 1)));
+    }
+    if (message == "exportPDF") {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(&PDFSketchInstance::ExportPDF));
     }
 
     if (message == "hello") {
@@ -537,6 +554,14 @@ void PDFRenderer::Render() {
       0,
       instance_->callback_factory_.NewCallback(
           &PDFSketchInstance::Paint, image_data));    
+}
+void PDFRenderer::ExportPDF() {
+  vector<char> pdf;
+  document_view_.ExportPDF(&pdf);
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      instance_->callback_factory_.NewCallback(
+          &PDFSketchInstance::SendPDFOut, pdf));
 }
 
 /// The Module class.  The browser calls the CreateInstance() method to create

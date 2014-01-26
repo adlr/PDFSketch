@@ -4,6 +4,7 @@
 #define PDFSKETCH_DOCUMENT_VIEW_H__
 
 #include <stdlib.h>
+#include <vector>
 
 #include <poppler/cpp/poppler-document.h>
 
@@ -23,6 +24,7 @@ class DocumentView : public View {
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void SetZoom(double zoom);
+  void ExportPDF(std::vector<char>* out);
 
  private:
   void UpdateSize();

@@ -5,8 +5,11 @@
 #include <stdio.h>
 
 #include <cairo.h>
+#include <cairo-pdf.h>
 
 #include "rectangle.h"
+
+using std::vector;
 
 namespace pdfsketch {
 
@@ -112,6 +115,46 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
 
     cairo_restore(cr);
   }
+}
+
+namespace {
+cairo_status_t HandleCairoStreamWrite(void* closure,
+                                      const unsigned char *data,
+                                      unsigned int length) {
+  vector<char>* out = reinterpret_cast<vector<char>*>(closure);
+  out->insert(out->end(), data, data + length);
+  return CAIRO_STATUS_SUCCESS;
+}
+}  // namespace {}
+
+void DocumentView::ExportPDF(vector<char>* out) {
+  if (!doc_) {
+    printf("can't export w/o a doc\n");
+    return;
+  }
+  cairo_surface_t *surface = cairo_pdf_surface_create_for_stream(
+      HandleCairoStreamWrite, out, 6 * 72, 6 * 72);
+  cairo_t* cr = cairo_create(surface);
+  for (size_t i = 1; i <= doc_->GetNumPages(); i++) {
+    Size pg_size = PageSize(i);
+    cairo_pdf_surface_set_size(surface, pg_size.width_, pg_size.height_);
+    // for each page:
+    cairo_save(cr);
+    printf("rendering page\n");
+    doc_->RenderPage(i, true, cr);
+    printf("rendering complete\n");
+    // Draw graphics
+    for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
+      if (gr->Page() != i)
+        continue;
+      gr->Draw(cr);
+    }
+    cairo_restore(cr);
+    cairo_surface_show_page(surface);
+  }
+  cairo_destroy(cr);
+  cairo_surface_finish(surface);
+  cairo_surface_destroy(surface);
 }
 
 }  // namespace pdfsketch
