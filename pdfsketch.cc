@@ -24,17 +24,21 @@
 /// when mutating property values that are exposed to both the browser and the
 /// NaCl module.
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
 #include <poppler/cpp/poppler-document.h>
 #include <cairo.h>
 #include <cairo-pdf.h>
+#include <libtar.h>
 
 #include "nacl_io/nacl_io.h"
 
@@ -138,23 +142,136 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     scroll_view_.SetFrame(root_view_.Frame());
   }
 
+  bool ListAndRemove(const char* dir) {
+    printf("ListAndRemove(%s) start\n", dir);
+    DIR* dirp = opendir(dir);
+    if (!dirp) {
+      printf("unable to open dir %s\n", dir);
+      return false;
+    }
+    bool ret = false;
+    while (true) {
+      struct dirent* result = NULL;
+      result = readdir(dirp);
+      if (!result) {
+        ret = true;
+        goto exit;
+      }
+      if (!strcmp(result->d_name, ".") || !strcmp(result->d_name, ".."))
+        continue;
+      struct stat stbuf;
+
+      char name[strlen(dir) + strlen(result->d_name) + 2];
+      memset(name, 0, sizeof(name));
+      strcat(name, dir);
+      strcat(name, "/");
+      strcat(name, result->d_name);
+
+      int rc = stat(name, &stbuf);
+      if (rc < 0) {
+        printf("unable to stat %s\n", name);
+        goto exit;
+      }
+      printf("RM: %s (%s)\n", name, !S_ISDIR(stbuf.st_mode) ? "file" : "dir");
+      if (!S_ISDIR(stbuf.st_mode)) {
+        unlink(name);
+      } else {
+        ListAndRemove(name);
+        printf("RMDIR: %s\n", name);
+        rmdir(name);
+      }
+    }
+ exit:
+    closedir(dirp);
+    printf("ListAndRemove(%s) end\n", dir);
+    return ret;
+  }
+
   int SetupFS() {
-    
-    printf("calling open\n");
-    int fd = open("/mnt/http/datafile.txt", O_RDONLY, 0);
-    if (fd < 0) {
-      int err = errno;
-      printf("open file failed: %d\n", err);
+    printf("calling umount\n");
+    int ret = umount("/");
+    printf("umount ret: %d\n", ret);
+    if (ret) {
+      printf("unmounting root fs failed\n");
       return 1;
     }
-    char buf[100];
-    printf("calling read\n");
-    int ret = read(fd, buf, sizeof(buf));
-    if (ret < 0) {
-      printf("read failed\n");
+    ret = mount("", "/", "memfs", 0, NULL);
+    printf("mount ret: %d\n", ret);
+    if (ret) {
+      printf("mounting root fs failed\n");
+      return 1;
     }
-    buf[ret] = '\0';
-    printf("read data:%s\n", buf);
+
+    printf("calling mkdirs\n");
+    mkdir("/mnt", 0777);
+    mkdir("/mnt/http", 0777);
+    mkdir("/mnt/html5", 0777);
+    printf("calling getenv\n");
+
+    const char* data_url = getenv("NACL_DATA_URL");
+    if (!data_url)
+      data_url = "./";
+
+    printf("mounting http\n");
+    ret = mount(data_url, "/mnt/http", "httpfs", 0,
+                "");
+    //"allow_cross_origin_requests=true,allow_credentials=false");
+    if (ret) {
+      printf("mounting http filesystem failed\n");
+      return 1;
+    }
+    printf("http mounted\n");
+    
+    // ret = mount("",                                       /* source */
+    //       "/mnt/html5",                             /* target */
+    //       "html5fs",                                /* filesystemtype */
+    //       0,                                        /* mountflags */
+    //       "type=PERSISTENT,expected_size=10000000"); /* data */    
+    // if (ret) {
+    //   printf("html5 mount failed\n");
+    //   return 1;
+    // }
+
+    ListAndRemove("/mnt/html5");
+
+    TAR* tar = NULL;
+    const char kTarPath[] = "/mnt/http/system.tar";
+    char tar_path[sizeof(kTarPath)];
+    memcpy(tar_path, kTarPath, sizeof(kTarPath));
+    ret = tar_open(&tar, tar_path, NULL, O_RDONLY, 0, 0);
+    if (ret) {
+      printf("tar open failed\n");
+      return 1;    }
+    const char kPrefix[] = "/";
+    char prefix[sizeof(kPrefix)];
+    memcpy(prefix, kPrefix, sizeof(kPrefix));
+    ret = tar_extract_all(tar, prefix);
+    if (ret) {
+      printf("tar extract failed: %s\n", strerror(errno));
+      tar_close(tar);
+      return 1;
+    }
+    ret = tar_close(tar);
+    if (ret) {
+      printf("tar close failed\n");
+      return 1;
+    }
+
+    // printf("calling open\n");
+    // int fd = open("/mnt/http/datafile.txt", O_RDONLY, 0);
+    // if (fd < 0) {
+    //   int err = errno;
+    //   printf("open file failed: %d\n", err);
+    //   return 1;
+    // }
+    // char buf[100];
+    // printf("calling read\n");
+    // int ret = read(fd, buf, sizeof(buf));
+    // if (ret < 0) {
+    //   printf("read failed\n");
+    // }
+    // buf[ret] = '\0';
+    // printf("read data:%s\n", buf);
     return 0;
   }
 
@@ -225,43 +342,6 @@ class PDFSketchInstance : public pp::Instance {
     printf("calling nacl_io_init()\n");
     nacl_io_init_ppapi(pp::Instance::pp_instance(),
                        pp::Module::Get()->get_browser_interface());
-    printf("calling umount\n");
-    int ret = umount("/");
-    printf("umount ret: %d\n", ret);
-    if (ret) {
-      printf("unmounting root fs failed\n");
-      return 1;
-    }
-    ret = mount("", "/", "memfs", 0, NULL);
-    printf("mount ret: %d\n", ret);
-    if (ret) {
-      printf("mounting root fs failed\n");
-      return 1;
-    }
-
-    printf("calling mkdirs\n");
-    mkdir("/home", 0777);
-    mkdir("/tmp", 0777);
-    mkdir("/bin", 0777);
-    mkdir("/etc", 0777);
-    mkdir("/mnt", 0777);
-    mkdir("/mnt/http", 0777);
-    mkdir("/mnt/html5", 0777);
-    printf("calling getenv\n");
-
-    const char* data_url = getenv("NACL_DATA_URL");
-    if (!data_url)
-      data_url = "./";
-
-    printf("mounting http\n");
-    ret = mount(data_url, "/mnt/http", "httpfs", 0,
-                "");
-    //"allow_cross_origin_requests=true,allow_credentials=false");
-    if (ret) {
-      printf("mounting http filesystem failed\n");
-      return 1;
-    }
-    printf("http mounted\n");
     renderer_ = new PDFRenderer(this);
     render_thread_.Start();
     return true;

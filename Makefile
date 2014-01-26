@@ -45,7 +45,7 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
 CXXFLAGS := -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
-LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat 
+LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat -ltar
 
 #
 # Disable DOS PATH warning when using Cygwin based tools Windows
@@ -75,6 +75,8 @@ OBJECTS=\
 	scroll_view.o \
 	document_view.o
 
+CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
+
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PEXE)
 
@@ -89,6 +91,17 @@ pdfsketch.bc: $(OBJECTS)
 
 $(PEXE): $(BCOBJECTS)
 	$(FINALIZE) -o $@ $(BCOBJECTS)
+
+$(CROSFONTSTARBALL):
+	wget http://commondatastorage.googleapis.com/chromeos-localmirror/distfiles/croscorefonts-1.23.0.tar.gz
+
+system.tar: $(CROSFONTSTARBALL)
+	mkdir -p system/usr/share/fonts
+	mkdir -p system/etc
+	ln -s $(NACL_SDK_ROOT)/toolchain/linux_pnacl/usr/etc/fonts system/etc/fonts
+	tar xzvf $< -C system
+	mv system/croscorefonts-* system/usr/share/fonts/croscore
+	tar cvhf ../system.tar -C system .
 
 #
 # Makefile target to run the SDK's simple HTTP server and serve this example.
