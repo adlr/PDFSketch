@@ -95,13 +95,16 @@ $(PEXE): $(BCOBJECTS)
 $(CROSFONTSTARBALL):
 	wget http://commondatastorage.googleapis.com/chromeos-localmirror/distfiles/croscorefonts-1.23.0.tar.gz
 
-system.tar: $(CROSFONTSTARBALL)
+system: $(CROSFONTSTARBALL)
 	mkdir -p system/usr/share/fonts
 	mkdir -p system/etc
 	ln -s $(NACL_SDK_ROOT)/toolchain/linux_pnacl/usr/etc/fonts system/etc/fonts
 	tar xzvf $< -C system
 	mv system/croscorefonts-* system/usr/share/fonts/croscore
-	tar cvhf ../system.tar -C system .
+
+system.tar: system
+	#cp local.conf system/etc/fonts/
+	tar cvhf system.tar -C system .
 
 #
 # Makefile target to run the SDK's simple HTTP server and serve this example.
