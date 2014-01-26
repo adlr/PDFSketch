@@ -3,6 +3,7 @@
 #ifndef PDFSKETCH_VIEW_H__
 #define PDFSKETCH_VIEW_H__
 
+#include <math.h>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -25,6 +26,9 @@ struct Size {
   Size(double w, double h) : width_(w), height_(h) {}
   Size ScaledBy(double scale) const {
     return Size(width_ * scale, height_ * scale);
+  }
+  Size RoundedUp() const {
+    return Size(ceil(width_), ceil(height_));
   }
   bool operator==(const Size& that) const {
     return width_ == that.width_ && height_ == that.height_;

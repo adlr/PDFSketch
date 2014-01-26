@@ -47,6 +47,18 @@ function openPDF() {
     });
 }
 
+gZoom = 1.0;
+
+function zoomIn() {
+    gZoom *= 1.3;
+    HelloTutorialModule.postMessage('zoomTo:' + gZoom);
+}
+
+function zoomOut() {
+    gZoom /= 1.3;
+    HelloTutorialModule.postMessage('zoomTo:' + gZoom);
+}
+
 function onProgressMessage(event) {
     var loadPercent = 0.0;
     var loadPercentString;
@@ -81,4 +93,6 @@ window.onload = function() {
     parentDiv.insertBefore(plugin, parentDiv.firstChild);
 
     document.getElementById('buttonOpen').onclick = openPDF;
+    document.getElementById('buttonZoomIn').onclick = zoomIn;
+    document.getElementById('buttonZoomOut').onclick = zoomOut;
 }

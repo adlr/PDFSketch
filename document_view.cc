@@ -6,6 +6,8 @@
 
 #include <cairo.h>
 
+#include "rectangle.h"
+
 namespace pdfsketch {
 
 namespace {
@@ -17,28 +19,52 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
     delete doc_;
   doc_ = new poppler::SimpleDocument(pdf_doc, pdf_doc_length);
 
+  UpdateSize();
+
+  // Add a silly graphic
+  AddGraphic(new Rectangle());
+
+  SetNeedsDisplay();
+}
+
+void DocumentView::UpdateSize() {
   // Update bounds
   double max_page_width = 0.0;  // w/o spacing
   double total_height = kSpacing;  // w/ spacing
   for (int i = 1; i <= doc_->GetNumPages(); i++) {
-    Size size = PageSize(i);
+    Size size = PageSize(i).ScaledBy(zoom_).RoundedUp();
     max_page_width = std::max(max_page_width, size.width_);
     total_height += size.height_ + kSpacing;
   }
   SetSize(Size(max_page_width + 2 * kSpacing, total_height));
+}
 
-  SetNeedsDisplay();
+void DocumentView::SetZoom(double zoom) {
+  zoom_ = zoom;
+  printf("zoom is %f\n", zoom_);
+ UpdateSize();
 }
 
 Rect DocumentView::PageRect(int page) const {
   double existing_pages_height = kSpacing;
   for (int i = 1; i < page; i++) {
-    existing_pages_height += doc_->GetPageHeight(i) + kSpacing;
+    existing_pages_height += ceil(doc_->GetPageHeight(i) * zoom_) + kSpacing;
   }
-  Size page_size = PageSize(page);
+  Size page_size = PageSize(page).ScaledBy(zoom_).RoundedUp();
   double offset = static_cast<int>(size_.width_ / 2 - page_size.width_ / 2);
   return Rect(offset, existing_pages_height,
               page_size.width_, page_size.height_);
+}
+
+void DocumentView::AddGraphic(Graphic* graphic) {
+  if (top_graphic_) {
+    top_graphic_->upper_sibling_ = graphic;
+  } else {
+    bottom_graphic_ = graphic;
+  }
+  graphic->lower_sibling_ = top_graphic_;
+  graphic->upper_sibling_ = NULL;
+  top_graphic_ = graphic;
 }
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
@@ -74,7 +100,16 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     page_rect.CairoRectangle(cr);
     cairo_fill(cr);
     cairo_translate(cr, page_rect.origin_.x_, page_rect.origin_.y_);
+    cairo_scale(cr, zoom_, zoom_);
     doc_->RenderPage(i, false, cr);
+
+    // Draw graphics
+    for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
+      if (gr->Page() != i)
+        continue;
+      gr->Draw(cr);
+    }
+
     cairo_restore(cr);
   }
 }

@@ -57,15 +57,6 @@ BCOBJECTS=\
 	pdfsketch.bc
 PEXE=pdfsketch.pexe
 
-SOURCES=\
-	pdfsketch.cc \
-	view.cc \
-	root_view.cc \
-	page_view.cc \
-	scroll_bar_view.cc \
-	scroll_view.cc \
-	document_view.cc
-
 OBJECTS=\
 	pdfsketch.o \
 	view.o \
@@ -73,7 +64,8 @@ OBJECTS=\
 	page_view.o \
 	scroll_bar_view.o \
 	scroll_view.o \
-	document_view.o
+	document_view.o \
+	rectangle.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

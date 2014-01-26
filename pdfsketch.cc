@@ -284,6 +284,9 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
     //root_view_.AddSubview(page_view_);
     document_view_.LoadFromPDF(doc, doc_len);
   }
+  void SetZoom(double zoom) {
+    document_view_.SetZoom(zoom);
+  }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
     size_ = size;
@@ -382,6 +385,10 @@ class PDFSketchInstance : public pp::Instance {
     printf("SetPDF done\n");
   }
 
+  void SetZoom(int32_t result, const double& zoom) {
+    renderer_->SetZoom(zoom);
+  }
+
   void SetSize(int32_t result, const pp::Size& size) {
     renderer_->SetSize(size);
   }
@@ -438,6 +445,15 @@ class PDFSketchInstance : public pp::Instance {
 
     // Get the string message and compare it to "hello".
     std::string message = var_message.AsString();
+    const char kZoomPrefix[] = "zoomTo:";
+    printf("got pepper message %s\n", message.c_str());
+    if (!strncmp(message.c_str(), kZoomPrefix, sizeof(kZoomPrefix) - 1)) {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(&PDFSketchInstance::SetZoom,
+                                        atof(message.c_str() +
+                                             sizeof(kZoomPrefix) - 1)));
+    }
+
     if (message == "hello") {
       // If it matches, send our response back to JavaScript.
       pp::Var var_reply("got hello");
