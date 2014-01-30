@@ -125,6 +125,25 @@ class MouseInputEvent {
   Type type_;
 };
 
+class KeyboardInputEvent {
+ public:
+  enum Type {
+    TEXT, DOWN, UP
+  };
+  KeyboardInputEvent(Type type, uint32_t keycode)
+      : type_(type), keycode_(keycode) {}
+  KeyboardInputEvent(Type type, std::string text)
+      : type_(type), keycode_(0), text_(text) {}
+  Type type() const { return type_; }
+  uint32_t keycode() const { return keycode_; }
+  const std::string& text() const { return text_; }
+
+ private:
+  Type type_;
+  uint32_t keycode_;
+  std::string text_;
+};
+
 class ViewDelegate {
  public:
   virtual void ViewFrameChanged(View* view, const Rect& frame) = 0;
@@ -178,6 +197,11 @@ class View {
   virtual View* OnMouseDown(const MouseInputEvent& event); // passes to subviews
   virtual void OnMouseDrag(const MouseInputEvent& event) {}
   virtual void OnMouseUp(const MouseInputEvent& event) {}
+
+  // Returns true if consumed
+  virtual bool OnKeyText(const KeyboardInputEvent& event); // passes to subviews
+  virtual bool OnKeyDown(const KeyboardInputEvent& event); // passes to subviews
+  virtual bool OnKeyUp(const KeyboardInputEvent& event); // passes to subviews
 
   // Button is up here. Returns true if consumed.
   virtual bool OnMouseMove(const MouseInputEvent& event) { return true; }

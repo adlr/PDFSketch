@@ -234,6 +234,25 @@ View* View::OnMouseDown(const MouseInputEvent& event) {
   return NULL;
 }
 
+bool View::OnKeyText(const KeyboardInputEvent& event) {
+  for (View* child = top_child_; child; child = child->lower_sibling_)
+    if (child->OnKeyText(event))
+      return true;
+  return false;
+}
+bool View::OnKeyDown(const KeyboardInputEvent& event) {
+  for (View* child = top_child_; child; child = child->lower_sibling_)
+    if (child->OnKeyDown(event))
+      return true;
+  return false;
+}
+bool View::OnKeyUp(const KeyboardInputEvent& event) {
+  for (View* child = top_child_; child; child = child->lower_sibling_)
+    if (child->OnKeyUp(event))
+      return true;
+  return false;
+}
+
 Point View::ConvertPointFromSubview(const View& subview, const Point& point) const {
   return Point(point.x_ * subview.scale_, point.y_ * subview.scale_).
       TranslatedBy(subview.origin_.x_, subview.origin_.y_);

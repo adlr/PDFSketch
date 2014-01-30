@@ -42,6 +42,8 @@ class DocumentView : public View,
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
 
+  virtual bool OnKeyDown(const KeyboardInputEvent& event);
+
  private:
   void UpdateSize();
   Size PageSize(int page) const {

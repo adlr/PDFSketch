@@ -9,6 +9,7 @@
 
 #include "rectangle.h"
 
+using std::set;
 using std::vector;
 
 namespace pdfsketch {
@@ -249,6 +250,20 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   }
   placing_graphic_ = NULL;
   printf("here %s:%d\n", __FILE__, __LINE__);
+}
+
+bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
+  if (event.keycode() == 8 || event.keycode() == 46) {  // backspace, delete
+    // delete selected graphics
+    for (set<Graphic*>::iterator it = selected_graphics_.begin(),
+             e = selected_graphics_.end(); it != e; ++it) {
+      (*it)->SetNeedsDisplay(true);
+      RemoveGraphic(*it);
+      delete *it;
+    }
+    selected_graphics_.clear();
+  }
+  return true;
 }
 
 void DocumentView::SetNeedsDisplayInPageRect(int page, const Rect& rect) {

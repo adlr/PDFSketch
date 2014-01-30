@@ -342,7 +342,8 @@ class PDFSketchInstance : public pp::Instance {
 
   virtual bool Init(uint32_t argc, const char *argn[], const char *argv[]) {
     printf("init called\n");
-    RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE);
+    RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE |
+                       PP_INPUTEVENT_CLASS_KEYBOARD);
     printf("calling nacl_io_init()\n");
     nacl_io_init_ppapi(pp::Instance::pp_instance(),
                        pp::Module::Get()->get_browser_interface());

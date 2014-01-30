@@ -96,6 +96,27 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
       }
       return;
     }
+    case PP_INPUTEVENT_TYPE_CHAR: {
+      pp::KeyboardInputEvent key_evt(event);
+      KeyboardInputEvent evt(KeyboardInputEvent::TEXT,
+                             key_evt.GetCharacterText().AsString());
+      OnKeyText(evt);
+      return;
+    }
+    case PP_INPUTEVENT_TYPE_KEYDOWN: {
+      pp::KeyboardInputEvent key_evt(event);
+      KeyboardInputEvent evt(KeyboardInputEvent::DOWN,
+                             key_evt.GetKeyCode());
+      OnKeyDown(evt);
+      return;
+    }
+    case PP_INPUTEVENT_TYPE_KEYUP: {
+      pp::KeyboardInputEvent key_evt(event);
+      KeyboardInputEvent evt(KeyboardInputEvent::UP,
+                             key_evt.GetKeyCode());
+      OnKeyUp(evt);
+      return;
+    }
   }
 }
 
