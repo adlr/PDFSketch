@@ -59,6 +59,25 @@ Rect DocumentView::PageRect(int page) const {
               page_size.width_, page_size.height_);
 }
 
+int DocumentView::PageForPoint(const Point& point) const {
+  for (int i = 1; i <= doc_->GetNumPages(); i++) {
+    if (point.y_ <= PageRect(i).Bottom())
+      return i;
+  }
+  return doc_->GetNumPages();
+}
+
+Point DocumentView::ConvertPointToPage(const Point& point, int page) const {
+  Rect page_rect = PageRect(page);
+  return point.TranslatedBy(-page_rect.Left(), -page_rect.Top()).
+      ScaledBy(1 / zoom_);
+}
+
+Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
+  Rect page_rect = PageRect(page);
+  return point.ScaledBy(zoom_).TranslatedBy(page_rect.Left(), page_rect.Top());
+}
+
 void DocumentView::AddGraphic(Graphic* graphic) {
   if (top_graphic_) {
     top_graphic_->upper_sibling_ = graphic;
@@ -68,6 +87,24 @@ void DocumentView::AddGraphic(Graphic* graphic) {
   graphic->lower_sibling_ = top_graphic_;
   graphic->upper_sibling_ = NULL;
   top_graphic_ = graphic;
+}
+
+void DocumentView::RemoveGraphic(Graphic* graphic) {
+  if (graphic->upper_sibling_) {
+    graphic->upper_sibling_->lower_sibling_ = graphic->lower_sibling_;
+  } else if (top_graphic_ == graphic) {
+    top_graphic_ = graphic->lower_sibling_;
+  } else {
+    printf("top graphic is wrong!\n");
+  }
+  if (graphic->lower_sibling_) {
+    graphic->lower_sibling_->upper_sibling_ = graphic->upper_sibling_;
+  } else if (bottom_graphic_ == graphic) {
+    bottom_graphic_ = graphic->upper_sibling_;
+  } else {
+    printf("bottom graphic is wrong!\n");
+  }
+  graphic->upper_sibling_ = graphic->lower_sibling_ = NULL;
 }
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
@@ -155,6 +192,42 @@ void DocumentView::ExportPDF(vector<char>* out) {
   cairo_destroy(cr);
   cairo_surface_finish(surface);
   cairo_surface_destroy(surface);
+}
+
+View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
+  printf("got to %s\n", __func__);
+  Rectangle* rect = new Rectangle();
+  rect->SetDelegate(this);
+  AddGraphic(rect);
+  int page = PageForPoint(event.position());
+  Point page_pos = ConvertPointToPage(event.position(), page);
+  rect->Place(page, page_pos, false);
+  placing_graphic_ = rect;
+  return this;
+}
+
+void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
+  if (!placing_graphic_)
+    return;
+  Point page_pos = ConvertPointToPage(event.position(), placing_graphic_->Page());
+  placing_graphic_->PlaceUpdate(page_pos, false);
+}
+
+void DocumentView::OnMouseUp(const MouseInputEvent& event) {
+  if (!placing_graphic_)
+    return;
+  if (placing_graphic_->PlaceComplete()) {
+    RemoveGraphic(placing_graphic_);
+    delete placing_graphic_;
+  }
+  placing_graphic_ = NULL;
+}
+
+void DocumentView::SetNeedsDisplayInPageRect(int page, const Rect& rect) {
+  printf("%s\n", __func__);
+  Rect local(ConvertPointFromPage(rect.UpperLeft(), page),
+             ConvertPointFromPage(rect.LowerRight(), page));
+  SetNeedsDisplayInRect(local);
 }
 
 }  // namespace pdfsketch

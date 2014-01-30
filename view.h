@@ -18,6 +18,9 @@ struct Point {
   Point TranslatedBy(double x, double y) const {
     return Point(x_ + x, y_ + y);
   }
+  Point ScaledBy(double factor) const {
+    return Point(x_ * factor, y_ * factor);
+  }
   double x_, y_;
 };
 
@@ -49,6 +52,10 @@ struct Rect {
       : size_(size) {}
   Rect(const Point& origin, const Size& size)
       : origin_(origin), size_(size) {}
+  Rect(const Point& upper_left, const Point& lower_right)
+      : origin_(upper_left),
+        size_(lower_right.x_ - upper_left.x_,
+              lower_right.y_ - upper_left.y_) {}
   Rect Intersect(const Rect& that) const;
   bool Intersects(const Rect& that) const;
   bool Contains(const Point& point) const;
@@ -64,6 +71,19 @@ struct Rect {
                 size_.width_ - 2.0 * inset,
                 size_.height_ - 2.0 * inset);
   }
+  double Top() const { return origin_.y_; }
+  double Bottom() const { return origin_.y_ + size_.height_; }
+  double Left() const { return origin_.x_; }
+  double Right() const { return origin_.x_ + size_.width_; }
+  Point UpperLeft() const { return origin_; }
+  Point LowerRight() const { return Point(Right(), Bottom()); }
+  
+  // These Set*Abs return true if flipped
+  bool SetTopAbs(double top);
+  bool SetRightAbs(double right);
+  bool SetLeftAbs(double left);
+  bool SetBottomAbs(double bottom);
+  
   std::string String() const {
     char buf[100];
     snprintf(buf, sizeof(buf), "[%f,%f,%f,%f]",
@@ -150,7 +170,7 @@ class View {
   virtual void OnMouseUp(const MouseInputEvent& event) {}
 
   // Button is up here. Returns true if consumed.
-  virtual bool OnMouseMove(const MouseInputEvent& event) {return true;}
+  virtual bool OnMouseMove(const MouseInputEvent& event) { return true; }
 
   // You must pass in a direct subview of this.
   Point ConvertPointToSubview(const View& subview, Point point) const;

@@ -53,6 +53,50 @@ bool Rect::Contains(const Point& point) const {
       origin_.y_ <= point.y_ && point.y_ < (origin_.y_ + size_.height_);
 }
 
+// Algorithm from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
+bool Rect::SetTopAbs(double top) {
+  bool flip = top < origin_.y_;
+  if (flip) {
+    size_.height_ = origin_.y_ - top;
+    origin_.y_ = top;
+  } else {
+    size_.height_ = top - origin_.y_;
+  }
+  return flip;
+}
+bool Rect::SetRightAbs(double right) {
+  bool flip = right < origin_.x_;
+  if (flip) {
+    size_.width_ = origin_.x_ - right;
+    origin_.x_ = right;
+  } else {
+    size_.width_ = right - origin_.x_;
+  }
+  return flip;
+}
+bool Rect::SetBottomAbs(double bottom) {
+  bool flip = bottom > (origin_.y_ + size_.height_);
+  if (flip) {
+    origin_.y_ += size_.height_;
+    size_.height_ = bottom - origin_.y_;
+  } else {
+    size_.height_ += (origin_.y_ - bottom);
+    origin_.y_ = bottom;
+  }
+  return flip;
+}
+bool Rect::SetLeftAbs(double left) {
+  bool flip = left > (origin_.x_ + size_.width_);
+  if (flip) {
+    origin_.x_ += size_.width_;
+    size_.width_ = left - origin_.x_;
+  } else {
+    size_.width_ += (origin_.x_ - left);
+    origin_.x_ = left;
+  }
+  return flip;
+}
+
 void MouseInputEvent::UpdateToSubview(View* subview) {
   position_ = subview->Superview()->ConvertPointToSubview(*subview, position_);
 }
@@ -97,6 +141,7 @@ void View::RemoveSubview(View* subview) {
 }
 
 void View::SetNeedsDisplayInRect(const Rect& rect) {
+  printf("view: %s\n", __func__);
   if (!parent_) {
     printf("%s: Missing parent!\n", __func__);
     return;

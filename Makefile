@@ -65,7 +65,8 @@ OBJECTS=\
 	scroll_bar_view.o \
 	scroll_view.o \
 	document_view.o \
-	rectangle.o
+	rectangle.o \
+	graphic.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
