@@ -30,12 +30,14 @@ const int kKnobMiddleRight = 1 << 4;
 const int kKnobLowerLeft   = 1 << 5;
 const int kKnobLowerMiddle = 1 << 6;
 const int kKnobLowerRight  = 1 << 7;
+const int kAllKnobs = 0xff;
 
 class GraphicDelegate {
  public:
   virtual void SetNeedsDisplayInPageRect(int page, const Rect& rect) = 0;
   virtual Point ConvertPointFromGraphic(int page, const Point& point) = 0;
   virtual Point ConvertPointToGraphic(int page, const Point& point) = 0;
+  virtual double GetZoom() = 0;
 };
 
 class Graphic {
@@ -48,6 +50,7 @@ class Graphic {
         line_width_(1.0),
         upper_sibling_(NULL),
         lower_sibling_(NULL),
+        knobs_(kAllKnobs),
         resizing_knob_(kKnobNone),
         delegate_(NULL) {}
 
@@ -70,6 +73,7 @@ class Graphic {
   virtual void EndResize();
 
   virtual void Draw(cairo_t* cr) {}
+  void DrawKnobs(cairo_t* cr);
   int Page() const { return page_; }
 
   // Drawing frames are for the regions that need to be redrawn
@@ -78,6 +82,8 @@ class Graphic {
 
   Rect KnobFrame(int knob) const;
   Rect DrawingKnobFrame(int knob) const;
+
+  void SetNeedsDisplay(bool withKnobs) const;
 
   Rect frame_;  // location in page
   Size natural_size_;
@@ -92,6 +98,9 @@ class Graphic {
 
   Graphic* upper_sibling_;
   Graphic* lower_sibling_;
+
+ protected:
+  int knobs_;
 
  private:
   int resizing_knob_;  // kKnobNone if no resize in progress

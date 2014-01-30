@@ -3,6 +3,7 @@
 #ifndef PDFSKETCH_DOCUMENT_VIEW_H__
 #define PDFSKETCH_DOCUMENT_VIEW_H__
 
+#include <set>
 #include <stdlib.h>
 #include <vector>
 
@@ -35,6 +36,7 @@ class DocumentView : public View,
   virtual Point ConvertPointToGraphic(int page, const Point& point) {
     return ConvertPointToPage(point, page);
   }
+  virtual double GetZoom() { return zoom_; }
 
   virtual View* OnMouseDown(const MouseInputEvent& event);
   virtual void OnMouseDrag(const MouseInputEvent& event);
@@ -64,6 +66,8 @@ class DocumentView : public View,
   Graphic* top_graphic_;
   Graphic* bottom_graphic_;
   Graphic* placing_graphic_;
+
+  std::set<Graphic*> selected_graphics_;
 };
 
 }  // namespace pdfsketch

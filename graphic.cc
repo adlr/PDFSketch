@@ -5,7 +5,7 @@
 namespace pdfsketch {
 
 namespace {
-const double kKnobEdgeLength = 6.0;
+const double kKnobEdgeLength = 7.0;
 const double kKnobLineWidth = 1.0;
 }  // namespace {}
 
@@ -54,13 +54,19 @@ Rect Graphic::KnobFrame(int knob) const {
   }
 
   Point knob_upper_left =
-      delegate_->ConvertPointToGraphic(Page(),
-          delegate_->ConvertPointFromGraphic(Page(), center).
+      delegate_->ConvertPointToGraphic(
+          Page(),
+          delegate_->ConvertPointFromGraphic(Page(), center).Rounded().
           TranslatedBy(-kKnobEdgeLength / 2.0, -kKnobEdgeLength / 2.0));
   Point knob_lower_right =
-      delegate_->ConvertPointToGraphic(Page(),
-          delegate_->ConvertPointFromGraphic(Page(), center).
+      delegate_->ConvertPointToGraphic(
+          Page(),
+          delegate_->ConvertPointFromGraphic(Page(), center).Rounded().
           TranslatedBy(kKnobEdgeLength / 2.0, kKnobEdgeLength / 2.0));
+  printf("center: %s corners: %s, %s\n",
+         center.String().c_str(),
+         knob_upper_left.String().c_str(),
+         knob_lower_right.String().c_str());
 
   return Rect(knob_upper_left, knob_lower_right);
 
@@ -70,9 +76,18 @@ Rect Graphic::DrawingKnobFrame(int knob) const {
   return KnobFrame(knob).InsetBy(-kKnobLineWidth / 2.0);
 }
 
+void Graphic::SetNeedsDisplay(bool withKnobs) const {
+  if (!delegate_)
+    return;
+  delegate_->SetNeedsDisplayInPageRect(Page(),
+                                       withKnobs ?
+                                       DrawingFrameWithKnobs() :
+                                       DrawingFrame());
+}
+
 void Graphic::Place(int page, const Point& location, bool constrain) {
   page_ = page;
-  frame_.origin_ = location;
+  frame_ = Rect(location);
   resizing_knob_ = kKnobLowerRight;
 }
 void Graphic::PlaceUpdate(const Point& location, bool constrain) {
@@ -89,6 +104,7 @@ void Graphic::BeginResize(const Point& location, int knob, bool constrain) {
 }
 void Graphic::UpdateResize(const Point& location, bool constrain) {
   // Structure from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
+  printf("UpdateResize before: %s\n", frame_.String().c_str());
 
   double shift_slope = 0.0;
   if (frame_.size_.width_ > 0.0 &&
@@ -163,9 +179,27 @@ void Graphic::UpdateResize(const Point& location, bool constrain) {
   if (delegate_) {
     delegate_->SetNeedsDisplayInPageRect(Page(), DrawingFrameWithKnobs());
   }
+  printf("UpdateResize after: %s\n", frame_.String().c_str());
 }
 void Graphic::EndResize() {
   resizing_knob_ = kKnobNone;
+}
+
+void Graphic::DrawKnobs(cairo_t* cr) {
+  if (!delegate_)
+    return;
+  for (int i = 0; i < 8; i++) {
+    int knob = 1 << i;
+    if (!(knobs_ & knob))
+      continue;
+    Rect frame = KnobFrame(knob);
+    frame.CairoRectangle(cr);
+    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);  // opaque white
+    cairo_fill_preserve(cr);
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1.0);  // opaque black
+    cairo_set_line_width(cr, kKnobLineWidth / delegate_->GetZoom());
+    cairo_stroke(cr);
+  }
 }
 
 }  // namespace pdfsketch

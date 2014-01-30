@@ -21,6 +21,16 @@ struct Point {
   Point ScaledBy(double factor) const {
     return Point(x_ * factor, y_ * factor);
   }
+  Point Rounded() const {
+    return Point(round(x_), round(y_));
+  }
+  std::string String() const {
+    char buf[100];
+    int rc = snprintf(buf, sizeof(buf), "%f,%f", x_, y_);
+    if (rc < 0 || rc == sizeof(buf))
+      return "(err)";
+    return buf;
+  }
   double x_, y_;
 };
 

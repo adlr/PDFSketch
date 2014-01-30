@@ -14,7 +14,7 @@ using std::vector;
 namespace pdfsketch {
 
 namespace {
-const double kSpacing = 20.0;
+const double kSpacing = 20.0;  // between pages
 }  // namespace {}
 
 void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
@@ -152,6 +152,18 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
 
     cairo_restore(cr);
   }
+
+  // draw knobs
+  for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
+    if (selected_graphics_.find(gr) == selected_graphics_.end())
+      continue;
+    cairo_save(cr);
+    Rect page_rect = PageRect(gr->Page());
+    cairo_translate(cr, page_rect.origin_.x_, page_rect.origin_.y_);
+    cairo_scale(cr, zoom_, zoom_);
+    gr->DrawKnobs(cr);
+    cairo_restore(cr);
+  }
 }
 
 namespace {
@@ -196,31 +208,47 @@ void DocumentView::ExportPDF(vector<char>* out) {
 
 View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
   printf("got to %s\n", __func__);
+  selected_graphics_.clear();
+  printf("here %s:%d\n", __FILE__, __LINE__);
   Rectangle* rect = new Rectangle();
   rect->SetDelegate(this);
   AddGraphic(rect);
   int page = PageForPoint(event.position());
-  Point page_pos = ConvertPointToPage(event.position(), page);
+  Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                      page);
   rect->Place(page, page_pos, false);
   placing_graphic_ = rect;
+  printf("here %s:%d\n", __FILE__, __LINE__);
   return this;
 }
 
 void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
+  printf("here %s:%d\n", __FILE__, __LINE__);
   if (!placing_graphic_)
     return;
-  Point page_pos = ConvertPointToPage(event.position(), placing_graphic_->Page());
+  printf("here %s:%d\n", __FILE__, __LINE__);
+  Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                      placing_graphic_->Page());
+  printf("here %s:%d\n", __FILE__, __LINE__);
   placing_graphic_->PlaceUpdate(page_pos, false);
 }
 
 void DocumentView::OnMouseUp(const MouseInputEvent& event) {
+  printf("here %s:%d\n", __FILE__, __LINE__);
   if (!placing_graphic_)
     return;
+  printf("here %s:%d\n", __FILE__, __LINE__);
+  placing_graphic_->SetNeedsDisplay(true);
   if (placing_graphic_->PlaceComplete()) {
     RemoveGraphic(placing_graphic_);
     delete placing_graphic_;
+  } else {
+    printf("here %s:%d\n", __FILE__, __LINE__);
+    selected_graphics_.insert(placing_graphic_);
+    printf("here %s:%d\n", __FILE__, __LINE__);
   }
   placing_graphic_ = NULL;
+  printf("here %s:%d\n", __FILE__, __LINE__);
 }
 
 void DocumentView::SetNeedsDisplayInPageRect(int page, const Rect& rect) {
