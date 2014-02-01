@@ -76,6 +76,21 @@ Rect Graphic::DrawingKnobFrame(int knob) const {
   return KnobFrame(knob).InsetBy(-kKnobLineWidth / 2.0);
 }
 
+int Graphic::PointInKnob(const Point& location) const {
+  if (!delegate_)
+    return kKnobNone;
+  for (int i = 0; i < 8; i++) {
+    int knob = 1 << i;
+    if (!(Knobs() & knob))
+      continue;
+    Rect frame = KnobFrame(knob);
+    if (frame.Contains(location))
+      return knob;
+  }
+  printf("no knobs hit\n");
+  return kKnobNone;
+}
+
 void Graphic::SetNeedsDisplay(bool withKnobs) const {
   if (!delegate_)
     return;
@@ -99,6 +114,7 @@ bool Graphic::PlaceComplete() {
 }
 
 void Graphic::BeginResize(const Point& location, int knob, bool constrain) {
+  printf("graphic: being resize\n");
   resizing_knob_ = knob;
   UpdateResize(location, constrain);
 }
@@ -190,7 +206,7 @@ void Graphic::DrawKnobs(cairo_t* cr) {
     return;
   for (int i = 0; i < 8; i++) {
     int knob = 1 << i;
-    if (!(knobs_ & knob))
+    if (!(Knobs() & knob))
       continue;
     Rect frame = KnobFrame(knob);
     frame.CairoRectangle(cr);

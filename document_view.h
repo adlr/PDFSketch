@@ -22,7 +22,8 @@ class DocumentView : public View,
       : doc_(NULL),
         zoom_(1.0),
         top_graphic_(NULL),
-        bottom_graphic_(NULL) {}
+        bottom_graphic_(NULL),
+        resizing_graphic_(NULL) {}
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void SetZoom(double zoom);
@@ -70,6 +71,7 @@ class DocumentView : public View,
   Graphic* placing_graphic_;
 
   std::set<Graphic*> selected_graphics_;
+  Graphic* resizing_graphic_;
 };
 
 }  // namespace pdfsketch

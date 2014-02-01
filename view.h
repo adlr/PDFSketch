@@ -24,6 +24,9 @@ struct Point {
   Point Rounded() const {
     return Point(round(x_), round(y_));
   }
+  void CairoMoveTo(cairo_t* cr) const {
+    cairo_move_to(cr, x_, y_);
+  }
   std::string String() const {
     char buf[100];
     int rc = snprintf(buf, sizeof(buf), "%f,%f", x_, y_);

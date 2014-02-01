@@ -50,7 +50,6 @@ class Graphic {
         line_width_(1.0),
         upper_sibling_(NULL),
         lower_sibling_(NULL),
-        knobs_(kAllKnobs),
         resizing_knob_(kKnobNone),
         delegate_(NULL) {}
 
@@ -76,6 +75,9 @@ class Graphic {
   void DrawKnobs(cairo_t* cr);
   int Page() const { return page_; }
 
+  // returns the knob hit, or kKnobNone if none.
+  int PointInKnob(const Point& location) const;
+
   // Drawing frames are for the regions that need to be redrawn
   Rect DrawingFrame() const;
   Rect DrawingFrameWithKnobs() const;
@@ -84,7 +86,6 @@ class Graphic {
   Rect DrawingKnobFrame(int knob) const;
 
   void SetNeedsDisplay(bool withKnobs) const;
-
   Rect frame_;  // location in page
   Size natural_size_;
   int page_;
@@ -100,7 +101,7 @@ class Graphic {
   Graphic* lower_sibling_;
 
  protected:
-  int knobs_;
+  virtual int Knobs() const { return kAllKnobs; }
 
  private:
   int resizing_knob_;  // kKnobNone if no resize in progress

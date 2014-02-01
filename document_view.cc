@@ -8,6 +8,7 @@
 #include <cairo-pdf.h>
 
 #include "rectangle.h"
+#include "text_area.h"
 
 using std::set;
 using std::vector;
@@ -208,26 +209,46 @@ void DocumentView::ExportPDF(vector<char>* out) {
 }
 
 View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
-  printf("got to %s\n", __func__);
+  if (!selected_graphics_.empty()) {
+    // See if we hit a knob
+    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+      if (selected_graphics_.find(gr) == selected_graphics_.end())
+        continue;
+      Point pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                     gr->Page());
+      int knob = kKnobNone;
+      printf("testing graphic for knob hit\n");
+      if ((knob = gr->PointInKnob(pos)) != kKnobNone) {
+        resizing_graphic_ = gr;
+        gr->BeginResize(pos, knob, false);
+        return this;
+      }
+      printf("no hit\n");
+    }
+  }
+
   selected_graphics_.clear();
-  printf("here %s:%d\n", __FILE__, __LINE__);
-  Rectangle* rect = new Rectangle();
-  rect->SetDelegate(this);
-  AddGraphic(rect);
+  Graphic* gr = new TextArea();
+  gr->SetDelegate(this);
+  AddGraphic(gr);
   int page = PageForPoint(event.position());
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                       page);
-  rect->Place(page, page_pos, false);
-  placing_graphic_ = rect;
-  printf("here %s:%d\n", __FILE__, __LINE__);
+  gr->Place(page, page_pos, false);
+  placing_graphic_ = gr;
   return this;
 }
 
 void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
-  printf("here %s:%d\n", __FILE__, __LINE__);
+  if (resizing_graphic_) {
+    Point pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                   resizing_graphic_->Page());
+    resizing_graphic_->UpdateResize(pos, false);
+    return;
+  }
+
   if (!placing_graphic_)
     return;
-  printf("here %s:%d\n", __FILE__, __LINE__);
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                       placing_graphic_->Page());
   printf("here %s:%d\n", __FILE__, __LINE__);
@@ -235,6 +256,12 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
 }
 
 void DocumentView::OnMouseUp(const MouseInputEvent& event) {
+  if (resizing_graphic_) {
+    resizing_graphic_->EndResize();
+    resizing_graphic_ = NULL;
+    return;
+  }
+
   printf("here %s:%d\n", __FILE__, __LINE__);
   if (!placing_graphic_)
     return;
