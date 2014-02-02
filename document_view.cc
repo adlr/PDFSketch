@@ -27,7 +27,9 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
   UpdateSize();
 
   // Add a silly graphic
-  AddGraphic(new Rectangle());
+  Graphic* gr = new Rectangle();
+  gr->SetDelegate(this);
+  AddGraphic(gr);
 
   SetNeedsDisplay();
 }
@@ -228,6 +230,19 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
   }
 
   selected_graphics_.clear();
+
+  // See if we hit a graphic
+  for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+    Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                        gr->Page());
+    if (gr->frame_.Contains(page_pos)) {
+      selected_graphics_.insert(gr);
+      last_move_pos_ = event.position();
+      gr->SetNeedsDisplay(true);
+      return this;
+    }
+  }
+
   Graphic* gr = new TextArea();
   gr->SetDelegate(this);
   AddGraphic(gr);
@@ -247,12 +262,24 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
     return;
   }
 
-  if (!placing_graphic_)
+  if (placing_graphic_) {
+    Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                        placing_graphic_->Page());
+    placing_graphic_->PlaceUpdate(page_pos, false);
     return;
-  Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
-                                      placing_graphic_->Page());
-  printf("here %s:%d\n", __FILE__, __LINE__);
-  placing_graphic_->PlaceUpdate(page_pos, false);
+  }
+
+  if (!selected_graphics_.empty()) {
+    // Move
+    double dx = event.position().x_ - last_move_pos_.x_;
+    double dy = event.position().y_ - last_move_pos_.y_;
+    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+      gr->SetNeedsDisplay(true);
+      gr->frame_.origin_ = gr->frame_.origin_.TranslatedBy(dx, dy);
+      gr->SetNeedsDisplay(true);
+    }
+    last_move_pos_ = event.position();
+  }
 }
 
 void DocumentView::OnMouseUp(const MouseInputEvent& event) {
@@ -262,21 +289,16 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     return;
   }
 
-  printf("here %s:%d\n", __FILE__, __LINE__);
   if (!placing_graphic_)
     return;
-  printf("here %s:%d\n", __FILE__, __LINE__);
   placing_graphic_->SetNeedsDisplay(true);
   if (placing_graphic_->PlaceComplete()) {
     RemoveGraphic(placing_graphic_);
     delete placing_graphic_;
   } else {
-    printf("here %s:%d\n", __FILE__, __LINE__);
     selected_graphics_.insert(placing_graphic_);
-    printf("here %s:%d\n", __FILE__, __LINE__);
   }
   placing_graphic_ = NULL;
-  printf("here %s:%d\n", __FILE__, __LINE__);
 }
 
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {

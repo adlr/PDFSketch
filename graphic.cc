@@ -87,7 +87,6 @@ int Graphic::PointInKnob(const Point& location) const {
     if (frame.Contains(location))
       return knob;
   }
-  printf("no knobs hit\n");
   return kKnobNone;
 }
 
@@ -114,13 +113,11 @@ bool Graphic::PlaceComplete() {
 }
 
 void Graphic::BeginResize(const Point& location, int knob, bool constrain) {
-  printf("graphic: being resize\n");
   resizing_knob_ = knob;
   UpdateResize(location, constrain);
 }
 void Graphic::UpdateResize(const Point& location, bool constrain) {
   // Structure from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
-  printf("UpdateResize before: %s\n", frame_.String().c_str());
 
   double shift_slope = 0.0;
   if (frame_.size_.width_ > 0.0 &&
@@ -195,7 +192,6 @@ void Graphic::UpdateResize(const Point& location, bool constrain) {
   if (delegate_) {
     delegate_->SetNeedsDisplayInPageRect(Page(), DrawingFrameWithKnobs());
   }
-  printf("UpdateResize after: %s\n", frame_.String().c_str());
 }
 void Graphic::EndResize() {
   resizing_knob_ = kKnobNone;

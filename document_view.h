@@ -72,6 +72,7 @@ class DocumentView : public View,
 
   std::set<Graphic*> selected_graphics_;
   Graphic* resizing_graphic_;
+  Point last_move_pos_;
 };
 
 }  // namespace pdfsketch

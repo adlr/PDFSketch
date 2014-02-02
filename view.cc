@@ -54,13 +54,13 @@ bool Rect::Contains(const Point& point) const {
 }
 
 // Algorithm from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
-bool Rect::SetTopAbs(double top) {
-  bool flip = top < origin_.y_;
+bool Rect::SetBottomAbs(double bottom) {
+  bool flip = bottom < origin_.y_;
   if (flip) {
-    size_.height_ = origin_.y_ - top;
-    origin_.y_ = top;
+    size_.height_ = origin_.y_ - bottom;
+    origin_.y_ = bottom;
   } else {
-    size_.height_ = top - origin_.y_;
+    size_.height_ = bottom - origin_.y_;
   }
   return flip;
 }
@@ -74,14 +74,14 @@ bool Rect::SetRightAbs(double right) {
   }
   return flip;
 }
-bool Rect::SetBottomAbs(double bottom) {
-  bool flip = bottom > (origin_.y_ + size_.height_);
+bool Rect::SetTopAbs(double top) {
+  bool flip = top > (origin_.y_ + size_.height_);
   if (flip) {
     origin_.y_ += size_.height_;
-    size_.height_ = bottom - origin_.y_;
+    size_.height_ = top - origin_.y_;
   } else {
-    size_.height_ += (origin_.y_ - bottom);
-    origin_.y_ = bottom;
+    size_.height_ += (origin_.y_ - top);
+    origin_.y_ = top;
   }
   return flip;
 }
@@ -141,7 +141,6 @@ void View::RemoveSubview(View* subview) {
 }
 
 void View::SetNeedsDisplayInRect(const Rect& rect) {
-  printf("view: %s\n", __func__);
   if (!parent_) {
     printf("%s: Missing parent!\n", __func__);
     return;
