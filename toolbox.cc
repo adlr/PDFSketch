@@ -1,0 +1,57 @@
+// Copyright...
+
+#include "toolbox.h"
+
+#include "rectangle.h"
+#include "text_area.h"
+
+namespace pdfksetch {
+
+Graphic* Toolbox::NewGraphic() {
+  switch (current_) {
+    case ARROW:
+      return NULL;
+    case TEXT:
+      return new TextArea();
+    case CIRCLE:
+      return new Rectangle();
+    case RECTANGLE:
+      return new Rectangle();
+    case SQUIGGLE:
+      return new Rectangle();
+    case CHECKMARK:
+      return new Rectangle();
+  }
+  printf("Toolbox::NewGraphic: should not get to here\n");
+  return NULL;
+}
+
+void Toolbox::SelectTool(const std::string& tool) {
+  Tool new_tool = ARROW;
+  if (tool == "Arrow") {
+    new_tool = ARROW;
+  } else if (tool == "Text") {
+    new_tool = TEXT:
+  } else if (tool == "Circle") {
+    new_tool = CIRCLE;
+  } else if (tool == "Rectangle") {
+    new_tool = RECTANGLE;
+  } else if (tool == "Squiggle") {
+    new_tool = SQUIGGLE;
+  } else if (tool == "Checkmark") {
+    new_tool = CHECKMARK;
+  } else {
+    printf("Unknown tool: %s\n", tool.c_str());
+    return;
+  }
+  SelectTooL(new_tool);
+}
+
+void Toolbox::SelectTool(Tool tool) {
+  current_ = tool;
+  if (delegate_) {
+    delegate_->(ToolSelected(current_));
+  }
+}
+
+}  // namespace pdfsketch

@@ -126,7 +126,8 @@ void ShowPDF(const char* orig, size_t orig_length, pp::Instance* inst) {
 
 class PDFSketchInstance;
 
-class PDFRenderer : public pdfsketch::RootViewDelegate {
+class PDFRenderer : public pdfsketch::RootViewDelegate,
+                    public pdfsketch::ToolboxDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
       : setup_(false), page_view_(NULL),
@@ -288,6 +289,9 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
   void SetZoom(double zoom) {
     document_view_.SetZoom(zoom);
   }
+  void SelectTool(const std::string& tool) {
+    toolbox_.SelectTool(tool);
+  }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
     size_ = size;
@@ -313,6 +317,8 @@ class PDFRenderer : public pdfsketch::RootViewDelegate {
   pdfsketch::PageView* page_view_;
   pdfsketch::ScrollView scroll_view_;
   pdfsketch::DocumentView document_view_;
+
+  pdfsketch::Toolbox toolbox_;
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
@@ -399,6 +405,10 @@ class PDFSketchInstance : public pp::Instance {
     renderer_->SetZoom(zoom);
   }
 
+  void SelectTool(int32_t result, const std::string& tool) {
+    renderer_->SelectTool(tool);
+  }
+
   void ExportPDF(int32_t result) {
     renderer_->ExportPDF();
   }
@@ -466,10 +476,20 @@ class PDFSketchInstance : public pp::Instance {
           callback_factory_.NewCallback(&PDFSketchInstance::SetZoom,
                                         atof(message.c_str() +
                                              sizeof(kZoomPrefix) - 1)));
+      return;
+    }
+    conse char kToolboxPrefix[] = "selectTool:";
+    if (!strncmp(message.c_str(), kToolPrefix, sizeof(kToolPrefix) - 1)) {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(
+              &PDFSketchInstance::SelectTool,
+              message.substring(sizeof(kToolPrefix) - 1)));
+      return;
     }
     if (message == "exportPDF") {
       render_thread_.message_loop().PostWork(
           callback_factory_.NewCallback(&PDFSketchInstance::ExportPDF));
+      return;
     }
 
     if (message == "hello") {

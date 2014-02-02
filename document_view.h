@@ -11,6 +11,7 @@
 
 #include "graphic.h"
 #include "scroll_bar_view.h"
+#include "toolbox.h"
 #include "view.h"
 
 namespace pdfsketch {
@@ -21,6 +22,7 @@ class DocumentView : public View,
   DocumentView()
       : doc_(NULL),
         zoom_(1.0),
+        toolbox_(NULL),
         top_graphic_(NULL),
         bottom_graphic_(NULL),
         resizing_graphic_(NULL) {}
@@ -28,6 +30,9 @@ class DocumentView : public View,
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void SetZoom(double zoom);
   void ExportPDF(std::vector<char>* out);
+  void SetToolbox(Toolbox* toolbox) {
+    toolbox_ = toolbox;
+  }
 
   // GraphicDelegate methods
   virtual void SetNeedsDisplayInPageRect(int page, const Rect& rect);
@@ -66,6 +71,7 @@ class DocumentView : public View,
 
   poppler::SimpleDocument* doc_;
   double zoom_;
+  Toolbox* toolbox_;
   Graphic* top_graphic_;
   Graphic* bottom_graphic_;
   Graphic* placing_graphic_;

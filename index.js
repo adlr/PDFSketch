@@ -31,6 +31,10 @@ function onPluginMessage(message_event) {
 
 	return;
     }
+    if (message_event.data instanceof String) {
+	console.log("got string: " + message_event.data);
+	return;
+    }
     console.log(message_event.data);
 }
 
@@ -77,6 +81,25 @@ function onProgressMessage(event) {
     }
 }
 
+function selectToolArrow() {
+    HelloTutorialModule.postMessage('selectTool:Arrow');
+}
+function selectToolText() {
+    HelloTutorialModule.postMessage('selectTool:Text');
+}
+function selectToolCircle() {
+    HelloTutorialModule.postMessage('selectTool:Circle');
+}
+function selectToolRectangle() {
+    HelloTutorialModule.postMessage('selectTool:Rectangle');
+}
+function selectToolSquiggle() {
+    HelloTutorialModule.postMessage('selectTool:Squiggle');
+}
+function selectToolCheckmark() {
+    HelloTutorialModule.postMessage('selectTool:Checkmark');
+}
+
 window.onload = function() {
     console.log(chrome.runtime.getURL('datafile.txt'));
 
@@ -100,4 +123,11 @@ window.onload = function() {
     document.getElementById('buttonExportPDF').onclick = exportPDF;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;
+
+    document.getElementById('buttonToolArrow').onclick = selectToolArrow;
+    document.getElementById('buttonToolText').onclick = selectToolText;
+    document.getElementById('buttonToolCircle').onclick = selectToolCircle;
+    document.getElementById('buttonToolRectangle').onclick = selectToolRectangle;
+    document.getElementById('buttonToolSquiggle').onclick = selectToolSquiggle;
+    document.getElementById('buttonToolCheckmark').onclick = selectToolCheckmark;
 }
