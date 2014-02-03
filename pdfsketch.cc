@@ -27,6 +27,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <functional>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mount.h>
@@ -124,6 +125,30 @@ void ShowPDF(const char* orig, size_t orig_length, pp::Instance* inst) {
   printf("showPDF done\n");
 }
 
+void Execute(std::function<void ()> func) {
+  printf("EXECUTE start\n");
+  func();
+  printf("EXECUTE done\n");
+}
+
+class MyFoo {
+ public:
+  std::function<void ()> Set(int num) {
+    printf("Setting[%d] to %d\n", id_, num);
+    int newnum = 1 - num;
+    return [this, newnum] () { Set(newnum); };
+  }
+  int id_;
+};
+
+void CXX11Test() {
+  MyFoo foo;
+  foo.id_ = 4;
+  auto closure = foo.Set(1);
+  foo.id_ = 3;
+  Execute(closure);
+}
+
 class PDFSketchInstance;
 
 class PDFRenderer : public pdfsketch::RootViewDelegate,
@@ -144,6 +169,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     scroll_view_.SetDocumentView(&document_view_);
     scroll_view_.SetResizeParams(true, false, true, false);
     scroll_view_.SetFrame(root_view_.Frame());
+    CXX11Test();
   }
 
   bool ListAndRemove(const char* dir) {
