@@ -63,10 +63,6 @@ Rect Graphic::KnobFrame(int knob) const {
           Page(),
           delegate_->ConvertPointFromGraphic(Page(), center).Rounded().
           TranslatedBy(kKnobEdgeLength / 2.0, kKnobEdgeLength / 2.0));
-  printf("center: %s corners: %s, %s\n",
-         center.String().c_str(),
-         knob_upper_left.String().c_str(),
-         knob_lower_right.String().c_str());
 
   return Rect(knob_upper_left, knob_lower_right);
 

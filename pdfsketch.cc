@@ -134,10 +134,13 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
         doc_(NULL), instance_(instance), graphics_(NULL) {
     printf("got a new PDFRenderer going\n");
 
+    toolbox_.SetDelegate(this);
+
     root_view_.SetDelegate(this);
 
     root_view_.AddSubview(&scroll_view_);
     document_view_.Resize(pdfsketch::Size(800.0, 2000.0));
+    document_view_.SetToolbox(&toolbox_);
     scroll_view_.SetDocumentView(&document_view_);
     scroll_view_.SetResizeParams(true, false, true, false);
     scroll_view_.SetFrame(root_view_.Frame());
@@ -187,6 +190,13 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     printf("ListAndRemove(%s) end\n", dir);
     return ret;
   }
+
+  virtual void ToolSelected(pdfsketch::Toolbox::Tool tool) {
+    std::string message =
+        std::string("ToolSelected:") + pdfsketch::Toolbox::ToolAsString(tool);
+    PostMessage(message);
+  }
+  void PostMessage(const std::string& message);
 
   void ExportPDF();
   int SetupFS() {
@@ -389,6 +399,9 @@ class PDFSketchInstance : public pp::Instance {
     out_var.Unmap();
     PostMessage(out_var);
   }
+  void PostMessageOut(int32_t result, const std::string& msg) {
+    PostMessage(msg);
+  }
 
  private:
   void SetPDF(int32_t result, const pp::Var& doc) {
@@ -478,12 +491,12 @@ class PDFSketchInstance : public pp::Instance {
                                              sizeof(kZoomPrefix) - 1)));
       return;
     }
-    conse char kToolboxPrefix[] = "selectTool:";
-    if (!strncmp(message.c_str(), kToolPrefix, sizeof(kToolPrefix) - 1)) {
+    const char kToolboxPrefix[] = "selectTool:";
+    if (!strncmp(message.c_str(), kToolboxPrefix, sizeof(kToolboxPrefix) - 1)) {
       render_thread_.message_loop().PostWork(
           callback_factory_.NewCallback(
               &PDFSketchInstance::SelectTool,
-              message.substring(sizeof(kToolPrefix) - 1)));
+              message.substr(sizeof(kToolboxPrefix) - 1)));
       return;
     }
     if (message == "exportPDF") {
@@ -583,6 +596,12 @@ void PDFRenderer::ExportPDF() {
       0,
       instance_->callback_factory_.NewCallback(
           &PDFSketchInstance::SendPDFOut, pdf));
+}
+void PDFRenderer::PostMessage(const std::string& message) {
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      instance_->callback_factory_.NewCallback(
+          &PDFSketchInstance::PostMessageOut, message));
 }
 
 /// The Module class.  The browser calls the CreateInstance() method to create

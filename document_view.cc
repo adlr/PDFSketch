@@ -231,19 +231,25 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
 
   selected_graphics_.clear();
 
-  // See if we hit a graphic
-  for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
-    Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
-                                        gr->Page());
-    if (gr->frame_.Contains(page_pos)) {
-      selected_graphics_.insert(gr);
-      last_move_pos_ = event.position();
-      gr->SetNeedsDisplay(true);
-      return this;
+  if (!toolbox_)
+    return this;
+
+  if (toolbox_->CurrentTool() == Toolbox::ARROW) {
+    // See if we hit a graphic
+    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+      Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                          gr->Page());
+      if (gr->frame_.Contains(page_pos)) {
+        selected_graphics_.insert(gr);
+        last_move_pos_ = event.position();
+        gr->SetNeedsDisplay(true);
+        return this;
+      }
     }
+    return this;
   }
 
-  Graphic* gr = new TextArea();
+  Graphic* gr = toolbox_->NewGraphic();
   gr->SetDelegate(this);
   AddGraphic(gr);
   int page = PageForPoint(event.position());
@@ -273,10 +279,11 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
     // Move
     double dx = event.position().x_ - last_move_pos_.x_;
     double dy = event.position().y_ - last_move_pos_.y_;
-    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
-      gr->SetNeedsDisplay(true);
-      gr->frame_.origin_ = gr->frame_.origin_.TranslatedBy(dx, dy);
-      gr->SetNeedsDisplay(true);
+    for (set<Graphic*>::iterator it = selected_graphics_.begin(),
+             e = selected_graphics_.end(); it != e; ++it) {
+      (*it)->SetNeedsDisplay(true);
+      (*it)->frame_.origin_ = (*it)->frame_.origin_.TranslatedBy(dx, dy);
+      (*it)->SetNeedsDisplay(true);
     }
     last_move_pos_ = event.position();
   }
@@ -299,6 +306,7 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     selected_graphics_.insert(placing_graphic_);
   }
   placing_graphic_ = NULL;
+  toolbox_->SelectTool(Toolbox::ARROW);
 }
 
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {

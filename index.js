@@ -1,3 +1,7 @@
+function stringStartsWith(str, prefix) {
+    return str.slice(0, prefix.length) == prefix;
+};
+
 HelloTutorialModule = null;  // Global application object.
 var statusText = 'NO-STATUS';
 
@@ -31,8 +35,11 @@ function onPluginMessage(message_event) {
 
 	return;
     }
-    if (message_event.data instanceof String) {
-	console.log("got string: " + message_event.data);
+    if (typeof(message_event.data) === 'string') {
+	var TOOL_SELECTED_PREFIX = 'ToolSelected:';
+	if (stringStartsWith(message_event.data, TOOL_SELECTED_PREFIX)) {
+	    toolSelected(message_event.data.slice(TOOL_SELECTED_PREFIX.length));
+	}
 	return;
     }
     console.log(message_event.data);
@@ -98,6 +105,21 @@ function selectToolSquiggle() {
 }
 function selectToolCheckmark() {
     HelloTutorialModule.postMessage('selectTool:Checkmark');
+}
+
+function toolSelected(tool) {
+    var buttons = {
+	'Arrow': document.getElementById('buttonToolArrow'),
+	'Text': document.getElementById('buttonToolText'),
+	'Circle': document.getElementById('buttonToolCircle'),
+	'Rectangle': document.getElementById('buttonToolRectangle'),
+	'Squiggle': document.getElementById('buttonToolSquiggle'),
+	'Checkmark': document.getElementById('buttonToolCheckmark')
+    };
+    for (type in buttons) {
+	buttons[type].className = '';
+    }
+    buttons[tool].className = 'selectedButton';
 }
 
 window.onload = function() {

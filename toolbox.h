@@ -5,7 +5,7 @@
 
 #include "graphic.h"
 
-namespace pdfksetch {
+namespace pdfsketch {
 
 class ToolboxDelegate;
 
@@ -14,14 +14,17 @@ class Toolbox {
   enum Tool {
     ARROW, TEXT, CIRCLE, RECTANGLE, SQUIGGLE, CHECKMARK
   };
+  Toolbox() : current_(ARROW), delegate_(NULL) {}
   void SetDelegate(ToolboxDelegate* delegate) {
     delegate_ = delegate;
   }
+  static std::string ToolAsString(Toolbox::Tool tool);
 
   // Caller takes ownership of returned Graphic:
   Graphic* NewGraphic();
   void SelectTool(const std::string& tool);
   void SelectTool(Tool tool);
+  Tool CurrentTool() const { return current_; }
 
  private:
   Tool current_;

@@ -46,13 +46,6 @@ void TextArea::Draw(cairo_t* cr) {
   Point cursor = frame_.origin_;
   cursor.y_ += extents.ascent;
 
-  // Try to place word-by-word
-  cairo_text_extents_t ext;
-  cairo_text_extents(cr, "X", &ext);
-  printf("ext: x: %f, %f\n", ext.width, ext.x_advance);
-  cairo_text_extents(cr, "X ", &ext);
-  printf("ext: x sp: %f, %f\n", ext.width, ext.x_advance);
-
   bool first_word = true;  // first word on the line
   size_t length = 0;
   const char* str = text_.c_str();
