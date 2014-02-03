@@ -17,8 +17,8 @@ NACL_SDK_ROOT ?= $(abspath $(dir $(THIS_MAKEFILE))../..)
 
 
 # Project Build flags
-WARNINGS := -Wno-long-long -Wall -Wswitch-enum -pedantic -Werror
-CXXFLAGS := -pthread -std=gnu++98 $(WARNINGS)
+WARNINGS := -Wno-long-long -Wall -Wswitch -Werror
+CXXFLAGS := -pthread -std=gnu++11 $(WARNINGS)
 
 #
 # Compute tool paths
@@ -44,7 +44,7 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
-CXXFLAGS := -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
+CXXFLAGS += -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
 LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat -ltar
 
 #

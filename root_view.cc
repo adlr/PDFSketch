@@ -58,8 +58,6 @@ void RootView::Resize(const Size& size) {
 
 void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
   switch (event.GetType()) {
-    default:
-      return;
     case PP_INPUTEVENT_TYPE_MOUSEDOWN: {
       pp::MouseInputEvent mouse_evt(event);
       pp::Point mouse_pos = mouse_evt.GetPosition();
@@ -117,6 +115,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
       OnKeyUp(evt);
       return;
     }
+    default:
+      return;
   }
 }
 

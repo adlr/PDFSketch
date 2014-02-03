@@ -130,8 +130,8 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
                     public pdfsketch::ToolboxDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
-      : setup_(false), page_view_(NULL),
-        doc_(NULL), instance_(instance), graphics_(NULL) {
+      : setup_(false),
+        doc_(NULL), instance_(instance) {
     printf("got a new PDFRenderer going\n");
 
     toolbox_.SetDelegate(this);
@@ -165,8 +165,9 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
         continue;
       struct stat stbuf;
 
-      char name[strlen(dir) + strlen(result->d_name) + 2];
-      memset(name, 0, sizeof(name));
+      vector<char> name_backing(strlen(dir) + strlen(result->d_name) + 2);
+      char* name = &name_backing[0];
+      memset(name, 0, name_backing.size());
       strcat(name, dir);
       strcat(name, "/");
       strcat(name, result->d_name);
@@ -324,7 +325,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
  private:
   bool setup_;
   pdfsketch::RootView root_view_;
-  pdfsketch::PageView* page_view_;
+  //pdfsketch::PageView* page_view_;
   pdfsketch::ScrollView scroll_view_;
   pdfsketch::DocumentView document_view_;
 
@@ -333,7 +334,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
   pp::Size size_;
-  pp::Graphics2D* graphics_;
+  //pp::Graphics2D* graphics_;
 
   pp::ImageData* image_data_;
   cairo_surface_t* surface_;

@@ -1,8 +1,8 @@
 // Copyright
 
-#include <stdio.h>
-
 #include "view.h"
+
+#include <stdio.h>
 
 namespace pdfsketch {
 

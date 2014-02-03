@@ -47,7 +47,6 @@ void TextArea::Draw(cairo_t* cr) {
   cursor.y_ += extents.ascent;
 
   bool first_word = true;  // first word on the line
-  size_t length = 0;
   const char* str = text_.c_str();
   string valid_line;  // line w/o final word fragment
   string line;

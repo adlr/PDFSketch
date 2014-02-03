@@ -249,7 +249,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     return this;
   }
 
-  Graphic* gr = toolbox_->NewGraphic();
+  auto gr = toolbox_->NewGraphic();
   gr->SetDelegate(this);
   AddGraphic(gr);
   int page = PageForPoint(event.position());

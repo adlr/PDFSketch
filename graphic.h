@@ -52,6 +52,7 @@ class Graphic {
         lower_sibling_(NULL),
         resizing_knob_(kKnobNone),
         delegate_(NULL) {}
+  virtual ~Graphic() {}
 
   void SetDelegate(GraphicDelegate* delegate) {
     delegate_ = delegate;

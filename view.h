@@ -4,7 +4,7 @@
 #define PDFSKETCH_VIEW_H__
 
 #include <math.h>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <vector>
 
