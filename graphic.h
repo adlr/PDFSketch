@@ -3,6 +3,8 @@
 #ifndef PDFSKETCH_GRAPHIC_H__
 #define PDFSKETCH_GRAPHIC_H__
 
+#include <memory>
+
 #include <cairo.h>
 
 #include "view.h"
@@ -48,8 +50,9 @@ class Graphic {
         page_(1),
         fill_color_(0.0, 1.0, 0.0, 0.3),
         line_width_(1.0),
+        h_flip_(0),
+        v_flip_(0),
         upper_sibling_(NULL),
-        lower_sibling_(NULL),
         resizing_knob_(kKnobNone),
         delegate_(NULL) {}
   virtual ~Graphic() {}
@@ -98,8 +101,10 @@ class Graphic {
   bool h_flip_:1;
   bool v_flip_:1;
 
+  // We only need one shared pointer here to keep these all "owned"
+  // by the containing DocumentView.
   Graphic* upper_sibling_;
-  Graphic* lower_sibling_;
+  std::shared_ptr<Graphic> lower_sibling_;
 
  protected:
   virtual int Knobs() const { return kAllKnobs; }

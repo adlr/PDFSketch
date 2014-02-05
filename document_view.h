@@ -23,8 +23,8 @@ class DocumentView : public View,
       : doc_(NULL),
         zoom_(1.0),
         toolbox_(NULL),
-        top_graphic_(NULL),
         bottom_graphic_(NULL),
+        placing_graphic_(NULL),
         resizing_graphic_(NULL) {}
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
@@ -66,13 +66,16 @@ class DocumentView : public View,
   Point ConvertPointToPage(const Point& point, int page) const;
   Point ConvertPointFromPage(const Point& point, int page) const;
 
-  void AddGraphic(Graphic* graphic);
-  void RemoveGraphic(Graphic* graphic);
+  void AddGraphic(std::shared_ptr<Graphic> graphic);
+  // Returns the shard_ptr of the removed graphic, incase you want to
+  // move it somewhere. If you ignore the return value, graphic may
+  // be deleted.
+  std::shared_ptr<Graphic> RemoveGraphic(Graphic* graphic);
 
   poppler::SimpleDocument* doc_;
   double zoom_;
   Toolbox* toolbox_;
-  Graphic* top_graphic_;
+  std::shared_ptr<Graphic> top_graphic_;
   Graphic* bottom_graphic_;
   Graphic* placing_graphic_;
 

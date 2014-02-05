@@ -11,6 +11,7 @@
 #include "text_area.h"
 
 using std::set;
+using std::shared_ptr;
 using std::vector;
 
 namespace pdfsketch {
@@ -27,7 +28,7 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
   UpdateSize();
 
   // Add a silly graphic
-  Graphic* gr = new Rectangle();
+  shared_ptr<Graphic> gr(new Rectangle());
   gr->SetDelegate(this);
   AddGraphic(gr);
 
@@ -82,21 +83,24 @@ Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
   return point.ScaledBy(zoom_).TranslatedBy(page_rect.Left(), page_rect.Top());
 }
 
-void DocumentView::AddGraphic(Graphic* graphic) {
+void DocumentView::AddGraphic(shared_ptr<Graphic> graphic) {
   if (top_graphic_) {
-    top_graphic_->upper_sibling_ = graphic;
+    top_graphic_->upper_sibling_ = graphic.get();
   } else {
-    bottom_graphic_ = graphic;
+    bottom_graphic_ = graphic.get();
   }
   graphic->lower_sibling_ = top_graphic_;
   graphic->upper_sibling_ = NULL;
   top_graphic_ = graphic;
 }
 
-void DocumentView::RemoveGraphic(Graphic* graphic) {
+shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
+  shared_ptr<Graphic> ret;
   if (graphic->upper_sibling_) {
+    ret = graphic->upper_sibling_->lower_sibling_;
     graphic->upper_sibling_->lower_sibling_ = graphic->lower_sibling_;
-  } else if (top_graphic_ == graphic) {
+  } else if (top_graphic_.get() == graphic) {
+    ret = top_graphic_;
     top_graphic_ = graphic->lower_sibling_;
   } else {
     printf("top graphic is wrong!\n");
@@ -108,7 +112,9 @@ void DocumentView::RemoveGraphic(Graphic* graphic) {
   } else {
     printf("bottom graphic is wrong!\n");
   }
-  graphic->upper_sibling_ = graphic->lower_sibling_ = NULL;
+  graphic->upper_sibling_ = NULL;
+  graphic->lower_sibling_.reset();
+  return ret;
 }
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
@@ -213,7 +219,7 @@ void DocumentView::ExportPDF(vector<char>* out) {
 View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
   if (!selected_graphics_.empty()) {
     // See if we hit a knob
-    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+    for (Graphic* gr = top_graphic_.get(); gr; gr = gr->lower_sibling_.get()) {
       if (selected_graphics_.find(gr) == selected_graphics_.end())
         continue;
       Point pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
@@ -236,7 +242,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
 
   if (toolbox_->CurrentTool() == Toolbox::ARROW) {
     // See if we hit a graphic
-    for (Graphic* gr = top_graphic_; gr; gr = gr->lower_sibling_) {
+    for (Graphic* gr = top_graphic_.get(); gr; gr = gr->lower_sibling_.get()) {
       Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                           gr->Page());
       if (gr->frame_.Contains(page_pos)) {
@@ -249,14 +255,14 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     return this;
   }
 
-  Graphic* gr = toolbox_->NewGraphic();
+  shared_ptr<Graphic> gr(toolbox_->NewGraphic());
   gr->SetDelegate(this);
   AddGraphic(gr);
   int page = PageForPoint(event.position());
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                       page);
   gr->Place(page, page_pos, false);
-  placing_graphic_ = gr;
+  placing_graphic_ = gr.get();
   return this;
 }
 
@@ -301,7 +307,6 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   placing_graphic_->SetNeedsDisplay(true);
   if (placing_graphic_->PlaceComplete()) {
     RemoveGraphic(placing_graphic_);
-    delete placing_graphic_;
   } else {
     selected_graphics_.insert(placing_graphic_);
   }
@@ -316,7 +321,6 @@ bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
              e = selected_graphics_.end(); it != e; ++it) {
       (*it)->SetNeedsDisplay(true);
       RemoveGraphic(*it);
-      delete *it;
     }
     selected_graphics_.clear();
   }

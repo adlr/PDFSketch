@@ -18,7 +18,7 @@ NACL_SDK_ROOT ?= $(abspath $(dir $(THIS_MAKEFILE))../..)
 
 # Project Build flags
 WARNINGS := -Wno-long-long -Wall -Wswitch -Werror
-CXXFLAGS := -pthread -std=gnu++11 $(WARNINGS)
+CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
 
 #
 # Compute tool paths
@@ -76,7 +76,7 @@ CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 all: $(PEXE)
 
 clean:
-	$(RM) $(PEXE) $(OBJECTS) $(BCOBJECTS)
+	rm -f $(PEXE) $(OBJECTS) $(BCOBJECTS)
 
 %.o: %.cc
 	$(CXX) -c -o $@ $< -O2 $(CXXFLAGS)
