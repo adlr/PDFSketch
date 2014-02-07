@@ -247,7 +247,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
                                           gr->Page());
       if (gr->frame_.Contains(page_pos)) {
         selected_graphics_.insert(gr);
-        last_move_pos_ = event.position();
+        start_move_pos_ = last_move_pos_ = event.position();
         gr->SetNeedsDisplay(true);
         return this;
       }
@@ -302,16 +302,49 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     return;
   }
 
-  if (!placing_graphic_)
-    return;
-  placing_graphic_->SetNeedsDisplay(true);
-  if (placing_graphic_->PlaceComplete()) {
-    RemoveGraphic(placing_graphic_);
+  if (placing_graphic_) {
+    placing_graphic_->SetNeedsDisplay(true);
+    if (placing_graphic_->PlaceComplete()) {
+      RemoveGraphic(placing_graphic_);
+    } else {
+      selected_graphics_.insert(placing_graphic_);
+    }
+    placing_graphic_ = NULL;
+    toolbox_->SelectTool(Toolbox::ARROW);
   } else {
-    selected_graphics_.insert(placing_graphic_);
+    // Moving
+    if (last_move_pos_ == start_move_pos_)
+      return;
+    if (!undo_manager_) {
+      printf("no undo manager\n");
+      return;
+    }
+    // Generate undo op
+    double dx = start_move_pos_.x_ - last_move_pos_.x_;
+    double dy = start_move_pos_.y_ - last_move_pos_.y_;
+    auto current_selected_graphics = selected_graphics_;
+    undo_manager_->AddClosure(
+        [this, current_selected_graphics, dx, dy] () {
+          MoveGraphics(current_selected_graphics, dx, dy);
+
+        }
+                              );
   }
-  placing_graphic_ = NULL;
-  toolbox_->SelectTool(Toolbox::ARROW);
+}
+
+void DocumentView::MoveGraphics(const std::set<Graphic*>& graphics,
+                                double dx, double dy) {
+  for (auto it = graphics.begin(), e = graphics.end();
+       it != e; ++it) {
+    (*it)->SetNeedsDisplay(true);
+    (*it)->frame_.origin_ = (*it)->frame_.origin_.TranslatedBy(dx, dy);
+    (*it)->SetNeedsDisplay(true);
+  }
+  undo_manager_->AddClosure(
+      [this, graphics, dx, dy] () {
+        MoveGraphics(graphics, -dx, -dy);
+      }
+                            );
 }
 
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {

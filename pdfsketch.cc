@@ -152,7 +152,8 @@ void CXX11Test() {
 class PDFSketchInstance;
 
 class PDFRenderer : public pdfsketch::RootViewDelegate,
-                    public pdfsketch::ToolboxDelegate {
+                    public pdfsketch::ToolboxDelegate,
+                    public pdfsketch::UndoManagerDelegate {
  public:
   PDFRenderer(PDFSketchInstance* instance)
       : setup_(false),
@@ -160,16 +161,17 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     printf("got a new PDFRenderer going\n");
 
     toolbox_.SetDelegate(this);
+    undo_manager_.SetDelegate(this);
 
     root_view_.SetDelegate(this);
 
     root_view_.AddSubview(&scroll_view_);
     document_view_.Resize(pdfsketch::Size(800.0, 2000.0));
     document_view_.SetToolbox(&toolbox_);
+    document_view_.SetUndoManager(&undo_manager_);
     scroll_view_.SetDocumentView(&document_view_);
     scroll_view_.SetResizeParams(true, false, true, false);
     scroll_view_.SetFrame(root_view_.Frame());
-    CXX11Test();
   }
 
   bool ListAndRemove(const char* dir) {
@@ -226,6 +228,20 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   void PostMessage(const std::string& message);
 
   void ExportPDF();
+
+  void Undo() {
+    undo_manager_.PerformUndo();
+  }
+  void Redo() {
+    undo_manager_.PerformRedo();
+  }
+  virtual void SetUndoEnabled(bool enabled) {
+    PostMessage(enabled ? "undoEnabled:true" : "undoEnabled:false");
+  }
+  virtual void SetRedoEnabled(bool enabled) {
+    PostMessage(enabled ? "redoEnabled:true" : "redoEnabled:false");
+  }
+
   int SetupFS() {
     printf("calling umount\n");
     int ret = umount("/");
@@ -356,6 +372,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   pdfsketch::DocumentView document_view_;
 
   pdfsketch::Toolbox toolbox_;
+  pdfsketch::UndoManager undo_manager_;
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
@@ -453,6 +470,14 @@ class PDFSketchInstance : public pp::Instance {
     renderer_->ExportPDF();
   }
 
+  void Undo(int32_t result) {
+    renderer_->Undo();
+  }
+
+  void Redo(int32_t result) {
+    renderer_->Redo();
+  }
+
   void SetSize(int32_t result, const pp::Size& size) {
     renderer_->SetSize(size);
   }
@@ -529,6 +554,16 @@ class PDFSketchInstance : public pp::Instance {
     if (message == "exportPDF") {
       render_thread_.message_loop().PostWork(
           callback_factory_.NewCallback(&PDFSketchInstance::ExportPDF));
+      return;
+    }
+    if (message == "undo") {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(&PDFSketchInstance::Undo));
+      return;
+    }
+    if (message == "redo") {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(&PDFSketchInstance::Redo));
       return;
     }
 

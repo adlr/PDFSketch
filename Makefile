@@ -68,7 +68,8 @@ OBJECTS=\
 	rectangle.o \
 	graphic.o \
 	text_area.o \
-	toolbox.o
+	toolbox.o \
+	undo_manager.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

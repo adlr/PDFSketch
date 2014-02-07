@@ -34,6 +34,12 @@ struct Point {
       return "(err)";
     return buf;
   }
+  bool operator==(const Point& that) const {
+    return x_ == that.x_ && y_ == that.y_;
+  }
+  bool operator!=(const Point& that) const {
+    return !(*this == that);
+  }
   double x_, y_;
 };
 

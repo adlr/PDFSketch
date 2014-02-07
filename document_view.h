@@ -12,6 +12,7 @@
 #include "graphic.h"
 #include "scroll_bar_view.h"
 #include "toolbox.h"
+#include "undo_manager.h"
 #include "view.h"
 
 namespace pdfsketch {
@@ -20,7 +21,8 @@ class DocumentView : public View,
                      public GraphicDelegate {
  public:
   DocumentView()
-      : doc_(NULL),
+      : undo_manager_(NULL),
+        doc_(NULL),
         zoom_(1.0),
         toolbox_(NULL),
         bottom_graphic_(NULL),
@@ -32,6 +34,9 @@ class DocumentView : public View,
   void ExportPDF(std::vector<char>* out);
   void SetToolbox(Toolbox* toolbox) {
     toolbox_ = toolbox;
+  }
+  void SetUndoManager(UndoManager* undo_manager) {
+    undo_manager_ = undo_manager;
   }
 
   // GraphicDelegate methods
@@ -47,6 +52,9 @@ class DocumentView : public View,
   virtual View* OnMouseDown(const MouseInputEvent& event);
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
+
+  void MoveGraphics(const std::set<Graphic*>& graphics,
+                    double dx, double dy);
 
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
 
@@ -67,6 +75,9 @@ class DocumentView : public View,
   Point ConvertPointFromPage(const Point& point, int page) const;
 
   void AddGraphic(std::shared_ptr<Graphic> graphic);
+
+  UndoManager* undo_manager_;
+
   // Returns the shard_ptr of the removed graphic, incase you want to
   // move it somewhere. If you ignore the return value, graphic may
   // be deleted.
@@ -82,6 +93,7 @@ class DocumentView : public View,
   std::set<Graphic*> selected_graphics_;
   Graphic* resizing_graphic_;
   Point last_move_pos_;
+  Point start_move_pos_;
 };
 
 }  // namespace pdfsketch

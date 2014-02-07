@@ -40,6 +40,14 @@ function onPluginMessage(message_event) {
 	if (stringStartsWith(message_event.data, TOOL_SELECTED_PREFIX)) {
 	    toolSelected(message_event.data.slice(TOOL_SELECTED_PREFIX.length));
 	}
+	var UNDO_ENABLED_PREFIX = 'undoEnabled:';
+	if (stringStartsWith(message_event.data, UNDO_ENABLED_PREFIX)) {
+	    setUndoEnabled(message_event.data.slice(UNDO_ENABLED_PREFIX.length));
+	}
+	var REDO_ENABLED_PREFIX = 'redoEnabled:';
+	if (stringStartsWith(message_event.data, REDO_ENABLED_PREFIX)) {
+	    setRedoEnabled(message_event.data.slice(REDO_ENABLED_PREFIX.length));
+	}
 	return;
     }
     console.log(message_event.data);
@@ -72,6 +80,13 @@ function zoomIn() {
 function zoomOut() {
     gZoom /= 1.3;
     HelloTutorialModule.postMessage('zoomTo:' + gZoom);
+}
+
+function undo() {
+    HelloTutorialModule.postMessage('undo');
+}
+function redo() {
+    HelloTutorialModule.postMessage('redo');
 }
 
 function onProgressMessage(event) {
@@ -122,6 +137,13 @@ function toolSelected(tool) {
     buttons[tool].className = 'selectedButton';
 }
 
+function setUndoEnabled(enabled) {
+    document.getElementById('buttonUndo').disabled = enabled != 'true';
+}
+function setRedoEnabled(enabled) {
+    document.getElementById('buttonRedo').disabled = enabled != 'true';
+}
+
 window.onload = function() {
     console.log(chrome.runtime.getURL('datafile.txt'));
 
@@ -145,6 +167,8 @@ window.onload = function() {
     document.getElementById('buttonExportPDF').onclick = exportPDF;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;
+    document.getElementById('buttonUndo').onclick = undo;
+    document.getElementById('buttonRedo').onclick = redo;
 
     document.getElementById('buttonToolArrow').onclick = selectToolArrow;
     document.getElementById('buttonToolText').onclick = selectToolText;

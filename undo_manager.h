@@ -8,17 +8,17 @@
 
 namespace pdfsketch{
 
-class UndoManagerDelegage {
+class UndoManagerDelegate {
  public:
-  void SetUndoEnabled(bool enabled) = 0;
-  void SetRedoEnabled(bool enabled) = 0;
+  virtual void SetUndoEnabled(bool enabled) = 0;
+  virtual void SetRedoEnabled(bool enabled) = 0;
 };
 
 class UndoManager {
  public:
   UndoManager();
 
-  void SetDelegate(UndoManagerDelegage* delegate) {
+  void SetDelegate(UndoManagerDelegate* delegate) {
     delegate_ = delegate;
   }
   void AddClosure(std::function<void ()> func);
@@ -27,13 +27,13 @@ class UndoManager {
   
  private:
   void UpdateDelegate();
-  void PerformUndoImpl(std::deque<function<void ()>>* undo,
-                       std::deque<function<void ()>>* redo);
+  void PerformUndoImpl(std::deque<std::function<void ()>>* ops);
 
   UndoManagerDelegate* delegate_;
   bool undo_in_progress_;
-  std::deque<function<void ()>> undo_ops_;
-  std::deque<function<void ()>> redo_ops_;
+  bool redo_in_progress_;
+  std::deque<std::function<void ()>> undo_ops_;
+  std::deque<std::function<void ()>> redo_ops_;
 };
 
 }  // namespace pdfsketch
