@@ -74,7 +74,18 @@ class DocumentView : public View,
   Point ConvertPointToPage(const Point& point, int page) const;
   Point ConvertPointFromPage(const Point& point, int page) const;
 
-  void AddGraphic(std::shared_ptr<Graphic> graphic);
+  void InsertGraphicAfter(std::shared_ptr<Graphic> graphic,
+                          Graphic* upper_sibling);
+  void AddGraphic(std::shared_ptr<Graphic> graphic) {
+    InsertGraphicAfter(graphic, NULL);
+  }
+
+  bool GraphicIsSelected(Graphic* graphic) {
+    return selected_graphics_.find(graphic) != selected_graphics_.end();
+  }
+
+  std::shared_ptr<Graphic> SharedPtrForGraphic(Graphic* graphic) const;
+  void RemoveGraphicsUndo(std::set<Graphic*> graphics);
 
   UndoManager* undo_manager_;
 

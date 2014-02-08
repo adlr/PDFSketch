@@ -10,6 +10,8 @@
 #include "rectangle.h"
 #include "text_area.h"
 
+using std::make_pair;
+using std::pair;
 using std::set;
 using std::shared_ptr;
 using std::vector;
@@ -83,18 +85,33 @@ Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
   return point.ScaledBy(zoom_).TranslatedBy(page_rect.Left(), page_rect.Top());
 }
 
-void DocumentView::AddGraphic(shared_ptr<Graphic> graphic) {
-  if (top_graphic_) {
-    top_graphic_->upper_sibling_ = graphic.get();
+void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
+                                      Graphic* upper_sibling) {
+  if (!upper_sibling) {
+    if (top_graphic_) {
+      top_graphic_->upper_sibling_ = graphic.get();
+    } else {
+      bottom_graphic_ = graphic.get();
+    }
+    graphic->lower_sibling_ = top_graphic_;
+    graphic->upper_sibling_ = NULL;
+    top_graphic_ = graphic;
   } else {
-    bottom_graphic_ = graphic.get();
+    if (upper_sibling->lower_sibling_.get())
+      graphic->lower_sibling_ = upper_sibling->lower_sibling_;
+    else
+      graphic->lower_sibling_.reset();
+    graphic->upper_sibling_ = upper_sibling;
+    upper_sibling->lower_sibling_ = graphic;
   }
-  graphic->lower_sibling_ = top_graphic_;
-  graphic->upper_sibling_ = NULL;
-  top_graphic_ = graphic;
+  graphic->SetNeedsDisplay(GraphicIsSelected(graphic.get()));
 }
 
 shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
+  graphic->SetNeedsDisplay(GraphicIsSelected(graphic));
+  if (GraphicIsSelected(graphic)) {
+    selected_graphics_.erase(selected_graphics_.find(graphic));
+  }
   shared_ptr<Graphic> ret;
   if (graphic->upper_sibling_) {
     ret = graphic->upper_sibling_->lower_sibling_;
@@ -114,6 +131,7 @@ shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
   }
   graphic->upper_sibling_ = NULL;
   graphic->lower_sibling_.reset();
+
   return ret;
 }
 
@@ -295,6 +313,22 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
   }
 }
 
+shared_ptr<Graphic> DocumentView::SharedPtrForGraphic(
+    Graphic* graphic) const {
+  if (!top_graphic_.get()) {
+    printf("no graphics!\n");
+    return shared_ptr<Graphic>();
+  }
+  if (graphic == top_graphic_.get())
+    return top_graphic_;
+  for (Graphic* gr = top_graphic_.get(); gr->lower_sibling_.get(); gr = gr->lower_sibling_.get()) {
+    if (gr->lower_sibling_.get() == graphic)
+      return gr->lower_sibling_;
+  }
+  printf("Error: %s called for missing graphic!\n", __func__);
+  return shared_ptr<Graphic>();
+}
+
 void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   if (resizing_graphic_) {
     resizing_graphic_->EndResize();
@@ -307,6 +341,14 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     if (placing_graphic_->PlaceComplete()) {
       RemoveGraphic(placing_graphic_);
     } else {
+      if (undo_manager_) {
+        set<Graphic*> gr;
+        gr.insert(placing_graphic_);
+        undo_manager_->AddClosure(
+            [this, gr] () {
+              RemoveGraphicsUndo(gr);
+            });
+      }
       selected_graphics_.insert(placing_graphic_);
     }
     placing_graphic_ = NULL;
@@ -327,8 +369,7 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
         [this, current_selected_graphics, dx, dy] () {
           MoveGraphics(current_selected_graphics, dx, dy);
 
-        }
-                              );
+        });
   }
 }
 
@@ -340,6 +381,8 @@ void DocumentView::MoveGraphics(const std::set<Graphic*>& graphics,
     (*it)->frame_.origin_ = (*it)->frame_.origin_.TranslatedBy(dx, dy);
     (*it)->SetNeedsDisplay(true);
   }
+  if (!undo_manager_)
+    return;
   undo_manager_->AddClosure(
       [this, graphics, dx, dy] () {
         MoveGraphics(graphics, -dx, -dy);
@@ -347,15 +390,31 @@ void DocumentView::MoveGraphics(const std::set<Graphic*>& graphics,
                             );
 }
 
+void DocumentView::RemoveGraphicsUndo(set<Graphic*> graphics) {
+  set<pair<shared_ptr<Graphic>, Graphic*>> pairs;
+    for (set<Graphic*>::iterator it = graphics.begin(),
+             e = graphics.end(); it != e; ++it) {
+      (*it)->SetNeedsDisplay(true);
+      Graphic* upper_sibling = (*it)->upper_sibling_;
+      pairs.insert(make_pair(RemoveGraphic(*it), upper_sibling));
+    }
+    if (undo_manager_)
+      undo_manager_->AddClosure(
+          [this, pairs, graphics] () {
+            for (auto graphic : pairs)
+              InsertGraphicAfter(graphic.first, graphic.second);
+            if (undo_manager_)
+              undo_manager_->AddClosure(
+                  [this, graphics] () {
+                    RemoveGraphicsUndo(graphics);
+                  });
+          });
+}
+
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
   if (event.keycode() == 8 || event.keycode() == 46) {  // backspace, delete
     // delete selected graphics
-    for (set<Graphic*>::iterator it = selected_graphics_.begin(),
-             e = selected_graphics_.end(); it != e; ++it) {
-      (*it)->SetNeedsDisplay(true);
-      RemoveGraphic(*it);
-    }
-    selected_graphics_.clear();
+    RemoveGraphicsUndo(selected_graphics_);
   }
   return true;
 }

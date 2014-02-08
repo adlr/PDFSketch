@@ -4,6 +4,10 @@
 
 namespace pdfsketch {
 
+Rectangle::~Rectangle() {
+  printf("~Rectangle()\n");
+}
+
 void Rectangle::Draw(cairo_t* cr) {
   frame_.CairoRectangle(cr);
   fill_color_.CairoSetSourceRGBA(cr);
