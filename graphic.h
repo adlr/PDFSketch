@@ -71,6 +71,14 @@ class Graphic {
   // By default, graphics with 0 size are deleted.
   virtual bool PlaceComplete();
 
+  virtual bool Editable() const { return false; }
+  virtual void BeginEditing() { editing_ = true; }
+  virtual void EndEditing() { editing_ = false; }
+  // These keyboard events arrive only when editing is in progress:
+  virtual void OnKeyText(const KeyboardInputEvent& event) {}
+  virtual void OnKeyDown(const KeyboardInputEvent& event) {}
+  virtual void OnKeyUp(const KeyboardInputEvent& event) {}
+
   virtual void BeginResize(const Point& location, int knob, bool constrain);
   virtual void UpdateResize(const Point& location, bool constrain);
   virtual void EndResize();
@@ -112,6 +120,8 @@ class Graphic {
  private:
   int resizing_knob_;  // kKnobNone if no resize in progress
   GraphicDelegate* delegate_;
+
+  bool editing_;  // is being edited
 };
 
 }  // namespace pdfsketch

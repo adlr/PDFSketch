@@ -367,14 +367,14 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     auto current_selected_graphics = selected_graphics_;
     undo_manager_->AddClosure(
         [this, current_selected_graphics, dx, dy] () {
-          MoveGraphics(current_selected_graphics, dx, dy);
+          MoveGraphicsUndo(current_selected_graphics, dx, dy);
 
         });
   }
 }
 
-void DocumentView::MoveGraphics(const std::set<Graphic*>& graphics,
-                                double dx, double dy) {
+void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,
+                                    double dx, double dy) {
   for (auto it = graphics.begin(), e = graphics.end();
        it != e; ++it) {
     (*it)->SetNeedsDisplay(true);
@@ -385,9 +385,8 @@ void DocumentView::MoveGraphics(const std::set<Graphic*>& graphics,
     return;
   undo_manager_->AddClosure(
       [this, graphics, dx, dy] () {
-        MoveGraphics(graphics, -dx, -dy);
-      }
-                            );
+        MoveGraphicsUndo(graphics, -dx, -dy);
+      });
 }
 
 void DocumentView::RemoveGraphicsUndo(set<Graphic*> graphics) {
@@ -420,7 +419,6 @@ bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
 }
 
 void DocumentView::SetNeedsDisplayInPageRect(int page, const Rect& rect) {
-  printf("%s\n", __func__);
   Rect local(ConvertPointFromPage(rect.UpperLeft(), page),
              ConvertPointFromPage(rect.LowerRight(), page));
   SetNeedsDisplayInRect(local);

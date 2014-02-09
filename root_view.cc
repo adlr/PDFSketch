@@ -31,7 +31,6 @@ void RootView::DrawRect(cairo_t* cr, const Rect& rect) {
 }
 
 void RootView::SetNeedsDisplayInRect(const Rect& rect) {
-  printf("root: %s\n", __func__);
   if (!delegate_) {
     printf("%s: can't draw, no delegate\n", __func__);
     return;

@@ -53,8 +53,8 @@ class DocumentView : public View,
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
 
-  void MoveGraphics(const std::set<Graphic*>& graphics,
-                    double dx, double dy);
+  void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
+                        double dx, double dy);
 
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
 
