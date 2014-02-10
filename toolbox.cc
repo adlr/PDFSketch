@@ -2,6 +2,7 @@
 
 #include "toolbox.h"
 
+#include "checkmark.h"
 #include "rectangle.h"
 #include "text_area.h"
 
@@ -22,7 +23,7 @@ Graphic* Toolbox::NewGraphic() {
     case SQUIGGLE:
       return new Rectangle();
     case CHECKMARK:
-      return new Rectangle();
+      return new Checkmark();
   }
   printf("Toolbox::NewGraphic: should not get to here\n");
   return NULL;

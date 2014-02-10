@@ -69,7 +69,8 @@ OBJECTS=\
 	graphic.o \
 	text_area.o \
 	toolbox.o \
-	undo_manager.o
+	undo_manager.o \
+	checkmark.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

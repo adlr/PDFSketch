@@ -27,6 +27,9 @@ struct Point {
   void CairoMoveTo(cairo_t* cr) const {
     cairo_move_to(cr, x_, y_);
   }
+  void CairoLineTo(cairo_t* cr) const {
+    cairo_line_to(cr, x_, y_);
+  }
   std::string String() const {
     char buf[100];
     int rc = snprintf(buf, sizeof(buf), "%f,%f", x_, y_);
@@ -95,7 +98,13 @@ struct Rect {
   double Left() const { return origin_.x_; }
   double Right() const { return origin_.x_ + size_.width_; }
   Point UpperLeft() const { return origin_; }
+  Point UpperRight() const { return Point(Right(), Top()); }
+  Point LowerLeft() const { return Point(Left(), Bottom()); }
   Point LowerRight() const { return Point(Right(), Bottom()); }
+  Point Center() const {
+    return Point(origin_.x_ + 0.5 * size_.width_,
+                 origin_.y_ + 0.5 * size_.height_);
+  }
   
   // These Set*Abs return true if flipped
   bool SetTopAbs(double top);
@@ -103,6 +112,11 @@ struct Rect {
   bool SetLeftAbs(double left);
   bool SetBottomAbs(double bottom);
   
+  void SetCenter(const Point& location) {
+    origin_.x_ = location.x_ - size_.width_ * 0.5;
+    origin_.y_ = location.y_ - size_.height_ * 0.5;
+  }
+
   std::string String() const {
     char buf[100];
     snprintf(buf, sizeof(buf), "[%f,%f,%f,%f]",
