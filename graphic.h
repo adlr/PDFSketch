@@ -48,7 +48,7 @@ class Graphic {
       : frame_(30.0, 30.0, 10.0, 20.0),
         natural_size_(1.0, 1.0),
         page_(1),
-        fill_color_(0.0, 1.0, 0.0, 0.3),
+        fill_color_(0.0, 0.0, 0.0, 0.0),
         line_width_(1.0),
         h_flip_(0),
         v_flip_(0),
