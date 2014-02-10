@@ -20,19 +20,72 @@ bool TextArea::PlaceComplete() {
   return false;
 }
 
-namespace {
-double GetTextDisplayWidth(cairo_t* cr, const string& str) {
-  cairo_text_extents_t ext;
-  cairo_text_extents(cr, str.c_str(), &ext);
-  return ext.width;
+void TextArea::BeginEditing() {
+  Graphic::BeginEditing();
+  selection_start_ = text_.size();
+  selection_size_ = 0;
 }
-}  // namespace {}
+
+void TextArea::EndEditing() {
+  Graphic::EndEditing();
+}
+
+void TextArea::OnKeyText(const KeyboardInputEvent& event) {
+  EraseSelection();
+  text_.insert(selection_start_, event.text());
+  selection_start_ += event.text().size();
+  SetNeedsDisplay(false);
+}
+
+void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
+  printf("got keydown %d\n", event.keycode());
+  if (event.keycode() == 8 || event.keycode() == 46) {
+    // backspace, delete
+    if (selection_size_ > 0) {
+      EraseSelection();
+    } else if (event.keycode() == 8) {
+      // do backspace
+      if (selection_start_ == 0)
+        return;
+      text_.erase(text_.begin() + selection_start_ - 1);
+      selection_start_--;
+    } else {
+      // do delete
+      if (selection_start_ >= text_.size())
+        return;
+      text_.erase(text_.begin() + selection_start_);
+    }
+  }
+  if (event.keycode() == 37) {  // left arrow
+    selection_size_ = 0;
+    if (selection_start_ > 0)
+      selection_start_--;
+  }
+  if (event.keycode() == 39) {  // right arrow
+    selection_start_ += selection_size_;
+    selection_size_ = 0;
+    if (selection_start_ < text_.size())
+      selection_start_++;
+  }
+  SetNeedsDisplay(false);
+}
+
+void TextArea::OnKeyUp(const KeyboardInputEvent& event) {
+}
+
+// namespace {
+// double GetTextDisplayWidth(cairo_t* cr, const string& str) {
+//   cairo_text_extents_t ext;
+//   cairo_text_extents(cr, str.c_str(), &ext);
+//   return ext.width;
+// }
+// }  // namespace {}
 
 void TextArea::UpdateLeftEdges(cairo_t* cr) {
   const double max_width = frame_.size_.width_;
   double left_edge = 0.0;
   //double cursor_pos = 0.0;
-  left_edges_.resize(text_.size(), 0.0);
+  left_edges_.resize(text_.size() + 1, 0.0);
   size_t start_of_word = 0;  // index into text_
   for (size_t i = 0, e = text_.size(); i != e; ++i) {
     // TODO(adlr): handle UTF-8
@@ -80,6 +133,7 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
 
     left_edge = right_edge;  // update for next iteration
   }
+  left_edges_[left_edges_.size() - 1] = left_edge;
 }
 
 string TextArea::DebugLeftEdges() {
@@ -94,7 +148,7 @@ string TextArea::DebugLeftEdges() {
 }
 
 string TextArea::GetLine(size_t start_idx) {
-  if (text_.size() != left_edges_.size()) {
+  if (text_.size() + 1 != left_edges_.size()) {
     printf("Size mismatch!\n");
     return "";
   }
@@ -108,6 +162,23 @@ string TextArea::GetLine(size_t start_idx) {
     }
   }
   return ret;
+}
+
+size_t TextArea::GetRowIndex(size_t index) {
+  size_t ret = 0;
+  for (size_t i = 1; i < index; i++) {
+    if (left_edges_[i] <= left_edges_[i - 1])
+      ret++;
+  }
+  return ret;
+}
+
+void TextArea::EraseSelection() {
+  if (selection_size_) {
+    text_.erase(text_.begin() + selection_start_,
+                text_.begin() + selection_start_ + selection_size_);
+    selection_size_ = 0;
+  }
 }
 
 void TextArea::Draw(cairo_t* cr) {
@@ -140,49 +211,20 @@ void TextArea::Draw(cairo_t* cr) {
     cursor.y_ += extents.height;
     index += line.size();
   }
-  return;
 
-  bool first_word = true;  // first word on the line
-  const char* str = text_.c_str();
-  string valid_line;  // line w/o final word fragment
-  string line;
-  for (; *str; ++str) {
-    if (GetTextDisplayWidth(cr, valid_line) > frame_.size_.width_ ||
-        GetTextDisplayWidth(cr, line) > frame_.size_.width_) {
-      printf("valid_line or line is too long!\n");
+  // Draw cursor if editing
+  if (IsEditing() && selection_size_ == 0) {
+    if (selection_start_ > (text_.size() + 1)) {
+      printf("Illegal selection_start_: %zu\n", selection_start_);
       return;
     }
-
-    if (*str == '\n') {
-      cursor.CairoMoveTo(cr);
-      cairo_show_text(cr, line.c_str());
-      cursor.x_ = frame_.Left();
-      cursor.y_ += extents.height;
-      line = valid_line = "";
-      first_word = true;
-      continue;
-    }
-
-    line += *str;
-    if (GetTextDisplayWidth(cr, line) > frame_.size_.width_) {
-      cursor.CairoMoveTo(cr);
-      cairo_show_text(cr, valid_line.c_str());
-      cursor.x_ = frame_.Left();
-      cursor.y_ += extents.height;
-
-      line = valid_line = line.substr(valid_line.size());
-      continue;
-    }
-    if (*str == ' ' || first_word) {
-      valid_line = line;
-      if (*str == ' ')
-        first_word = false;
-      continue;
-    }
-  }
-  if (!line.empty()) {
-    cursor.CairoMoveTo(cr);
-    cairo_show_text(cr, line.c_str());
+    double x_pos = left_edges_[selection_start_] + frame_.Left();
+    double y_pos = extents.height * GetRowIndex(selection_start_) +
+        frame_.Top();
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1.0);  // opaque black
+    cairo_set_line_width(cr, 1.0);
+    cairo_move_to(cr, x_pos, y_pos);
+    cairo_line_to(cr, x_pos, y_pos + extents.height);
   }
 }
 

@@ -74,6 +74,7 @@ class Graphic {
   virtual bool Editable() const { return false; }
   virtual void BeginEditing() { editing_ = true; }
   virtual void EndEditing() { editing_ = false; }
+  bool IsEditing() const { return editing_; }
   // These keyboard events arrive only when editing is in progress:
   virtual void OnKeyText(const KeyboardInputEvent& event) {}
   virtual void OnKeyDown(const KeyboardInputEvent& event) {}

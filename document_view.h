@@ -27,6 +27,7 @@ class DocumentView : public View,
         toolbox_(NULL),
         bottom_graphic_(NULL),
         placing_graphic_(NULL),
+        editing_graphic_(NULL),
         resizing_graphic_(NULL) {}
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
@@ -56,6 +57,7 @@ class DocumentView : public View,
   void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
                         double dx, double dy);
 
+  virtual bool OnKeyText(const KeyboardInputEvent& event);
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
 
  private:
@@ -100,6 +102,7 @@ class DocumentView : public View,
   std::shared_ptr<Graphic> top_graphic_;
   Graphic* bottom_graphic_;
   Graphic* placing_graphic_;
+  Graphic* editing_graphic_;
 
   std::set<Graphic*> selected_graphics_;
   Graphic* resizing_graphic_;

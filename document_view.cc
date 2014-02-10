@@ -255,6 +255,11 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
 
   selected_graphics_.clear();
 
+  if (editing_graphic_) {
+    editing_graphic_->EndEditing();
+    editing_graphic_ = NULL;
+  }
+
   if (!toolbox_)
     return this;
 
@@ -350,6 +355,10 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
             });
       }
       selected_graphics_.insert(placing_graphic_);
+      if (placing_graphic_->Editable()) {
+        placing_graphic_->BeginEditing();
+        editing_graphic_ = placing_graphic_;
+      }
     }
     placing_graphic_ = NULL;
     toolbox_->SelectTool(Toolbox::ARROW);
@@ -390,7 +399,7 @@ void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,
 }
 
 void DocumentView::RemoveGraphicsUndo(set<Graphic*> graphics) {
-  set<pair<shared_ptr<Graphic>, Graphic*>> pairs;
+  set<pair<shared_ptr<Graphic>, Graphic*> > pairs;
     for (set<Graphic*>::iterator it = graphics.begin(),
              e = graphics.end(); it != e; ++it) {
       (*it)->SetNeedsDisplay(true);
@@ -410,7 +419,19 @@ void DocumentView::RemoveGraphicsUndo(set<Graphic*> graphics) {
           });
 }
 
+bool DocumentView::OnKeyText(const KeyboardInputEvent& event) {
+  if (editing_graphic_) {
+    editing_graphic_->OnKeyText(event);
+    return true;
+  }
+  return false;
+}
+
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
+  if (editing_graphic_) {
+    editing_graphic_->OnKeyDown(event);
+    return true;
+  }
   if (event.keycode() == 8 || event.keycode() == 46) {  // backspace, delete
     // delete selected graphics
     RemoveGraphicsUndo(selected_graphics_);
