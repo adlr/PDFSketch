@@ -50,10 +50,12 @@
 #include "ppapi/cpp/image_data.h"
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/module.h"
+#include "ppapi/cpp/mouse_cursor.h"
 #include "ppapi/cpp/size.h"
 #include "ppapi/cpp/var.h"
 #include "ppapi/cpp/var_array_buffer.h"
 #include "ppapi/c/ppb_image_data.h"
+#include "ppapi/c/ppb_mouse_cursor.h"
 
 #include "document_view.h"
 #include "page_view.h"
@@ -400,8 +402,49 @@ class PDFSketchInstance : public pp::Instance {
   }
   virtual ~PDFSketchInstance() {}
 
+  void SetCrosshairCursor() {
+    pp::Size size(17, 17);
+    pp::ImageData* image_data =
+        new pp::ImageData(this,
+                          PP_IMAGEDATAFORMAT_BGRA_PREMUL,
+                          size,
+                          true);
+    cairo_surface_t* surface =
+        cairo_image_surface_create_for_data(
+            (unsigned char*)image_data->data(),
+            CAIRO_FORMAT_ARGB32,
+            size.width(),
+            size.height(),
+            image_data->stride());
+    cairo_t* cr = cairo_create(surface);
+    cairo_set_line_width(cr, 1.0);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
+    cairo_move_to(cr, size.width() / 2 + 0.5, 0.5);
+    cairo_line_to(cr, size.width() / 2 + 0.5, size.height() - 1.0);
+    cairo_move_to(cr, 0.5, size.height() / 2 + 0.5);
+    cairo_line_to(cr, 0.5 + size.width() - 1.0,
+                  size.height() / 2 + 0.5);
+    cairo_stroke(cr);
+    cairo_destroy(cr);
+    cr = NULL;
+    cairo_surface_finish(surface);
+    cairo_surface_destroy(surface);
+    surface = NULL;
+
+    pp::MouseCursor::SetCursor(this,
+                               PP_MOUSECURSOR_TYPE_CUSTOM,
+                               *image_data,
+                               pp::Point(size.width() / 2,
+                                         size.height() / 2));
+
+    delete image_data;
+    image_data = NULL;
+  }
+
   virtual bool Init(uint32_t argc, const char *argn[], const char *argv[]) {
     printf("init called\n");
+    SetCrosshairCursor();
     RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE |
                        PP_INPUTEVENT_CLASS_KEYBOARD);
     printf("calling nacl_io_init()\n");
