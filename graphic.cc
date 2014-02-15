@@ -79,7 +79,7 @@ int Graphic::PointInKnob(const Point& location) const {
     int knob = 1 << i;
     if (!(Knobs() & knob))
       continue;
-    Rect frame = KnobFrame(knob);
+    Rect frame = KnobFrame(knob).InsetBy(-0.5);
     if (frame.Contains(location))
       return knob;
   }

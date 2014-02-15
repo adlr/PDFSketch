@@ -526,6 +526,11 @@ class PDFSketchInstance : public pp::Instance {
   }
 
   virtual bool HandleInputEvent(const pp::InputEvent& event) {
+    // if (event.GetType() == PP_INPUTEVENT_TYPE_MOUSEMOVE) {
+    //   pp::MouseInputEvent mouse_evt(event);
+    //   pp::Point mouse_pos = mouse_evt.GetPosition();
+    //   printf("Mouse: %d %d\n", mouse_pos.x(), mouse_pos.y());
+    // }
     render_thread_.message_loop().PostWork(
         callback_factory_.NewCallback(&PDFSketchInstance::HandleInputEventThread,
                                       event));
