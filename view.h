@@ -153,18 +153,26 @@ class KeyboardInputEvent {
   enum Type {
     TEXT, DOWN, UP
   };
-  KeyboardInputEvent(Type type, uint32_t keycode)
-      : type_(type), keycode_(keycode) {}
-  KeyboardInputEvent(Type type, std::string text)
-      : type_(type), keycode_(0), text_(text) {}
+  static const uint32_t kShift   = 1 << 0;
+  static const uint32_t kControl = 1 << 1;
+  static const uint32_t kAlt     = 1 << 2;
+  static const uint32_t kMeta    = 1 << 3;
+  static const uint32_t kShortcutMask = kControl | kAlt | kMeta;
+  static const uint32_t kModifiersMask = 0xf;
+  KeyboardInputEvent(Type type, uint32_t keycode, uint32_t modifiers)
+      : type_(type), keycode_(keycode), modifiers_(modifiers) {}
+  KeyboardInputEvent(Type type, std::string text, uint32_t modifiers)
+      : type_(type), keycode_(0), text_(text), modifiers_(modifiers) {}
   Type type() const { return type_; }
   uint32_t keycode() const { return keycode_; }
   const std::string& text() const { return text_; }
+  uint32_t modifiers() const { return modifiers_; }
 
  private:
   Type type_;
   uint32_t keycode_;
   std::string text_;
+  uint32_t modifiers_;
 };
 
 class ViewDelegate {

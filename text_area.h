@@ -34,7 +34,7 @@ class TextArea : public Graphic {
 
  private:
   void UpdateLeftEdges(cairo_t* cr);
-  std::string GetLine(size_t start_idx);
+  std::string GetLine(size_t start_idx, size_t* out_advance);
   std::string DebugLeftEdges();
   size_t GetRowIndex(size_t index);
 

@@ -2,6 +2,7 @@
 
 #include "text_area.h"
 
+#include <cstring>
 #include <string>
 
 using std::string;
@@ -31,14 +32,25 @@ void TextArea::EndEditing() {
 }
 
 void TextArea::OnKeyText(const KeyboardInputEvent& event) {
+  if (event.modifiers() & KeyboardInputEvent::kShortcutMask)
+    return;
   EraseSelection();
-  text_.insert(selection_start_, event.text());
+  const string* use = &event.text();
+  const string newline("\n");
+  if (!strcmp(event.text().c_str(), "\r"))
+    use = &newline;
+  text_.insert(selection_start_, *use);
   selection_start_ += event.text().size();
   SetNeedsDisplay(false);
 }
 
 void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
-  printf("got keydown %d\n", event.keycode());
+  printf("got keydown %s%s%s%s%d\n",
+         event.modifiers() & KeyboardInputEvent::kShift ? "shift-" : "",
+         event.modifiers() & KeyboardInputEvent::kControl ? "ctrl-" : "",
+         event.modifiers() & KeyboardInputEvent::kAlt ? "alt-" : "",
+         event.modifiers() & KeyboardInputEvent::kMeta ? "meta-" : "",
+         event.keycode());
   if (event.keycode() == 8 || event.keycode() == 46) {
     // backspace, delete
     if (selection_size_ > 0) {
@@ -67,6 +79,12 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
     if (selection_start_ < text_.size())
       selection_start_++;
   }
+  if (event.keycode() == 65 &&
+      (event.modifiers() & KeyboardInputEvent::kControl)) {
+    // Select all
+    selection_start_ = 0;
+    selection_size_ = text_.size();
+  }
   SetNeedsDisplay(false);
 }
 
@@ -92,7 +110,8 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
     char str[2] = { text_[i], '\0' };
     
     if (text_[i] == '\n') {
-      left_edges_[i] = left_edge = 0.0;
+      left_edges_[i] = left_edge;
+      left_edge = 0.0;
       continue;
     }
 
@@ -138,16 +157,17 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
 
 string TextArea::DebugLeftEdges() {
   string ret;
-  for (size_t i = 0; i < text_.size(); i++) {
+  for (size_t i = 0; i <= text_.size(); i++) {
     char buf[20] = {0};
-    char str[2] = { text_[i], '\0' };
-    snprintf(buf, sizeof(buf), " %s(%.2f)", str, left_edges_[i]);
+    char str[2] = { i < text_.size() ? text_[i] : '$', '\0' };
+    snprintf(buf, sizeof(buf), " %s(%.2f)[%d]", str, left_edges_[i],
+             GetRowIndex(i));
     ret += buf;
   }
   return ret;
 }
 
-string TextArea::GetLine(size_t start_idx) {
+string TextArea::GetLine(size_t start_idx, size_t* out_advance) {
   if (text_.size() + 1 != left_edges_.size()) {
     printf("Size mismatch!\n");
     return "";
@@ -161,12 +181,16 @@ string TextArea::GetLine(size_t start_idx) {
         break;
     }
   }
+  if (out_advance)
+    *out_advance = ret.size();
+  if (!ret.empty() && *ret.rbegin() == '\n')
+    ret.resize(ret.size() - 1);
   return ret;
 }
 
 size_t TextArea::GetRowIndex(size_t index) {
   size_t ret = 0;
-  for (size_t i = 1; i < index; i++) {
+  for (size_t i = 1; i <= index; i++) {
     if (left_edges_[i] <= left_edges_[i - 1])
       ret++;
   }
@@ -182,12 +206,6 @@ void TextArea::EraseSelection() {
 }
 
 void TextArea::Draw(cairo_t* cr) {
-  // draw rectangle for clarity
-  frame_.CairoRectangle(cr);
-  cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);  // opaque red
-  cairo_set_line_width(cr, 1.0);
-  cairo_stroke(cr);
-
   stroke_color_.CairoSetSourceRGBA(cr);
   cairo_select_font_face(cr, "serif",
                          CAIRO_FONT_SLANT_NORMAL,
@@ -200,17 +218,44 @@ void TextArea::Draw(cairo_t* cr) {
   cursor.y_ += extents.ascent;
 
   UpdateLeftEdges(cr);
-  //printf("DBG: %s\n", DebugLeftEdges().c_str());
+  printf("DBG: %s\n", DebugLeftEdges().c_str());
+  if (selection_size_) {
+    // Draw hilight for selection
+    cairo_save(cr);
+    for (size_t i = selection_start_; i < selection_size_; i++) {
+      Point letter_origin(left_edges_[i],
+                          GetRowIndex(i) * extents.height);
+      double width = left_edges_[i + 1] - left_edges_[i];
+      if (width <= 0.0)
+        width = frame_.size_.width_ - left_edges_[i];
+      Rect box(letter_origin, Size(width, extents.height));
+      box = box.TranslatedBy(frame_.Left(), frame_.Top());
+      box.CairoRectangle(cr);
+      cairo_set_source_rgba(cr, 0.0, 0.0, 1.0, 0.2);
+      cairo_fill(cr);
+    }
+    cairo_restore(cr);
+  }
+
   for (size_t index = 0; index < text_.size(); ) {
-    string line = GetLine(index);
-    if (line.empty())
-      break;
+    size_t advance = 0;
+    string line = GetLine(index, &advance);
+    printf("Line: [%s]. adv: %zu\n", line.c_str(), advance);
     cursor.CairoMoveTo(cr);
     cairo_show_text(cr, line.c_str());
-    //printf("DRAW:[%s]\n", line.c_str());
     cursor.y_ += extents.height;
-    index += line.size();
+    index += advance;
+    if (advance == 0)
+      break;
   }
+  frame_.size_.height_ =
+      (GetRowIndex(text_.size()) + 1) * extents.height;
+
+  // draw rectangle for clarity
+  frame_.CairoRectangle(cr);
+  cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 0.5);  // translucent red
+  cairo_set_line_width(cr, 1.0);
+  cairo_stroke(cr);
 
   // Draw cursor if editing
   if (IsEditing() && selection_size_ == 0) {
