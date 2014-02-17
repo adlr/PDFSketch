@@ -271,7 +271,8 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       if (gr->frame_.Contains(page_pos)) {
         if (event.ClickCount() == 1) {
           selected_graphics_.insert(gr);
-          start_move_pos_ = last_move_pos_ = event.position();
+          start_move_pos_ = last_move_pos_ =
+              event.position().ScaledBy(1.0 / zoom_);
         } else if (event.ClickCount() == 2 &&
                    gr->Editable()) {
           if (editing_graphic_) {
@@ -316,15 +317,18 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
 
   if (!selected_graphics_.empty()) {
     // Move
-    double dx = event.position().x_ - last_move_pos_.x_;
-    double dy = event.position().y_ - last_move_pos_.y_;
+    printf("Move from %s to %s\n", last_move_pos_.String().c_str(),
+           event.position().String().c_str());
+    Point pos = event.position().ScaledBy(1.0 / zoom_);
+    double dx = pos.x_ - last_move_pos_.x_;
+    double dy = pos.y_ - last_move_pos_.y_;
     for (set<Graphic*>::iterator it = selected_graphics_.begin(),
              e = selected_graphics_.end(); it != e; ++it) {
       (*it)->SetNeedsDisplay(true);
       (*it)->frame_.origin_ = (*it)->frame_.origin_.TranslatedBy(dx, dy);
       (*it)->SetNeedsDisplay(true);
     }
-    last_move_pos_ = event.position();
+    last_move_pos_ = pos;
   }
 }
 

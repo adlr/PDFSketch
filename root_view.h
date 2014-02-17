@@ -23,6 +23,7 @@ class RootView : public View {
       : draw_requested_(false),
         callback_factory_(this),
         down_mouse_handler_(NULL) {}
+  virtual std::string Name() const { return "RootView"; }
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);
   virtual void SetNeedsDisplayInRect(const Rect& rect);
   void SetDelegate(RootViewDelegate* delegate) {

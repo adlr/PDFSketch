@@ -97,8 +97,10 @@ bool Rect::SetLeftAbs(double left) {
   return flip;
 }
 
-void MouseInputEvent::UpdateToSubview(View* subview) {
-  position_ = subview->Superview()->ConvertPointToSubview(*subview, position_);
+void MouseInputEvent::UpdateToSubview(View* subview,
+                                      View* from_superview) {
+  position_ =
+      from_superview->ConvertPointToSubview(*subview, position_);
 }
 
 void MouseInputEvent::UpdateFromSubview(View* subview) {
@@ -224,7 +226,7 @@ View* View::OnMouseDown(const MouseInputEvent& event) {
     View* ret = NULL;
     if (child->Frame().Contains(event.position())) {
       MouseInputEvent child_evt(event);
-      child_evt.UpdateToSubview(child);
+      child_evt.UpdateToSubview(child, this);
       ret = child->OnMouseDown(child_evt);
     }
     if (ret)
@@ -266,7 +268,8 @@ Point View::ConvertPointToSubview(const View& subview, Point point) const {
       printf("Missing superview\n");
       return Point();
     }
-    point = subview.Superview()->ConvertPointToSubview(subview, point);
+    point = ConvertPointToSubview(*subview.Superview(), point);
+    return subview.Superview()->ConvertPointToSubview(subview, point);
   }
   Point temp = point.TranslatedBy(-subview.origin_.x_, -subview.origin_.y_);
   return Point(temp.x_ / subview.scale_, temp.y_ / subview.scale_);

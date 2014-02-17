@@ -23,6 +23,7 @@ class ScrollBarView : public View {
         delegate_(NULL),
         drag_start_pos_(0.0),
         drag_start_show_min_(0.0) {}
+  virtual std::string Name() const { return "ScrollBarView"; }
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void SetDocSize(double min, double max) {
     doc_min_ = min;

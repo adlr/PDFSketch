@@ -142,7 +142,7 @@ class MouseInputEvent {
       : position_(position),
         type_(type),
         click_count_(click_count) {}
-  void UpdateToSubview(View* subview);
+  void UpdateToSubview(View* subview, View* from_superview);
   void UpdateFromSubview(View* subview);
   const Point& position() const { return position_; }
   int32_t ClickCount() const { return click_count_; }
@@ -199,6 +199,7 @@ class View {
         lower_sibling_(NULL),
         upper_sibling_(NULL) {}
   virtual ~View() {}
+  virtual std::string Name() const { return "View"; }
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);
   virtual void SetNeedsDisplayInRect(const Rect& rect);
   void SetNeedsDisplay() {

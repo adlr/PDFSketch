@@ -29,6 +29,7 @@ class DocumentView : public View,
         placing_graphic_(NULL),
         editing_graphic_(NULL),
         resizing_graphic_(NULL) {}
+  virtual std::string Name() const { return "DocumentView"; }
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void SetZoom(double zoom);

@@ -13,6 +13,7 @@ class ScrollView : public View,
                    public ViewDelegate {
  public:
   ScrollView();
+  virtual std::string Name() const { return "ScrollView"; }
   // Adds document as a subview of this:
   void SetDocumentView(View* document);
 
