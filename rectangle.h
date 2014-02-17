@@ -10,7 +10,7 @@ namespace pdfsketch {
 class Rectangle : public Graphic {
  public:
   ~Rectangle();
-  virtual void Draw(cairo_t* cr);
+  virtual void Draw(cairo_t* cr, bool selected);
 };
 
 }  // namespace pdfsketch

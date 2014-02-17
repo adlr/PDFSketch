@@ -14,7 +14,7 @@ class Checkmark : public Graphic {
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);
   virtual bool PlaceComplete() { return false; }
-  virtual void Draw(cairo_t* cr);
+  virtual void Draw(cairo_t* cr, bool selected);
 };
 
 }  // namespace pdfsketch

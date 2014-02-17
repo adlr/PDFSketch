@@ -15,7 +15,7 @@ void Checkmark::PlaceUpdate(const Point& location, bool constrain) {
   SetNeedsDisplay(false);
 }
 
-void Checkmark::Draw(cairo_t* cr) {
+void Checkmark::Draw(cairo_t* cr, bool selected) {
   stroke_color_.CairoSetSourceRGBA(cr);
   cairo_set_line_width(cr, line_width_);
   frame_.UpperLeft().CairoMoveTo(cr);

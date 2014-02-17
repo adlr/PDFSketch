@@ -27,7 +27,7 @@ class TextArea : public Graphic {
   // virtual void UpdateResize(const Point& location, bool constrain);
   // virtual void EndResize();
 
-  virtual void Draw(cairo_t* cr);
+  virtual void Draw(cairo_t* cr, bool selected);
 
  protected:
   virtual int Knobs() const { return kKnobMiddleLeft | kKnobMiddleRight; }

@@ -175,7 +175,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
       if (gr->Page() != i)
         continue;
-      gr->Draw(cr);
+      gr->Draw(cr, GraphicIsSelected(gr));
     }
 
     cairo_restore(cr);
@@ -224,7 +224,7 @@ void DocumentView::ExportPDF(vector<char>* out) {
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
       if (gr->Page() != i)
         continue;
-      gr->Draw(cr);
+      gr->Draw(cr, false);
     }
     cairo_restore(cr);
     cairo_surface_show_page(surface);
@@ -269,8 +269,18 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                           gr->Page());
       if (gr->frame_.Contains(page_pos)) {
-        selected_graphics_.insert(gr);
-        start_move_pos_ = last_move_pos_ = event.position();
+        if (event.ClickCount() == 1) {
+          selected_graphics_.insert(gr);
+          start_move_pos_ = last_move_pos_ = event.position();
+        } else if (event.ClickCount() == 2 &&
+                   gr->Editable()) {
+          if (editing_graphic_) {
+            printf("Already editing!\n");
+            return this;
+          }
+          editing_graphic_ = gr;
+          gr->BeginEditing();
+        }
         gr->SetNeedsDisplay(true);
         return this;
       }

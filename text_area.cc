@@ -205,7 +205,7 @@ void TextArea::EraseSelection() {
   }
 }
 
-void TextArea::Draw(cairo_t* cr) {
+void TextArea::Draw(cairo_t* cr, bool selected) {
   stroke_color_.CairoSetSourceRGBA(cr);
   cairo_select_font_face(cr, "serif",
                          CAIRO_FONT_SLANT_NORMAL,
@@ -218,8 +218,8 @@ void TextArea::Draw(cairo_t* cr) {
   cursor.y_ += extents.ascent;
 
   UpdateLeftEdges(cr);
-  printf("DBG: %s\n", DebugLeftEdges().c_str());
-  if (selection_size_) {
+  //printf("DBG: %s\n", DebugLeftEdges().c_str());
+  if (IsEditing() && selection_size_) {
     // Draw hilight for selection
     cairo_save(cr);
     for (size_t i = selection_start_; i < selection_size_; i++) {
@@ -240,7 +240,7 @@ void TextArea::Draw(cairo_t* cr) {
   for (size_t index = 0; index < text_.size(); ) {
     size_t advance = 0;
     string line = GetLine(index, &advance);
-    printf("Line: [%s]. adv: %zu\n", line.c_str(), advance);
+    //printf("Line: [%s]. adv: %zu\n", line.c_str(), advance);
     cursor.CairoMoveTo(cr);
     cairo_show_text(cr, line.c_str());
     cursor.y_ += extents.height;
@@ -251,25 +251,28 @@ void TextArea::Draw(cairo_t* cr) {
   frame_.size_.height_ =
       (GetRowIndex(text_.size()) + 1) * extents.height;
 
-  // draw rectangle for clarity
-  frame_.CairoRectangle(cr);
-  cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 0.5);  // translucent red
-  cairo_set_line_width(cr, 1.0);
-  cairo_stroke(cr);
-
-  // Draw cursor if editing
-  if (IsEditing() && selection_size_ == 0) {
-    if (selection_start_ > (text_.size() + 1)) {
-      printf("Illegal selection_start_: %zu\n", selection_start_);
-      return;
-    }
-    double x_pos = left_edges_[selection_start_] + frame_.Left();
-    double y_pos = extents.height * GetRowIndex(selection_start_) +
-        frame_.Top();
-    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1.0);  // opaque black
+  if (IsEditing() || selected) {
+    // draw rectangle for clarity
+    frame_.CairoRectangle(cr);
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.2);
     cairo_set_line_width(cr, 1.0);
-    cairo_move_to(cr, x_pos, y_pos);
-    cairo_line_to(cr, x_pos, y_pos + extents.height);
+    cairo_stroke(cr);
+
+    // Draw cursor if editing
+    if (IsEditing() && selection_size_ == 0) {
+      if (selection_start_ > (text_.size() + 1)) {
+        printf("Illegal selection_start_: %zu\n", selection_start_);
+        return;
+      }
+      double x_pos = left_edges_[selection_start_] + frame_.Left();
+      double y_pos = extents.height * GetRowIndex(selection_start_) +
+          frame_.Top();
+      cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1.0);  // opaque black
+      cairo_set_line_width(cr, 1.0);
+      cairo_move_to(cr, x_pos, y_pos);
+      cairo_line_to(cr, x_pos, y_pos + extents.height);
+      cairo_stroke(cr);
+    }
   }
 }
 

@@ -8,7 +8,7 @@ Rectangle::~Rectangle() {
   printf("~Rectangle()\n");
 }
 
-void Rectangle::Draw(cairo_t* cr) {
+void Rectangle::Draw(cairo_t* cr, bool selected) {
   frame_.CairoRectangle(cr);
   fill_color_.CairoSetSourceRGBA(cr);
   cairo_fill_preserve(cr);

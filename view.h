@@ -137,15 +137,20 @@ class MouseInputEvent {
   enum Type {
     DOWN, DRAG, UP, MOVE
   };
-  MouseInputEvent(Point position, Type type)
-      : position_(position), type_(type) {}
+  MouseInputEvent(Point position, Type type,
+                  int32_t click_count)
+      : position_(position),
+        type_(type),
+        click_count_(click_count) {}
   void UpdateToSubview(View* subview);
   void UpdateFromSubview(View* subview);
   const Point& position() const { return position_; }
+  int32_t ClickCount() const { return click_count_; }
 
  private:
   Point position_;
   Type type_;
+  int32_t click_count_;
 };
 
 class KeyboardInputEvent {
