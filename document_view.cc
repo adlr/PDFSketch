@@ -37,6 +37,14 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
   SetNeedsDisplay();
 }
 
+void DocumentView::GetPDFData(const char** out_buf,
+                              size_t* out_len) const {
+  if (!doc_)
+    return;
+  *out_buf = doc_->buf();
+  *out_len = doc_->buf_len();
+}
+
 void DocumentView::UpdateSize() {
   // Update bounds
   double max_page_width = 0.0;  // w/o spacing
@@ -47,6 +55,12 @@ void DocumentView::UpdateSize() {
     total_height += size.height_ + kSpacing;
   }
   SetSize(Size(max_page_width + 2 * kSpacing, total_height));
+}
+
+void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
+  for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
+    //pdfsketchproto::Graphic* gr_msg = msg->
+  }
 }
 
 void DocumentView::SetZoom(double zoom) {

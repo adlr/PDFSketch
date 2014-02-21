@@ -10,11 +10,19 @@
 
 #include <cairo.h>
 
+#include "document.pb.h"
+
 namespace pdfsketch {
 
 struct Point {
   Point() : x_(0.0), y_(0.0) {}
   Point(double x, double y) : x_(x), y_(y) {}
+  explicit Point(const pdfsketchproto::Point& msg)
+      : x_(msg.x()), y_(msg.y()) {}
+  void Serialize(pdfsketchproto::Point* out) const {
+    out->set_x(x_);
+    out->set_y(y_);
+  }
   Point TranslatedBy(double x, double y) const {
     return Point(x_ + x, y_ + y);
   }
@@ -49,6 +57,12 @@ struct Point {
 struct Size {
   Size() : width_(0.0), height_(0.0) {}
   Size(double w, double h) : width_(w), height_(h) {}
+  explicit Size(const pdfsketchproto::Size& msg)
+      : width_(msg.width()), height_(msg.height()) {}
+  void Serialize(pdfsketchproto::Size* out) const {
+    out->set_width(width_);
+    out->set_height(height_);
+  }
   Size ScaledBy(double scale) const {
     return Size(width_ * scale, height_ * scale);
   }
@@ -78,6 +92,12 @@ struct Rect {
       : origin_(upper_left),
         size_(lower_right.x_ - upper_left.x_,
               lower_right.y_ - upper_left.y_) {}
+  explicit Rect(const pdfsketchproto::Rect& msg)
+      : origin_(msg.origin()), size_(msg.size()) {}
+  void Serialize(pdfsketchproto::Rect* out) const {
+    origin_.Serialize(out->mutable_origin());
+    size_.Serialize(out->mutable_size());
+  }
   Rect Intersect(const Rect& that) const;
   bool Intersects(const Rect& that) const;
   bool Contains(const Point& point) const;

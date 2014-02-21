@@ -32,8 +32,10 @@ class DocumentView : public View,
   virtual std::string Name() const { return "DocumentView"; }
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
+  void GetPDFData(const char** out_buf, size_t* out_len) const;
   void SetZoom(double zoom);
   void ExportPDF(std::vector<char>* out);
+  void Serialize(pdfsketchproto::Document* msg) const;
   void SetToolbox(Toolbox* toolbox) {
     toolbox_ = toolbox;
   }
@@ -41,6 +43,9 @@ class DocumentView : public View,
     undo_manager_ = undo_manager;
   }
 
+  void AddGraphic(std::shared_ptr<Graphic> graphic) {
+    InsertGraphicAfter(graphic, NULL);
+  }
   // GraphicDelegate methods
   virtual void SetNeedsDisplayInPageRect(int page, const Rect& rect);
   virtual Point ConvertPointFromGraphic(int page, const Point& point) {
@@ -79,9 +84,6 @@ class DocumentView : public View,
 
   void InsertGraphicAfter(std::shared_ptr<Graphic> graphic,
                           Graphic* upper_sibling);
-  void AddGraphic(std::shared_ptr<Graphic> graphic) {
-    InsertGraphicAfter(graphic, NULL);
-  }
 
   bool GraphicIsSelected(Graphic* graphic) {
     return selected_graphics_.find(graphic) != selected_graphics_.end();

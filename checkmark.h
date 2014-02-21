@@ -10,6 +10,8 @@ namespace pdfsketch {
 class Checkmark : public Graphic {
  public:
   Checkmark() {}
+  explicit Checkmark(const pdfsketchproto::Graphic& msg)
+      : Graphic(msg) {}
   ~Checkmark() {}
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);

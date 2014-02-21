@@ -1,0 +1,52 @@
+package pdfsketchproto;
+
+message Point {
+  required double x = 1;
+  required double y = 2;
+}
+
+message Size {
+  required double width = 1;
+  required double height = 2;
+}
+
+message Rect {
+  required Point origin = 1;
+  required Size size = 2;
+}
+
+message Color {
+  required double red = 1;
+  required double green = 2;
+  required double blue = 3;
+  required double alpha = 4;
+}
+
+message TextArea {
+  required string text = 2;
+}
+
+message Graphic {
+  required Rect frame = 1;
+  optional Size natural_size = 2;
+  required uint32 page = 3;
+  required Color fill_color = 4;
+  required Color stroke_color = 5;
+  required double line_width = 6;
+  required bool h_flip = 7;
+  required bool v_flip = 8;
+
+  enum Type {
+    TEXT = 0;
+    //CIRCLE = 1;
+    RECTANGLE = 2;
+    //SQUIGGLE = 3;
+    CHECKMARK = 4;
+  }  
+  required Type type = 9;
+  optional TextArea text_area = 10;
+}
+
+message Document {
+  repeated Graphic graphic = 1;
+}

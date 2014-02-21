@@ -44,8 +44,8 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
-CXXFLAGS += -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo)
-LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2) -lz -lexpat -ltar
+CXXFLAGS += -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo protobuf)
+LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf) -lz -lexpat -ltar
 
 #
 # Disable DOS PATH warning when using Cygwin based tools Windows
@@ -70,7 +70,9 @@ OBJECTS=\
 	text_area.o \
 	toolbox.o \
 	undo_manager.o \
-	checkmark.o
+	checkmark.o \
+	document.pb.o \
+	file_io.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
@@ -79,6 +81,9 @@ all: $(PEXE)
 
 clean:
 	rm -f $(PEXE) $(OBJECTS) $(BCOBJECTS)
+
+%.pb.cc: %.proto
+	protoc --cpp_out=. document.proto
 
 %.o: %.cc
 	$(CXX) -c -o $@ $< -O2 $(CXXFLAGS)

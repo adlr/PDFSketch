@@ -12,6 +12,12 @@ class TextArea : public Graphic {
   TextArea()
       : selection_start_(0),
         selection_size_(0) {}
+  TextArea(const pdfsketchproto::Graphic& msg)
+      : Graphic(msg),
+        text_(msg.text_area().text()),
+        selection_start_(text_.size()),
+        selection_size_(0) {}
+  virtual void Serialize(pdfsketchproto::Graphic* out) const;
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);
   virtual bool PlaceComplete();

@@ -8,6 +8,11 @@ Rectangle::~Rectangle() {
   printf("~Rectangle()\n");
 }
 
+void Rectangle::Serialize(pdfsketchproto::Graphic* out) const {
+  Graphic::Serialize(out);
+  out->set_type(pdfsketchproto::Graphic::RECTANGLE);
+}
+
 void Rectangle::Draw(cairo_t* cr, bool selected) {
   frame_.CairoRectangle(cr);
   fill_color_.CairoSetSourceRGBA(cr);

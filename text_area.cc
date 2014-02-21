@@ -9,6 +9,13 @@ using std::string;
 
 namespace pdfsketch {
 
+void TextArea::Serialize(pdfsketchproto::Graphic* out) const {
+  Graphic::Serialize(out);
+  out->set_type(pdfsketchproto::Graphic::TEXT);
+  pdfsketchproto::TextArea* msg = out->mutable_text_area();
+  *msg->mutable_text() = text_;
+}
+
 void TextArea::Place(int page, const Point& location, bool constrain) {
   page_ = page;
   text_ = "The quick brown fox jumps over the lazy dog.";

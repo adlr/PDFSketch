@@ -17,6 +17,17 @@ class Color {
       : red_(0.0), green_(0.0), blue_(0.0), alpha_(1.0) {}  // opaque black
   Color(double red, double green, double blue, double alpha)
       : red_(red), green_(green), blue_(blue), alpha_(alpha) {}
+  explicit Color(const pdfsketchproto::Color& msg)
+      : red_(msg.red()),
+        green_(msg.green()),
+        blue_(msg.blue()),
+        alpha_(msg.alpha()) {}
+  void Serialize(pdfsketchproto::Color* out) const {
+    out->set_red(red_);
+    out->set_green(green_);
+    out->set_blue(blue_);
+    out->set_alpha(alpha_);
+  }
   void CairoSetSourceRGBA(cairo_t* cr) const {
     cairo_set_source_rgba(cr, red_, green_, blue_, alpha_);
   }
@@ -55,7 +66,22 @@ class Graphic {
         upper_sibling_(NULL),
         resizing_knob_(kKnobNone),
         delegate_(NULL) {}
+  Graphic(const pdfsketchproto::Graphic& msg)
+      : frame_(msg.frame()),
+        natural_size_(msg.has_natural_size() ?
+                      Size(msg.natural_size()) : Size(1.0, 1.0)),
+        page_(msg.page()),
+        fill_color_(msg.fill_color()),
+        stroke_color_(msg.stroke_color()),
+        line_width_(msg.line_width()),
+        h_flip_(msg.h_flip()),
+        v_flip_(msg.v_flip()),
+        upper_sibling_(NULL),
+        resizing_knob_(kKnobNone),
+        delegate_(NULL) {}
   virtual ~Graphic() {}
+
+  virtual void Serialize(pdfsketchproto::Graphic* out) const;
 
   void SetDelegate(GraphicDelegate* delegate) {
     delegate_ = delegate;
