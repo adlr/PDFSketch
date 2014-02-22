@@ -20,8 +20,6 @@ class Toolbox {
   }
   static std::string ToolAsString(Toolbox::Tool tool);
 
-  // Caller takes ownership of returned Graphic:
-  Graphic* NewGraphic();
   void SelectTool(const std::string& tool);
   void SelectTool(Tool tool);
   Tool CurrentTool() const { return current_; }

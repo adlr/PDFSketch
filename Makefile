@@ -72,7 +72,9 @@ OBJECTS=\
 	undo_manager.o \
 	checkmark.o \
 	document.pb.o \
-	file_io.o
+	file_io.o \
+	graphic_factory.o \
+	circle.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

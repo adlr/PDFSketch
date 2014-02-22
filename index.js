@@ -23,8 +23,20 @@ function errorHandler(err) {
     console.log(err);
 }
 
+function isPDFSketch(array_buf) {
+    var intarr = new Int8Array(array_buf);
+    return intarr[0] == 's'.charCodeAt(0) &&
+	intarr[1] == 'k'.charCodeAt(0) &&
+	intarr[2] == 'c'.charCodeAt(0) &&
+	intarr[3] == 'h'.charCodeAt(0);
+}
+
 function onPluginMessage(message_event) {
     if (message_event.data instanceof ArrayBuffer) {
+	if (isPDFSketch(message_event.data)) {
+	    handlePDFSketchSave(message_event.data);
+	    return;
+	}
 	console.log("got PDF i assume");
 
 	chrome.fileSystem.chooseEntry({'type': 'saveFile'}, function(entry) {
@@ -64,6 +76,37 @@ function openPDF() {
 	    reader.readAsArrayBuffer(file);
 	});
     });
+}
+
+gSaveFileEntry = null;
+
+function save() {
+    HelloTutorialModule.postMessage('save');
+}
+
+function saveAs() {
+    gSaveFileEntry = null;
+    HelloTutorialModule.postMessage('save');
+}
+
+function handlePDFSketchSave(arraybuf) {
+    var write = function() {
+	gSaveFileEntry.createWriter(function(fileWriter) {
+	    fileWriter.write(new Blob([new Int8Array(arraybuf)], {type: 'application/x-pdfsketch'}));
+	}, errorHandler);
+    };
+
+    if (!gSaveFileEntry) {
+	chrome.fileSystem.chooseEntry(
+	    {type: 'saveFile',
+	     accepts: [{ extensions: ['html']}]
+	    }, function(entry) {
+		gSaveFileEntry = entry;
+		write();
+	    });
+    } else {
+	write();
+    }
 }
 
 function exportPDF() {
@@ -164,6 +207,8 @@ window.onload = function() {
     parentDiv.insertBefore(plugin, parentDiv.firstChild);
 
     document.getElementById('buttonOpen').onclick = openPDF;
+    document.getElementById('buttonSave').onclick = save;
+    document.getElementById('buttonSaveAs').onclick = saveAs;
     document.getElementById('buttonExportPDF').onclick = exportPDF;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;

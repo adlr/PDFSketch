@@ -2,32 +2,9 @@
 
 #include "toolbox.h"
 
-#include "checkmark.h"
-#include "rectangle.h"
-#include "text_area.h"
-
 using std::string;
 
 namespace pdfsketch {
-
-Graphic* Toolbox::NewGraphic() {
-  switch (current_) {
-    case ARROW:
-      return NULL;
-    case TEXT:
-      return new TextArea();
-    case CIRCLE:
-      return new Rectangle();
-    case RECTANGLE:
-      return new Rectangle();
-    case SQUIGGLE:
-      return new Rectangle();
-    case CHECKMARK:
-      return new Checkmark();
-  }
-  printf("Toolbox::NewGraphic: should not get to here\n");
-  return NULL;
-}
 
 void Toolbox::SelectTool(const std::string& tool) {
   printf("select tool: %s\n", tool.c_str());

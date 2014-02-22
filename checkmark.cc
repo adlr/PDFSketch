@@ -4,6 +4,11 @@
 
 namespace pdfsketch {
 
+void Checkmark::Serialize(pdfsketchproto::Graphic* out) const {
+  Graphic::Serialize(out);
+  out->set_type(pdfsketchproto::Graphic::CHECKMARK);
+}
+
 void Checkmark::Place(int page, const Point& location, bool constrain) {
   frame_.size_ = Size(9.0, 9.0);
   PlaceUpdate(location, constrain);

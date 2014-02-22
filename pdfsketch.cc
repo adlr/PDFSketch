@@ -58,6 +58,7 @@
 #include "ppapi/c/ppb_mouse_cursor.h"
 
 #include "document_view.h"
+#include "file_io.h"
 #include "page_view.h"
 #include "root_view.h"
 #include "scroll_bar_view.h"
@@ -159,21 +160,34 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
  public:
   PDFRenderer(PDFSketchInstance* instance)
       : setup_(false),
-        doc_(NULL), instance_(instance) {
+        doc_(NULL), instance_(instance),
+        image_data_(NULL),
+        surface_(NULL),
+        cr_(NULL) {
     printf("got a new PDFRenderer going\n");
 
     toolbox_.SetDelegate(this);
+    printf("%s:%d\n", __FILE__, __LINE__);
     undo_manager_.SetDelegate(this);
+    printf("%s:%d\n", __FILE__, __LINE__);
 
     root_view_.SetDelegate(this);
+    printf("%s:%d\n", __FILE__, __LINE__);
 
     root_view_.AddSubview(&scroll_view_);
-    document_view_.Resize(pdfsketch::Size(800.0, 2000.0));
+    printf("%s:%d\n", __FILE__, __LINE__);
     document_view_.SetToolbox(&toolbox_);
+    printf("%s:%d\n", __FILE__, __LINE__);
     document_view_.SetUndoManager(&undo_manager_);
+    printf("%s:%d\n", __FILE__, __LINE__);
     scroll_view_.SetDocumentView(&document_view_);
+    printf("%s:%d\n", __FILE__, __LINE__);
     scroll_view_.SetResizeParams(true, false, true, false);
+    printf("%s:%d\n", __FILE__, __LINE__);
     scroll_view_.SetFrame(root_view_.Frame());
+    printf("%s:%d\n", __FILE__, __LINE__);
+    document_view_.Resize(pdfsketch::Size(800.0, 2000.0));
+    printf("%s:%d\n", __FILE__, __LINE__);
   }
 
   bool ListAndRemove(const char* dir) {
@@ -229,6 +243,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   }
   void PostMessage(const std::string& message);
 
+  void SaveFile();
   void ExportPDF();
 
   void Undo() {
@@ -339,7 +354,16 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     //Render();
     //page_view_ = new pdfsketch::PageView(doc, doc_len);
     //root_view_.AddSubview(page_view_);
-    document_view_.LoadFromPDF(doc, doc_len);
+    const char kMagic[] = {'s', 'k', 'c', 'h'};
+    if (doc_len < sizeof(kMagic))
+      return;
+    if (!strncmp(doc, kMagic, sizeof(kMagic))) {
+      printf("loading saved file\n");
+      pdfsketch::FileIO::Open(doc, doc_len, &document_view_);
+    } else {
+      printf("loading new pdf\n");
+      document_view_.LoadFromPDF(doc, doc_len);
+    }
   }
   void SetZoom(double zoom) {
     document_view_.SetZoom(zoom);
@@ -509,6 +533,10 @@ class PDFSketchInstance : public pp::Instance {
     renderer_->SelectTool(tool);
   }
 
+  void SaveFile(int32_t result) {
+    renderer_->SaveFile();
+  }
+
   void ExportPDF(int32_t result) {
     renderer_->ExportPDF();
   }
@@ -598,6 +626,10 @@ class PDFSketchInstance : public pp::Instance {
               &PDFSketchInstance::SelectTool,
               message.substr(sizeof(kToolboxPrefix) - 1)));
       return;
+    }
+    if (message == "save") {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(&PDFSketchInstance::SaveFile));
     }
     if (message == "exportPDF") {
       render_thread_.message_loop().PostWork(
@@ -698,6 +730,14 @@ void PDFRenderer::Render() {
       0,
       instance_->callback_factory_.NewCallback(
           &PDFSketchInstance::Paint, image_data));    
+}
+void PDFRenderer::SaveFile() {
+  vector<char> out;
+  pdfsketch::FileIO::Save(document_view_, &out);
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      instance_->callback_factory_.NewCallback(
+          &PDFSketchInstance::SendPDFOut, out));
 }
 void PDFRenderer::ExportPDF() {
   vector<char> pdf;

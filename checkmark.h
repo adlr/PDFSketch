@@ -13,6 +13,7 @@ class Checkmark : public Graphic {
   explicit Checkmark(const pdfsketchproto::Graphic& msg)
       : Graphic(msg) {}
   ~Checkmark() {}
+  virtual void Serialize(pdfsketchproto::Graphic* out) const;
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);
   virtual bool PlaceComplete() { return false; }

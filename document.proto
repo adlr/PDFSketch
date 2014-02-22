@@ -38,7 +38,7 @@ message Graphic {
 
   enum Type {
     TEXT = 0;
-    //CIRCLE = 1;
+    CIRCLE = 1;
     RECTANGLE = 2;
     //SQUIGGLE = 3;
     CHECKMARK = 4;

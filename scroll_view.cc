@@ -33,14 +33,19 @@ void ScrollView::SetDocumentView(View* document) {
 }
 
 void ScrollView::RepositionSubviews() {
+  printf("%s:%d\n", __FILE__, __LINE__);
   if (!document_) {
     // nothing to really do
     return;
   }
+  printf("%s:%d\n", __FILE__, __LINE__);
 
   // todo: update doc size w/ event, not every call here
+  printf("%s:%d\n", __FILE__, __LINE__);
   h_scroller_.SetDocSize(0.0, document_->size().width_);
+  printf("%s:%d\n", __FILE__, __LINE__);
   v_scroller_.SetDocSize(0.0, document_->size().height_);
+  printf("%s:%d\n", __FILE__, __LINE__);
 
   bool use_h = false;
   bool use_v = false;
@@ -102,7 +107,9 @@ void ScrollView::RepositionSubviews() {
            size_.width_ - (use_v ? ScrollBarView::kThickness : 0.0),
            size_.height_ - (use_h ? ScrollBarView::kThickness : 0.0));
   clip_view_.SetFrame(clip_frame);
+  printf("%s:%d\n", __FILE__, __LINE__);
   SetNeedsDisplay();
+  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void ScrollView::Resize(const Size& size) {
@@ -127,8 +134,13 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
 }
 
 void ScrollView::ViewFrameChanged(View* view, const Rect& frame) {
-  if (view == document_)
+  printf("%s:%d\n", __FILE__, __LINE__);
+  if (view == document_) {
+    printf("%s:%d\n", __FILE__, __LINE__);
     RepositionSubviews();
+    printf("%s:%d\n", __FILE__, __LINE__);
+  }
+  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 }  // namespace pdfsketch

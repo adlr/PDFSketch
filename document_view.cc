@@ -7,8 +7,8 @@
 #include <cairo.h>
 #include <cairo-pdf.h>
 
+#include "graphic_factory.h"
 #include "rectangle.h"
-#include "text_area.h"
 
 using std::make_pair;
 using std::pair;
@@ -28,11 +28,6 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
   doc_ = new poppler::SimpleDocument(pdf_doc, pdf_doc_length);
 
   UpdateSize();
-
-  // Add a silly graphic
-  shared_ptr<Graphic> gr(new Rectangle());
-  gr->SetDelegate(this);
-  AddGraphic(gr);
 
   SetNeedsDisplay();
 }
@@ -58,9 +53,15 @@ void DocumentView::UpdateSize() {
 }
 
 void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
+  printf("%s:%d\n", __FILE__, __LINE__);
   for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
-    //pdfsketchproto::Graphic* gr_msg = msg->
+    printf("%s:%d\n", __FILE__, __LINE__);
+    pdfsketchproto::Graphic* gr_msg = msg->add_graphic();
+    printf("%s:%d\n", __FILE__, __LINE__);
+    gr->Serialize(gr_msg);
+    printf("%s:%d\n", __FILE__, __LINE__);
   }
+  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void DocumentView::SetZoom(double zoom) {
@@ -101,6 +102,7 @@ Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
 
 void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
                                       Graphic* upper_sibling) {
+  graphic->SetDelegate(this);
   if (!upper_sibling) {
     if (top_graphic_) {
       top_graphic_->upper_sibling_ = graphic.get();
@@ -303,8 +305,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     return this;
   }
 
-  shared_ptr<Graphic> gr(toolbox_->NewGraphic());
-  gr->SetDelegate(this);
+  shared_ptr<Graphic> gr = GraphicFactory::NewGraphic(toolbox_->CurrentTool());
   AddGraphic(gr);
   int page = PageForPoint(event.position());
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),

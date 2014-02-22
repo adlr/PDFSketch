@@ -217,7 +217,8 @@ class View {
         bottom_child_(NULL),
         parent_(NULL),
         lower_sibling_(NULL),
-        upper_sibling_(NULL) {}
+        upper_sibling_(NULL),
+        delegate_(NULL) {}
   virtual ~View() {}
   virtual std::string Name() const { return "View"; }
   virtual void DrawRect(cairo_t* ctx, const Rect& rect);

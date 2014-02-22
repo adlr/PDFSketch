@@ -9,8 +9,11 @@ Rectangle::~Rectangle() {
 }
 
 void Rectangle::Serialize(pdfsketchproto::Graphic* out) const {
+  printf("%s:%d\n", __FILE__, __LINE__);
   Graphic::Serialize(out);
+  printf("%s:%d\n", __FILE__, __LINE__);
   out->set_type(pdfsketchproto::Graphic::RECTANGLE);
+  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void Rectangle::Draw(cairo_t* cr, bool selected) {

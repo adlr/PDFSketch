@@ -10,13 +10,23 @@ const double kKnobLineWidth = 1.0;
 }  // namespace {}
 
 void Graphic::Serialize(pdfsketchproto::Graphic* out) const {
+  printf("%s:%d\n", __FILE__, __LINE__);
   frame_.Serialize(out->mutable_frame());
+  printf("%s:%d\n", __FILE__, __LINE__);
   natural_size_.Serialize(out->mutable_natural_size());
+  printf("%s:%d\n", __FILE__, __LINE__);
+  out->set_page(page_);
+  printf("%s:%d\n", __FILE__, __LINE__);
   fill_color_.Serialize(out->mutable_fill_color());
+  printf("%s:%d\n", __FILE__, __LINE__);
   stroke_color_.Serialize(out->mutable_stroke_color());
+  printf("%s:%d\n", __FILE__, __LINE__);
   out->set_line_width(line_width_);
+  printf("%s:%d\n", __FILE__, __LINE__);
   out->set_h_flip(h_flip_);
+  printf("%s:%d\n", __FILE__, __LINE__);
   out->set_v_flip(v_flip_);
+  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 Rect Graphic::DrawingFrame() const {
