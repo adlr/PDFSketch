@@ -9,9 +9,22 @@ using std::min;
 
 namespace pdfsketch {
 
+Squiggle::Squiggle(const pdfsketchproto::Graphic& msg)
+    : Graphic(msg),
+      original_origin_(msg.squiggle().original_origin()) {
+  for (size_t i = 0; i < msg.squiggle().point_size(); i++) {
+    points_.push_back(Point(msg.squiggle().point(i)));
+  }
+}
+
 void Squiggle::Serialize(pdfsketchproto::Graphic* out) const {
   Graphic::Serialize(out);
   out->set_type(pdfsketchproto::Graphic::SQUIGGLE);
+  pdfsketchproto::Squiggle* msg = out->mutable_squiggle();
+  original_origin_.Serialize(msg->mutable_original_origin());
+  for (auto it = points_.begin(), e = points_.end(); it != e; ++it) {
+    it->Serialize(msg->add_point());
+  }
 }
 
 void Squiggle::Place(int page, const Point& location, bool constrain) {

@@ -26,6 +26,11 @@ message TextArea {
   required string text = 2;
 }
 
+message Squiggle {
+  repeated Point point = 1;
+  required Point original_origin = 2;
+}
+
 message Graphic {
   required Rect frame = 1;
   optional Size natural_size = 2;
@@ -45,6 +50,7 @@ message Graphic {
   }  
   required Type type = 9;
   optional TextArea text_area = 10;
+  optional Squiggle squiggle = 11;
 }
 
 message Document {
