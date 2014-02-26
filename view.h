@@ -26,6 +26,12 @@ struct Point {
   Point TranslatedBy(double x, double y) const {
     return Point(x_ + x, y_ + y);
   }
+  Point Add(const Point& that) const {
+    return TranslatedBy(that.x_, that.y_);
+  }
+  Point Subtract(const Point& that) const {
+    return Point(x_ - that.x_, y_ - that.y_);
+  }
   Point ScaledBy(double factor) const {
     return Point(x_ * factor, y_ * factor);
   }
@@ -68,6 +74,13 @@ struct Size {
   }
   Size RoundedUp() const {
     return Size(ceil(width_), ceil(height_));
+  }
+  std::string String() const {
+    char buf[100];
+    int rc = snprintf(buf, sizeof(buf), "%f,%f", width_, height_);
+    if (rc < 0 || rc == sizeof(buf))
+      return "(err)";
+    return buf;
   }
   bool operator==(const Size& that) const {
     return width_ == that.width_ && height_ == that.height_;

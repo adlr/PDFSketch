@@ -40,7 +40,7 @@ message Graphic {
     TEXT = 0;
     CIRCLE = 1;
     RECTANGLE = 2;
-    //SQUIGGLE = 3;
+    SQUIGGLE = 3;
     CHECKMARK = 4;
   }  
   required Type type = 9;

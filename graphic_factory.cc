@@ -5,6 +5,7 @@
 #include "circle.h"
 #include "checkmark.h"
 #include "rectangle.h"
+#include "squiggle.h"
 #include "text_area.h"
 
 using std::make_shared;
@@ -24,7 +25,7 @@ std::shared_ptr<Graphic> GraphicFactory::NewGraphic(
     case Toolbox::RECTANGLE:
       return make_shared<Rectangle>();
     case Toolbox::SQUIGGLE:
-      return make_shared<Rectangle>();
+      return make_shared<Squiggle>();
     case Toolbox::CHECKMARK:
       return make_shared<Checkmark>();
   }
@@ -41,8 +42,8 @@ std::shared_ptr<Graphic> GraphicFactory::NewGraphic(
       return make_shared<Circle>(msg);
     case pdfsketchproto::Graphic::RECTANGLE:
       return make_shared<Rectangle>(msg);
-      // case pdfsketchproto::Graphic::SQUIGGLE:
-      //   return make_shared<Graphic>(Rectangle(gr));
+    case pdfsketchproto::Graphic::SQUIGGLE:
+      return make_shared<Squiggle>(msg);
     case pdfsketchproto::Graphic::CHECKMARK:
       return make_shared<Checkmark>(msg);
   }

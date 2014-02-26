@@ -74,7 +74,8 @@ OBJECTS=\
 	document.pb.o \
 	file_io.o \
 	graphic_factory.o \
-	circle.o
+	circle.o \
+	squiggle.o
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

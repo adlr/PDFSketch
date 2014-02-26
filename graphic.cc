@@ -165,6 +165,7 @@ void Graphic::UpdateResize(const Point& location, bool constrain) {
     flip_x = frame_.SetRightAbs(location.x_);
         
   if (flip_y) {
+    v_flip_ = !v_flip_;
     switch (resizing_knob_) {
       case kKnobUpperLeft: resizing_knob_ = kKnobLowerLeft; break;
       case kKnobUpperMiddle: resizing_knob_ = kKnobLowerMiddle; break;
@@ -175,6 +176,7 @@ void Graphic::UpdateResize(const Point& location, bool constrain) {
     }
   }
   if (flip_x) {
+    h_flip_ = !h_flip_;
     switch (resizing_knob_) {
       case kKnobUpperLeft: resizing_knob_ = kKnobUpperRight; break;
       case kKnobMiddleLeft: resizing_knob_ = kKnobMiddleRight; break;
