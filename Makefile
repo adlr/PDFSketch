@@ -117,7 +117,7 @@ $(CROSFONTSTARBALL):
 system: $(CROSFONTSTARBALL)
 	mkdir -p system/usr/share/fonts
 	mkdir -p system/etc
-	ln -s $(NACL_SDK_ROOT)/toolchain/linux_pnacl/usr/etc/fonts system/etc/fonts
+	cp -R $(NACL_SDK_ROOT)/toolchain/linux_pnacl/usr/etc/fonts system/etc/
 	tar xzvf $< -C system
 	mv system/croscorefonts-* system/usr/share/fonts/croscore
 
