@@ -81,9 +81,13 @@ DISTFILES=\
 	$(PEXE) \
 	system.tar \
 	manifest.json \
+	index.html \
 	index.js \
 	main.js \
-	style.css
+	style.css \
+	logo16.png \
+	logo128.png \
+	pdfsketch.nmf
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
