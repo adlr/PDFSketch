@@ -93,6 +93,8 @@ all: $(PEXE)
 clean:
 	rm -f $(PEXE) $(OBJECTS) $(BCOBJECTS)
 
+$(OBJECTS): document.pb.cc
+
 %.pb.cc: %.proto
 	protoc --cpp_out=. document.proto
 
@@ -123,7 +125,7 @@ dist.zip: $(DISTFILES)
 	rm -rf dist
 	mkdir dist
 	cp $(DISTFILES) dist
-	zip dist dist.zip
+	cd dist && zip ../$@ * && cd ..
 
 #
 # Makefile target to run the SDK's simple HTTP server and serve this example.
