@@ -77,6 +77,14 @@ OBJECTS=\
 	circle.o \
 	squiggle.o
 
+DISTFILES=\
+	$(PEXE) \
+	system.tar \
+	manifest.json \
+	index.js \
+	main.js \
+	style.css
+
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
 # Declare the ALL target first, to make the 'all' target the default build
@@ -108,8 +116,14 @@ system: $(CROSFONTSTARBALL)
 	mv system/croscorefonts-* system/usr/share/fonts/croscore
 
 system.tar: system
-	#cp local.conf system/etc/fonts/
+	cp local.conf system/etc/fonts/
 	tar cvhf system.tar -C system .
+
+dist.zip: $(DISTFILES)
+	rm -rf dist
+	mkdir dist
+	cp $(DISTFILES) dist
+	zip dist dist.zip
 
 #
 # Makefile target to run the SDK's simple HTTP server and serve this example.
