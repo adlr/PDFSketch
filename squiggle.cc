@@ -12,7 +12,7 @@ namespace pdfsketch {
 Squiggle::Squiggle(const pdfsketchproto::Graphic& msg)
     : Graphic(msg),
       original_origin_(msg.squiggle().original_origin()) {
-  for (size_t i = 0; i < msg.squiggle().point_size(); i++) {
+  for (int i = 0; i < msg.squiggle().point_size(); i++) {
     points_.push_back(Point(msg.squiggle().point(i)));
   }
 }

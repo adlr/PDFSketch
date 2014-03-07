@@ -167,7 +167,7 @@ string TextArea::DebugLeftEdges() {
   for (size_t i = 0; i <= text_.size(); i++) {
     char buf[20] = {0};
     char str[2] = { i < text_.size() ? text_[i] : '$', '\0' };
-    snprintf(buf, sizeof(buf), " %s(%.2f)[%d]", str, left_edges_[i],
+    snprintf(buf, sizeof(buf), " %s(%.2f)[%zu]", str, left_edges_[i],
              GetRowIndex(i));
     ret += buf;
   }

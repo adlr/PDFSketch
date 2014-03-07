@@ -4,7 +4,7 @@
 #define PDFSKETCH_VIEW_H__
 
 #include <math.h>
-#include <cstdio>
+#include <stdio.h>
 #include <string>
 #include <vector>
 
@@ -159,6 +159,12 @@ struct Rect {
   void CairoRectangle(cairo_t* cr) const {
     cairo_rectangle(cr, origin_.x_, origin_.y_, size_.width_, size_.height_);
   }
+  bool operator==(const Rect& that) const {
+    return origin_ == that.origin_ && size_ == that.size_;
+  }
+  bool operator!=(const Rect& that) const {
+    return !(*this == that);
+  }
   Point origin_;
   Size size_;
 };
@@ -247,6 +253,10 @@ class View {
   Rect Frame() const {
     return Rect(origin_, size_.ScaledBy(scale_));
   }
+  // Returns in view's coordinates the region that's visible. May
+  // return a region that's larger than what's actually visible, e.g.,
+  // if something is obscuring this view.
+  Rect VisibleSubrect() const;
   virtual void Resize(const Size& size);  // Resizes subviews
   void SetResizeParams(bool top_fixed_to_top,
                        bool bot_fixed_to_top,
@@ -279,6 +289,7 @@ class View {
 
   // You must pass in a direct subview of this.
   Point ConvertPointToSubview(const View& subview, Point point) const;
+  Rect ConvertRectToSubview(const View& subview, const Rect& rect) const;
 
   Point ConvertPointFromSubview(const View& subview, const Point& point) const;
   Size ConvertSizeFromSubview(const View& subview, const Size& size) const;

@@ -2,6 +2,8 @@
 
 #include "undo_manager.h"
 
+#include <stdlib.h>
+
 using std::function;
 
 namespace pdfsketch{

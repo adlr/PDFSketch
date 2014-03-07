@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-#include <poppler/cpp/poppler-document.h>
+#include <poppler-document.h>
 
 #include "view.h"
 

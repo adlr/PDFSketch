@@ -18,7 +18,6 @@ NACL_SDK_ROOT ?= $(abspath $(dir $(THIS_MAKEFILE))../..)
 
 # Project Build flags
 WARNINGS := -Wno-long-long -Wall -Wswitch -Werror
-CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
 
 #
 # Compute tool paths
@@ -26,41 +25,50 @@ CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
 GETOS := python $(NACL_SDK_ROOT)/tools/getos.py
 OSHELPERS = python $(NACL_SDK_ROOT)/tools/oshelpers.py
 OSNAME := $(shell $(GETOS))
-RM := $(OSHELPERS) rm
 
-PNACL_TC_PATH := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
-X86_64_TC_PATH := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_newlib)
-PNACL_CXX_SUFFIX=clang++
-X86_64_CXX_SUFFIX=g++
-PNACL_PREFIX=pnacl-
-X86_64_PREFIX=x86_64-nacl-
+ifdef NATIVE
 
-TC_PATH=$(PNACL_TC_PATH)
-CXX_SUFFIX=$(PNACL_CXX_SUFFIX)
-PREFIX=$(PNACL_PREFIX)
+TC_PATH=/usr
+PREFIX=
+EXTRA_CXX_FLAGS=
+EXTRA_LD_FLAGS=
+CXX_PKGCONFIG=$(shell pkg-config --cflags cairo protobuf)  -I$(shell readlink -f $$HOME)/Code/poppler-0.24.5/cpp
+LD_PKGCONFIG=-L$(shell readlink -f $$HOME)/Code/poppler-0.24.5/cpp/.libs -lpoppler-cpp $(shell pkg-config --libs cairo fontconfig pixman-1 freetype2 protobuf ) 
+PROTOC=protoc
+CXX_SUFFIX=g++
+CXXFLAGS := -pthread -std=gnu++0x $(WARNINGS)
+LDTAR=
 
-PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
+else
 
+TC_PATH=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
+PREFIX=pnacl-
+EXTRA_CXX_FLAGS= -I$(NACL_SDK_ROOT)/include
+EXTRA_LD_FLAGS=-L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp
+CXX_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo protobuf poppler poppler-cpp)
+LD_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf)
+PROTOC=/usr/local/google/home/adlr/Code/protobuf-2.5.0/src/protoc
+CXX_SUFFIX=clang++
+CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
+LDTAR=-ltar
+
+endif
 
 CXX := $(TC_PATH)/bin/$(PREFIX)$(CXX_SUFFIX)
-FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
-CXXFLAGS += -I$(NACL_SDK_ROOT)/include $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo protobuf)
-LDFLAGS := -L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf) -lz -lexpat -ltar
+PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 
-#
-# Disable DOS PATH warning when using Cygwin based tools Windows
-#
-CYGWIN ?= nodosfilewarning
-export CYGWIN
+FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
+CXXFLAGS += $(EXTRA_CXX_FLAGS) $(CXX_PKGCONFIG)
+LDFLAGS := $(EXTRA_LD_FLAGS) $(LD_PKGCONFIG) -lz -lexpat $(LDTAR)
 
 BCOBJECTS=\
 	pdfsketch.bc
 PEXE=pdfsketch.pexe
+NEXE=pdfsketch_x86_64.nexe
+TEST_EXE=test
 
 OBJECTS=\
-	pdfsketch.o \
 	view.o \
-	root_view.o \
 	page_view.o \
 	scroll_bar_view.o \
 	scroll_view.o \
@@ -76,6 +84,13 @@ OBJECTS=\
 	graphic_factory.o \
 	circle.o \
 	squiggle.o
+
+NACL_OBJECTS=\
+	pdfsketch.o \
+	root_view.o
+
+TEST_OBJECTS=\
+	test_main.o
 
 DISTFILES=\
 	$(PEXE) \
@@ -95,21 +110,27 @@ CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 all: $(PEXE)
 
 clean:
-	rm -f $(PEXE) $(OBJECTS) $(BCOBJECTS)
+	rm -f $(PEXE) $(OBJECTS) $(NACL_OBJECTS) $(TEST_OBJECTS) $(BCOBJECTS) *.pb.*
 
 $(OBJECTS): document.pb.cc
 
 %.pb.cc: %.proto
-	protoc --cpp_out=. document.proto
+	$(PROTOC) --cpp_out=. document.proto
 
 %.o: %.cc
 	$(CXX) -c -o $@ $< -O2 $(CXXFLAGS)
 
-pdfsketch.bc: $(OBJECTS)
-	$(CXX) -o $@ $(OBJECTS) -O2 $(CXXFLAGS) $(LDFLAGS)
+pdfsketch.bc: $(OBJECTS) $(NACL_OBJECTS)
+	$(CXX) -o $@ $(OBJECTS) $(NACL_OBJECTS) -O2 $(CXXFLAGS) $(LDFLAGS)
+
+$(TEST_EXE): $(OBJECTS) $(TEST_OBJECTS)
+	$(CXX) -o $@ $(OBJECTS) $(TEST_OBJECTS) -O2 $(CXXFLAGS) $(LDFLAGS)
 
 $(PEXE): $(BCOBJECTS)
 	$(FINALIZE) -o $@ $(BCOBJECTS)
+
+$(NEXE): $(PEXE)
+	$(NACL_SDK_ROOT)/toolchain/linux_pnacl/bin/pnacl-translate --allow-llvm-bitcode-input $< -arch x86-64 -o $@
 
 $(CROSFONTSTARBALL):
 	wget http://commondatastorage.googleapis.com/chromeos-localmirror/distfiles/croscorefonts-1.23.0.tar.gz
@@ -131,11 +152,3 @@ dist.zip: $(DISTFILES)
 	cp $(DISTFILES) dist
 	cd dist && zip ../$@ * && cd ..
 
-#
-# Makefile target to run the SDK's simple HTTP server and serve this example.
-#
-HTTPD_PY := python $(NACL_SDK_ROOT)/tools/httpd.py
-
-.PHONY: serve
-serve: all
-	$(HTTPD_PY) -C $(CURDIR)

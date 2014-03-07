@@ -7,6 +7,36 @@
 
 namespace pdfsketch {
 
+// Text responsibilities:
+
+// text_ - the text to show (saved)
+
+// Graphic when not editing: paint text to screen
+// Prerendered: just draw prerendered PDF
+//   graphic_
+
+// Non-prerendered: use fonts to draw text at precomputed locations
+//   left_edges_
+//   This will get more complex as we do more than just have new lines
+
+// Graphic when resizing: reflow text
+// Prerendered: rerender the graphic. Generates graphic_
+// Non-prerendered: generates left edges
+
+// Graphic when editing: handle keyboard/mouse input to make edits,
+// redraw portions (while reflowing).
+
+// class TextDraw {
+//   graphic_ Prerender(string text);
+//   Update(offset);
+//   line_state_;
+// };
+
+// class TextEdit {
+//   HandleKeyboard/Mouse();
+//   Draw();
+// };
+
 class TextArea : public Graphic {
  public:
   TextArea()

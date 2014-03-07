@@ -152,6 +152,60 @@ shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
 }
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
+  // Do some caching
+  if (VisibleSubrect() != cached_subrect_ && doc_) {
+    cached_subrect_ = VisibleSubrect();
+    if (cached_surface_) {
+      cairo_surface_finish(cached_surface_);
+      cairo_surface_destroy(cached_surface_);
+      cached_surface_ = NULL;
+    }
+
+    // Create new cache
+    double width = size_.width_;
+    double height = size_.height_;
+    cairo_user_to_device_distance(cr, &width, &height);
+    cached_surface_ =
+        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+
+    cairo_t* cache_cr = cairo_create(cached_surface_);
+    cairo_translate(cache_cr, -cached_subrect_.Left(), -cached_subrect_.Top());
+    for (int i = 1; i <= doc_->GetNumPages(); i++) {
+      Rect page_rect = PageRect(i);
+      if (!rect.Intersects(page_rect))
+        continue;
+      // draw this page
+      cairo_save(cache_cr);
+      cairo_set_source_rgb(cache_cr, 0.0, 0.0, 0.0);
+      cairo_set_line_width(cache_cr, 1.0);
+      Rect outline = page_rect.InsetBy(-0.5);
+      outline.CairoRectangle(cache_cr);
+      cairo_stroke(cache_cr);
+
+      cairo_set_source_rgb(cache_cr, 1.0, 1.0, 1.0);
+      page_rect.CairoRectangle(cache_cr);
+      cairo_fill(cache_cr);
+      cairo_translate(cache_cr, page_rect.origin_.x_, page_rect.origin_.y_);
+      cairo_scale(cache_cr, zoom_, zoom_);
+      printf("rendering page\n");
+      doc_->RenderPage(i, false, cache_cr);
+      printf("rendering page (done)\n");
+    }
+    cairo_destroy(cache_cr);
+  }
+
+  if (cached_surface_) {
+    cairo_pattern_t* old_pattern = cairo_pattern_reference(cairo_get_source(cr));
+    cairo_save(cr);
+    cairo_set_source_surface(cr, cached_surface_,
+                             cached_subrect_.Left(),
+                             cached_subrect_.Top());
+    cairo_paint(cr);
+    cairo_set_source(cr, old_pattern);
+    cairo_pattern_destroy(old_pattern);
+    cairo_restore(cr);
+  }
+
   if (!doc_) {
     double border = 15.0;
     cairo_set_line_width(cr, 2.0);
@@ -174,18 +228,23 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       continue;
     // draw this page
     cairo_save(cr);
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_set_line_width(cr, 1.0);
-    Rect outline = page_rect.InsetBy(-0.5);
-    outline.CairoRectangle(cr);
-    cairo_stroke(cr);
 
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    page_rect.CairoRectangle(cr);
-    cairo_fill(cr);
+    // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    // cairo_set_line_width(cr, 1.0);
+    // Rect outline = page_rect.InsetBy(-0.5);
+    // outline.CairoRectangle(cr);
+    // cairo_stroke(cr);
+
+    // cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    // page_rect.CairoRectangle(cr);
+    // cairo_fill(cr);
+
     cairo_translate(cr, page_rect.origin_.x_, page_rect.origin_.y_);
     cairo_scale(cr, zoom_, zoom_);
-    doc_->RenderPage(i, false, cr);
+
+    // printf("rendering page\n");
+    // doc_->RenderPage(i, false, cr);
+    // printf("rendering page (done)\n");
 
     // Draw graphics
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
@@ -228,7 +287,7 @@ void DocumentView::ExportPDF(vector<char>* out) {
   cairo_surface_t *surface = cairo_pdf_surface_create_for_stream(
       HandleCairoStreamWrite, out, 6 * 72, 6 * 72);
   cairo_t* cr = cairo_create(surface);
-  for (size_t i = 1; i <= doc_->GetNumPages(); i++) {
+  for (int i = 1; i <= doc_->GetNumPages(); i++) {
     Size pg_size = PageSize(i);
     cairo_pdf_surface_set_size(surface, pg_size.width_, pg_size.height_);
     // for each page:

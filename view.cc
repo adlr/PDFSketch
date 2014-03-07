@@ -171,6 +171,15 @@ void View::DrawRect(cairo_t* ctx, const Rect& rect) {
   }
 }
 
+Rect View::VisibleSubrect() const {
+  if (!parent_)
+    return Rect(size_);
+  // TODO(adlr): fill this in
+  Rect parent_visible = parent_->ConvertRectToSubview(*this,
+                                                      parent_->VisibleSubrect());
+  return parent_visible.Intersect(Rect(size_));
+}
+
 void View::Resize(const Size& size) {
     printf("%s:%d\n", __FILE__, __LINE__);
   double x_delta = size.width_ - size_.width_;
@@ -222,7 +231,7 @@ void View::SetSize(const Size& size) {
   printf("%s:%d\n", __FILE__, __LINE__);
   if (delegate_) {
     printf("%s:%d\n", __FILE__, __LINE__);
-    printf("this: 0x%08x del: 0x%08x\n",
+    printf("this: 0x%08zx del: 0x%08zx\n",
            (size_t)this, (size_t)delegate_);
     delegate_->ViewFrameChanged(this, Frame());
     printf("%s:%d\n", __FILE__, __LINE__);
@@ -289,6 +298,10 @@ Point View::ConvertPointToSubview(const View& subview, Point point) const {
   }
   Point temp = point.TranslatedBy(-subview.origin_.x_, -subview.origin_.y_);
   return Point(temp.x_ / subview.scale_, temp.y_ / subview.scale_);
+}
+Rect View::ConvertRectToSubview(const View& subview, const Rect& rect) const {
+  return Rect(ConvertPointToSubview(subview, rect.UpperLeft()),
+              ConvertPointToSubview(subview, rect.LowerRight()));
 }
 
 }  // namespace pdfsketch

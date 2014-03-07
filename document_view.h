@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <vector>
 
-#include <poppler/cpp/poppler-document.h>
+#include <poppler-document.h>
 
 #include "graphic.h"
 #include "scroll_bar_view.h"
@@ -23,6 +23,7 @@ class DocumentView : public View,
   DocumentView()
       : undo_manager_(NULL),
         doc_(NULL),
+        cached_surface_(NULL),
         zoom_(1.0),
         toolbox_(NULL),
         bottom_graphic_(NULL),
@@ -100,6 +101,9 @@ class DocumentView : public View,
   std::shared_ptr<Graphic> RemoveGraphic(Graphic* graphic);
 
   poppler::SimpleDocument* doc_;
+  Rect cached_subrect_;
+  cairo_surface_t* cached_surface_;
+
   double zoom_;
   Toolbox* toolbox_;
   std::shared_ptr<Graphic> top_graphic_;

@@ -195,8 +195,13 @@ window.onload = function() {
     plugin.addEventListener('load', onPluginLoaded);
 
     plugin.id = 'naclPlugin';
-    plugin.setAttribute('src', 'pdfsketch.nmf');
-    plugin.setAttribute('type', 'application/x-pnacl');
+    if (false) {  // pnacl
+	plugin.setAttribute('src', 'pdfsketch.nmf');
+	plugin.setAttribute('type', 'application/x-pnacl');
+    } else {
+	plugin.setAttribute('src', 'pdfsketch_nexe.nmf');
+	plugin.setAttribute('type', 'application/x-nacl');
+    }
     plugin.addEventListener('progress', onProgressMessage);
     plugin.addEventListener('message', onPluginMessage);
     plugin.addEventListener('crash', function (ev) {

@@ -135,12 +135,12 @@ void Graphic::BeginResize(const Point& location, int knob, bool constrain) {
 void Graphic::UpdateResize(const Point& location, bool constrain) {
   // Structure from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
 
-  double shift_slope = 0.0;
-  if (frame_.size_.width_ > 0.0 &&
-      frame_.size_.height_ > 0.0)
-    shift_slope = frame_.size_.height_ / frame_.size_.width_;
-  else
-    shift_slope = natural_size_.height_ / natural_size_.width_;
+  //double shift_slope = 0.0;
+  // if (frame_.size_.width_ > 0.0 &&
+  //     frame_.size_.height_ > 0.0)
+  //   shift_slope = frame_.size_.height_ / frame_.size_.width_;
+  // else
+  //   shift_slope = natural_size_.height_ / natural_size_.width_;
 
   if (delegate_) {
     delegate_->SetNeedsDisplayInPageRect(Page(), DrawingFrameWithKnobs());

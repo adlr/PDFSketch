@@ -126,7 +126,7 @@ void FileIO::Open(const char* buf, size_t len, DocumentView* doc) {
     return;
   }
   doc->LoadFromPDF(pdf_doc, pdfdata_len);
-  for (size_t i = 0; i < msg.graphic_size(); i++) {
+  for (int i = 0; i < msg.graphic_size(); i++) {
     const pdfsketchproto::Graphic& gr = msg.graphic(i);
     doc->AddGraphic(GraphicFactory::NewGraphic(gr));
   }
