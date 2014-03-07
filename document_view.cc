@@ -50,6 +50,8 @@ void DocumentView::UpdateSize() {
     total_height += size.height_ + kSpacing;
   }
   SetSize(Size(max_page_width + 2 * kSpacing, total_height));
+  // invalidate cache
+  cached_subrect_ = Rect();
 }
 
 void DocumentView::Serialize(pdfsketchproto::Document* msg) const {

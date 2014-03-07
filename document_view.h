@@ -102,7 +102,7 @@ class DocumentView : public View,
 
   poppler::SimpleDocument* doc_;
   Rect cached_subrect_;
-  cairo_surface_t* cached_surface_;
+  cairo_surface_t* cached_surface_;  // TODO(adlr): free in dtor
 
   double zoom_;
   Toolbox* toolbox_;
