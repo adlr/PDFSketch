@@ -65,6 +65,11 @@ BCOBJECTS=\
 	pdfsketch.bc
 PEXE=pdfsketch.pexe
 NEXE=pdfsketch_x86_64.nexe
+NEXES=\
+	pdfsketch_x86_32.nexe \
+	pdfsketch_x86_64.nexe \
+	pdfsketch_arm_32.nexe
+
 TEST_EXE=test
 
 OBJECTS=\
@@ -93,7 +98,7 @@ TEST_OBJECTS=\
 	test_main.o
 
 DISTFILES=\
-	$(PEXE) \
+	$(NEXES) \
 	system.tar \
 	manifest.json \
 	index.html \
@@ -102,7 +107,7 @@ DISTFILES=\
 	style.css \
 	logo16.png \
 	logo128.png \
-	pdfsketch.nmf
+	pdfsketch_nexe.nmf
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
@@ -131,6 +136,12 @@ $(PEXE): $(BCOBJECTS)
 
 $(NEXE): $(PEXE)
 	$(NACL_SDK_ROOT)/toolchain/linux_pnacl/bin/pnacl-translate --allow-llvm-bitcode-input $< -arch x86-64 -o $@
+
+pdfsketch_x86_32.nexe: $(PEXE)
+	$(NACL_SDK_ROOT)/toolchain/linux_pnacl/bin/pnacl-translate --allow-llvm-bitcode-input $< -arch x86-32 -o $@
+
+pdfsketch_arm_32.nexe: $(PEXE)
+	$(NACL_SDK_ROOT)/toolchain/linux_pnacl/bin/pnacl-translate --allow-llvm-bitcode-input $< -arch arm -o $@
 
 $(CROSFONTSTARBALL):
 	wget http://commondatastorage.googleapis.com/chromeos-localmirror/distfiles/croscorefonts-1.23.0.tar.gz

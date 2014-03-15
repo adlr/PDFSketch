@@ -35,6 +35,8 @@ namespace pdfsketch {
 // class TextEdit {
 //   HandleKeyboard/Mouse();
 //   Draw();
+//   cursor_location_, virtual_cursor_location_;
+//   selection_;
 // };
 
 class TextArea : public Graphic {
