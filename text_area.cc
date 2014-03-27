@@ -18,7 +18,6 @@ void TextArea::Serialize(pdfsketchproto::Graphic* out) const {
 
 void TextArea::Place(int page, const Point& location, bool constrain) {
   page_ = page;
-  text_ = "The quick brown fox jumps over the lazy dog.";
   PlaceUpdate(location, constrain);
 }
 void TextArea::PlaceUpdate(const Point& location, bool constrain) {

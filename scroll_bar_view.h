@@ -38,6 +38,8 @@ class ScrollBarView : public View {
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
 
+  void ScrollBy(double delta);
+
  private:
   bool vertical_;
 

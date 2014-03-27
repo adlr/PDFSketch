@@ -25,6 +25,8 @@ class ScrollView : public View,
   // ViewDelegate method
   virtual void ViewFrameChanged(View* view, const Rect& frame);
 
+  virtual void OnScrollEvent(const ScrollInputEvent& event);
+
  private:
   void RepositionSubviews();
 

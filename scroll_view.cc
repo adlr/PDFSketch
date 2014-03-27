@@ -143,4 +143,11 @@ void ScrollView::ViewFrameChanged(View* view, const Rect& frame) {
   printf("%s:%d\n", __FILE__, __LINE__);
 }
 
+void ScrollView::OnScrollEvent(const ScrollInputEvent& event) {
+  if (h_visible_ && event.dx())
+    h_scroller_.ScrollBy(-event.dx());
+  if (v_visible_ && event.dy())
+    v_scroller_.ScrollBy(-event.dy());
+}
+
 }  // namespace pdfsketch

@@ -192,6 +192,18 @@ class MouseInputEvent {
   int32_t click_count_;
 };
 
+class ScrollInputEvent {
+ public:
+  ScrollInputEvent(double dx, double dy)
+      : dx_(dx), dy_(dy) {}
+  void UpdateToSubview(View* subview, View* from_superview);
+  double dx() const { return dx_; }
+  double dy() const { return dy_; }
+
+ private:
+  double dx_, dy_;
+};
+
 class KeyboardInputEvent {
  public:
   enum Type {
@@ -278,6 +290,7 @@ class View {
   virtual View* OnMouseDown(const MouseInputEvent& event); // passes to subviews
   virtual void OnMouseDrag(const MouseInputEvent& event) {}
   virtual void OnMouseUp(const MouseInputEvent& event) {}
+  virtual void OnScrollEvent(const ScrollInputEvent& event); // passes to subviews
 
   // Returns true if consumed
   virtual bool OnKeyText(const KeyboardInputEvent& event); // passes to subviews
@@ -290,6 +303,7 @@ class View {
   // You must pass in a direct subview of this.
   Point ConvertPointToSubview(const View& subview, Point point) const;
   Rect ConvertRectToSubview(const View& subview, const Rect& rect) const;
+  Size ConvertSizeToSubview(const View& subview, const Size& size) const;
 
   Point ConvertPointFromSubview(const View& subview, const Point& point) const;
   Size ConvertSizeFromSubview(const View& subview, const Size& size) const;

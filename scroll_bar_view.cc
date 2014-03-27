@@ -63,12 +63,15 @@ View* ScrollBarView::OnMouseDown(const MouseInputEvent& event) {
 void ScrollBarView::OnMouseDrag(const MouseInputEvent& event) {
   double pos = vertical_ ? event.position().y_ : event.position().x_;
   double delta = pos - drag_start_pos_;
-  show_min_ = drag_start_show_min_ + delta * (doc_max_ - doc_min_) /
+  double new_show_min = drag_start_show_min_ + delta * (doc_max_ - doc_min_) /
       (vertical_ ? size_.height_ : size_.width_);
+  ScrollBy(new_show_min - show_min_);
+}
+
+void ScrollBarView::ScrollBy(double delta) {
+  show_min_ += delta;
 
   // clamp show_min_ to reasonable range
-  printf("scroller drag: min %f, doc min %f max %f show size %f\n",
-         show_min_, doc_min_, doc_max_, show_size_);
   show_min_ = std::max(show_min_, doc_min_);
   if (show_min_ + show_size_ > doc_max_) {
     show_min_ = doc_max_ - show_size_;

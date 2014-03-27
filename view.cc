@@ -107,6 +107,13 @@ void MouseInputEvent::UpdateFromSubview(View* subview) {
   position_ = subview->Superview()->ConvertPointFromSubview(*subview, position_);
 }
 
+void ScrollInputEvent::UpdateToSubview(View* subview, View* from_superview) {
+  Size size(dx(), dy());
+  size = from_superview->ConvertSizeToSubview(*subview, size);
+  dx_ = size.width_;
+  dy_ = size.height_;
+}
+
 void View::AddSubview(View* subview) {
   if (subview->parent_) {
     printf("%s: Subview has parent already!\n", __func__);
@@ -279,6 +286,12 @@ bool View::OnKeyUp(const KeyboardInputEvent& event) {
   return false;
 }
 
+void View::OnScrollEvent(const ScrollInputEvent& event) {
+  // TODO(adlr): Only pass where mouse pointer is
+  for (View* child = top_child_; child; child = child->lower_sibling_)
+    child->OnScrollEvent(event);
+}
+
 Point View::ConvertPointFromSubview(const View& subview, const Point& point) const {
   return Point(point.x_ * subview.scale_, point.y_ * subview.scale_).
       TranslatedBy(subview.origin_.x_, subview.origin_.y_);
@@ -302,6 +315,9 @@ Point View::ConvertPointToSubview(const View& subview, Point point) const {
 Rect View::ConvertRectToSubview(const View& subview, const Rect& rect) const {
   return Rect(ConvertPointToSubview(subview, rect.UpperLeft()),
               ConvertPointToSubview(subview, rect.LowerRight()));
+}
+Size View::ConvertSizeToSubview(const View& subview, const Size& size) const {
+  return ConvertRectToSubview(subview, Rect(size)).size_;
 }
 
 }  // namespace pdfsketch

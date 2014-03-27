@@ -124,6 +124,12 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
       OnKeyUp(evt);
       return;
     }
+    case PP_INPUTEVENT_TYPE_WHEEL: {
+      pp::WheelInputEvent wheel_evt(event);
+      ScrollInputEvent evt(wheel_evt.GetDelta().x(), wheel_evt.GetDelta().y());
+      OnScrollEvent(evt);
+      return;
+    }
     default:
       return;
   }
