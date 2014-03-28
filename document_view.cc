@@ -164,8 +164,8 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     }
 
     // Create new cache
-    double width = size_.width_;
-    double height = size_.height_;
+    double width = cached_subrect_.size_.width_;
+    double height = cached_subrect_.size_.height_;
     cairo_user_to_device_distance(cr, &width, &height);
     cached_surface_ =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
@@ -174,7 +174,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     cairo_translate(cache_cr, -cached_subrect_.Left(), -cached_subrect_.Top());
     for (int i = 1; i <= doc_->GetNumPages(); i++) {
       Rect page_rect = PageRect(i);
-      if (!rect.Intersects(page_rect))
+      if (!cached_subrect_.Intersects(page_rect))
         continue;
       // draw this page
       cairo_save(cache_cr);
@@ -189,9 +189,10 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       cairo_fill(cache_cr);
       cairo_translate(cache_cr, page_rect.origin_.x_, page_rect.origin_.y_);
       cairo_scale(cache_cr, zoom_, zoom_);
-      printf("rendering page\n");
+      printf("rendering page %d\n", i);
       doc_->RenderPage(i, false, cache_cr);
       printf("rendering page (done)\n");
+      cairo_restore(cache_cr);
     }
     cairo_destroy(cache_cr);
   }
