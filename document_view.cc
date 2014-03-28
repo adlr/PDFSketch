@@ -452,7 +452,7 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
       }
     }
     placing_graphic_ = NULL;
-    toolbox_->SelectTool(Toolbox::ARROW);
+    //toolbox_->SelectTool(Toolbox::ARROW);
   } else {
     // Moving
     if (last_move_pos_ == start_move_pos_)
