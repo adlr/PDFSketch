@@ -11,6 +11,7 @@ void Circle::Serialize(pdfsketchproto::Graphic* out) const {
 
 void Circle::Draw(cairo_t* cr, bool selected) {
   cairo_save(cr);
+  cairo_move_to(cr, frame_.Right(), (frame_.Top() + frame_.Bottom()) / 2.0);
   cairo_translate(cr, frame_.Left(), frame_.Top());
   cairo_scale(cr, frame_.size_.width_, frame_.size_.height_);
   cairo_arc(cr, 0.5, 0.5, 0.5, 0, 2 * M_PI);
