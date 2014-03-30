@@ -20,7 +20,7 @@ class RootViewDelegate {
 class RootView : public View {
  public:
   RootView()
-      : draw_requested_(false),
+      : draw_requested_(0),
         callback_factory_(this),
         down_mouse_handler_(NULL) {}
   virtual std::string Name() const { return "RootView"; }
@@ -35,7 +35,7 @@ class RootView : public View {
 
  private:
   RootViewDelegate* delegate_;
-  bool draw_requested_;
+  int draw_requested_;
   pp::CompletionCallbackFactory<RootView> callback_factory_;
   View* down_mouse_handler_;
 };
