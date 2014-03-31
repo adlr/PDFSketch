@@ -1,12 +1,9 @@
 // Copyright
 
-#include <algorithm>
 #include <math.h>
 #include <stdio.h>
 
 #include "root_view.h"
-
-using std::min;
 
 namespace pdfsketch {
 
@@ -38,26 +35,18 @@ void RootView::SetNeedsDisplayInRect(const Rect& rect) {
     printf("%s: can't draw, no delegate\n", __func__);
     return;
   }
-  draw_requested_ = min(2, draw_requested_ + 1);
-  if (draw_requested_ == 1) {
+  if (!draw_requested_) {
+    draw_requested_ = true;
     pp::MessageLoop::GetCurrent().PostWork(
         callback_factory_.NewCallback(&RootView::HandleDrawRequest));
   }
 }
 
 void RootView::HandleDrawRequest(int32_t result) {
-  draw_requested_--;
-  if (draw_requested_ < 0) {
-    printf("draw requested dropped below zero!\n");
-    draw_requested_ = 0;
-  }
+  draw_requested_ = false;
   cairo_t* cr = delegate_->AllocateCairo();
   DrawRect(cr, Bounds());
   delegate_->FlushCairo();
-  if (draw_requested_) {
-    pp::MessageLoop::GetCurrent().PostWork(
-        callback_factory_.NewCallback(&RootView::HandleDrawRequest));
-  }
 }
 
 void RootView::Resize(const Size& size) {
