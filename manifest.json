@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "PDFSketch",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "minimum_chrome_version": "33",
   "icons": {
     "16": "logo16.png",
