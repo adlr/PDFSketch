@@ -9,6 +9,8 @@ using std::string;
 
 namespace pdfsketch {
 
+void Dbg(const char* str);
+
 void TextArea::Serialize(pdfsketchproto::Graphic* out) const {
   Graphic::Serialize(out);
   out->set_type(pdfsketchproto::Graphic::TEXT);
@@ -248,6 +250,8 @@ void TextArea::Draw(cairo_t* cr, bool selected) {
     string line = GetLine(index, &advance);
     //printf("Line: [%s]. adv: %zu\n", line.c_str(), advance);
     cursor.CairoMoveTo(cr);
+    // Dbg("Printing:");
+    // Dbg(line.c_str());
     cairo_show_text(cr, line.c_str());
     cursor.y_ += extents.height;
     index += advance;

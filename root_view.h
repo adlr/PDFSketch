@@ -14,13 +14,14 @@ namespace pdfsketch {
 class RootViewDelegate {
  public:
   virtual cairo_t* AllocateCairo() = 0;
-  virtual void FlushCairo() = 0;
+  virtual bool FlushCairo(std::function<void(int32_t)> complete_callback) = 0;
 };
 
 class RootView : public View {
  public:
   RootView()
       : draw_requested_(false),
+        flush_in_progress_(false),
         callback_factory_(this),
         down_mouse_handler_(NULL) {}
   virtual std::string Name() const { return "RootView"; }
@@ -31,11 +32,13 @@ class RootView : public View {
   }
   virtual void Resize(const Size& size);
   void HandleDrawRequest(int32_t result);
+  void FlushComplete();
   void HandlePepperInputEvent(const pp::InputEvent& event);
 
  private:
   RootViewDelegate* delegate_;
   bool draw_requested_;
+  bool flush_in_progress_;
   pp::CompletionCallbackFactory<RootView> callback_factory_;
   View* down_mouse_handler_;
 };

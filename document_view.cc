@@ -323,6 +323,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       int knob = kKnobNone;
       printf("testing graphic for knob hit\n");
       if ((knob = gr->PointInKnob(pos)) != kKnobNone) {
+        resize_graphic_original_frame_ = gr->Frame();
         resizing_graphic_ = gr;
         gr->BeginResize(pos, knob, false);
         return this;
@@ -428,6 +429,18 @@ shared_ptr<Graphic> DocumentView::SharedPtrForGraphic(
 void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   if (resizing_graphic_) {
     resizing_graphic_->EndResize();
+
+    // if (resize_graphic_original_frame_ != resizing_graphic_->Frame()) {
+    //   // Generate undo op
+    //   undo_manager_->AddClosure(
+    //       [this, resizing_graphic_, resize_graphic_original_frame_] () {
+    //         Rect old_frame = resizing_graphic_->Frame();
+    //         resizing_graphic_->frame_ = resize_graphic_original_frame_;
+    //         SetNeedsDisplay();
+    //         // TODO(adlr): add next undo (redo)
+    //       });
+    // }
+
     resizing_graphic_ = NULL;
     return;
   }

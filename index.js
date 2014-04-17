@@ -60,6 +60,7 @@ function onPluginMessage(message_event) {
 	if (stringStartsWith(message_event.data, REDO_ENABLED_PREFIX)) {
 	    setRedoEnabled(message_event.data.slice(REDO_ENABLED_PREFIX.length));
 	}
+	// console.log(message_event.data);
 	return;
     }
     console.log(message_event.data);
@@ -188,7 +189,7 @@ function setRedoEnabled(enabled) {
 }
 
 window.onload = function() {
-    console.log(chrome.runtime.getURL('datafile.txt'));
+    //console.log(chrome.runtime.getURL('datafile.txt'));
 
     var plugin = window.document.createElement('embed');
     HelloTutorialModule = plugin;

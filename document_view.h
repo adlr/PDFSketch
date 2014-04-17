@@ -115,6 +115,8 @@ class DocumentView : public View,
   Graphic* resizing_graphic_;
   Point last_move_pos_;
   Point start_move_pos_;
+
+  Rect resize_graphic_original_frame_;
 };
 
 }  // namespace pdfsketch

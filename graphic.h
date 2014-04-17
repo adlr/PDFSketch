@@ -117,6 +117,8 @@ class Graphic {
   // returns the knob hit, or kKnobNone if none.
   int PointInKnob(const Point& location) const;
 
+  const Rect& Frame() const { return frame_; }
+
   // Drawing frames are for the regions that need to be redrawn
   Rect DrawingFrame() const;
   Rect DrawingFrameWithKnobs() const;

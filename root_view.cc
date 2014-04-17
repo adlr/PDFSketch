@@ -7,6 +7,8 @@
 
 namespace pdfsketch {
 
+void Dbg(const char* str);
+
 void RootView::DrawRect(cairo_t* cr, const Rect& rect) {
   View::DrawRect(cr, rect);
   /*
@@ -35,18 +37,25 @@ void RootView::SetNeedsDisplayInRect(const Rect& rect) {
     printf("%s: can't draw, no delegate\n", __func__);
     return;
   }
-  if (!draw_requested_) {
-    draw_requested_ = true;
+  if (!draw_requested_ && !flush_in_progress_) {
     pp::MessageLoop::GetCurrent().PostWork(
         callback_factory_.NewCallback(&RootView::HandleDrawRequest));
   }
+  draw_requested_ = true;
 }
 
 void RootView::HandleDrawRequest(int32_t result) {
   draw_requested_ = false;
   cairo_t* cr = delegate_->AllocateCairo();
   DrawRect(cr, Bounds());
-  delegate_->FlushCairo();
+  if (delegate_->FlushCairo([this] (int32_t result) { FlushComplete(); }))
+    flush_in_progress_ = true;
+}
+
+void RootView::FlushComplete() {
+  flush_in_progress_ = false;
+  if (draw_requested_)
+    HandleDrawRequest(0);
 }
 
 void RootView::Resize(const Size& size) {

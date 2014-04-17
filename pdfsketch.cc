@@ -66,6 +66,17 @@
 
 using std::vector;
 
+class PDFSketchInstance;
+PDFSketchInstance* g_inst_ = NULL;
+
+void RunOnMainThread(std::function<void ()> func);
+void RunOnRenderThread(std::function<void ()> func);
+
+namespace pdfsketch {
+void Dbg(const char* str);
+}
+using pdfsketch::Dbg;
+
 cairo_status_t HandleCairoStreamWrite(void* closure,
                                       const unsigned char *data,
                                       unsigned int length) {
@@ -94,7 +105,21 @@ void ModifyPDF(const char* orig, size_t orig_length, vector<char>* out) {
   printf("modifyPDF done\n");
 }
 
-void MyCompletionCallback(void* user_data, int32_t result) {}
+void FlushCompletionCallback(void* user_data, int32_t result) {
+  std::function<void (int32_t)>* func_p =
+      reinterpret_cast<std::function<void (int32_t)>*>(user_data);
+  std::function<void (int32_t)> func = *func_p;
+  RunOnRenderThread([func, result]() { func(result); });
+  delete func_p;
+}
+
+void MyCompletionCallback(void* user_data, int32_t result) {
+  // if (user_data) {
+  //   std::pair<pp::Instance*, const char*>* mypair = reinterpret_cast<std::pair<pp::Instance*, const char*>*>(user_data);
+  //   mypair->first->PostMessage(pp::Var(mypair->second));
+  //   delete mypair;
+  // }
+}
 
 void ShowPDF(const char* orig, size_t orig_length, pp::Instance* inst) {
   pp::ImageData image_data(inst, PP_IMAGEDATAFORMAT_BGRA_PREMUL, pp::Size(300, 300), true);
@@ -388,7 +413,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   }
 
   virtual cairo_t* AllocateCairo();
-  virtual void FlushCairo();
+  virtual bool FlushCairo(std::function<void(int32_t)> complete_callback);
 
  private:
   bool setup_;
@@ -476,9 +501,12 @@ class PDFSketchInstance : public pp::Instance {
     nacl_io_init_ppapi(pp::Instance::pp_instance(),
                        pp::Module::Get()->get_browser_interface());
     renderer_ = new PDFRenderer(this);
+    g_inst_ = this;
     render_thread_.Start();
     return true;
   }
+
+  //void RunOnRenderThread(c++11 function)
 
   virtual void DidChangeView(const pp::View& view) {
     printf("View did change\n");
@@ -495,13 +523,34 @@ class PDFSketchInstance : public pp::Instance {
                                       size_));
   }
 
+  void PostStr(const char* str) {
+    PostMessage(pp::Var(str));
+  }
+
+  void ExecOnRenderThread(std::function<void ()> func) {
+    render_thread_.message_loop().PostWork(
+        callback_factory_.NewCallback(&PDFSketchInstance::Exec, func));
+  }
+
+  void Exec(int32_t resize, std::function<void ()> func) {
+    func();
+  }
+
   void Paint(int32_t result, const pp::ImageData& data) {
     if (data.size() != size_) {
       printf("Paint: bad size: skipping\n");
       return;
     }
     graphics_.PaintImageData(data, pp::Point());
-    graphics_.Flush(pp::CompletionCallback(MyCompletionCallback, NULL));
+    PostMessage(pp::Var("starting flush"));
+    // std::pair<pp::Instance*, const char*>* mypair =
+    //     new std::pair<pp::Instance*, const char*>(this, "flush done");
+    int32_t rc = graphics_.Flush(pp::CompletionCallback(MyCompletionCallback, NULL));
+    if (rc != PP_OK) {
+      PostMessage(pp::Var("flush reply:"));
+      PostMessage(pp::Var(rc));
+      // delete mypair;
+    }
   }
 
   void SendPDFOut(int32_t result, const vector<char>& out) {
@@ -559,6 +608,11 @@ class PDFSketchInstance : public pp::Instance {
     //   pp::MouseInputEvent mouse_evt(event);
     //   pp::Point mouse_pos = mouse_evt.GetPosition();
     //   printf("Mouse: %d %d\n", mouse_pos.x(), mouse_pos.y());
+    // }
+    // if (event.GetType() == PP_INPUTEVENT_TYPE_CHAR) {
+    //   pp::KeyboardInputEvent key_evt(event);
+    //   PostMessage(pp::Var("Input key:"));
+    //   PostMessage(pp::Var(key_evt.GetCharacterText().AsString().c_str()));
     // }
     render_thread_.message_loop().PostWork(
         callback_factory_.NewCallback(&PDFSketchInstance::HandleInputEventThread,
@@ -661,6 +715,7 @@ class PDFSketchInstance : public pp::Instance {
   pp::Size size_;
   pp::SimpleThread render_thread_;
   PDFRenderer* renderer_;
+ public:
   pp::Graphics2D graphics_;
 };
 
@@ -687,19 +742,31 @@ cairo_t* PDFRenderer::AllocateCairo() {
   return cr_;
 }
 
-void PDFRenderer::FlushCairo() {
+bool PDFRenderer::FlushCairo(std::function<void(int32_t)> complete_callback) {
   cairo_destroy(cr_);
   cr_ = NULL;
   cairo_surface_finish(surface_);
   cairo_surface_destroy(surface_);
   surface_ = NULL;
 
-  pp::Module::Get()->core()->CallOnMainThread(
-      0,
-      instance_->callback_factory_.NewCallback(
-          &PDFSketchInstance::Paint, *image_data_));
+  // pp::Module::Get()->core()->CallOnMainThread(
+  //     0,
+  //     instance_->callback_factory_.NewCallback(
+  //         &PDFSketchInstance::Paint, *image_data_));
+  instance_->graphics_.PaintImageData(*image_data_, pp::Point());
+  std::function<void(int32_t)>* callback_pointer =
+      new std::function<void(int32_t)>(complete_callback);
+  int32_t rc = instance_->graphics_.Flush(pp::CompletionCallback(FlushCompletionCallback, callback_pointer));
   delete image_data_;
   image_data_ = NULL;
+  if (rc != PP_OK_COMPLETIONPENDING) {
+    delete callback_pointer;
+    char buf[100];
+    snprintf(buf, sizeof(buf), "flush done rc: %d", rc);
+    Dbg(buf);
+    return false;
+  }
+  return true;
 }
 
 void PDFRenderer::Render() {
@@ -781,3 +848,22 @@ Module* CreateModule() {
   return new HelloTutorialModule();
 }
 }  // namespace pp
+
+namespace pdfsketch {
+void Dbg(const char* str) {
+  if (!g_inst_)
+    return;
+  g_inst_->PostStr(str);
+}
+}  // namespace pdfsketch
+
+void RunOnMainThread(std::function<void ()> func) {
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      g_inst_->callback_factory_.NewCallback(
+          &PDFSketchInstance::Exec, func));
+}
+
+void RunOnRenderThread(std::function<void ()> func) {
+  g_inst_->ExecOnRenderThread(func);
+}
