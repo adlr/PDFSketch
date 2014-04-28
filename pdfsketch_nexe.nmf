@@ -1,0 +1,7 @@
+{
+  "program": {
+    "x86-32": {"url": "pdfsketch_x86_32.nexe"},
+    "x86-64": {"url": "pdfsketch_x86_64.nexe"},
+    "arm": {"url": "pdfsketch_arm_32.nexe"}
+  }
+}
