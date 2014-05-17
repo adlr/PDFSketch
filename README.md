@@ -7,7 +7,7 @@ However, if you use it carefully, it can function.
 PDFSketch is a PDF annotator/editor. It can be used to mark up a PDF file with text, circles,
 freehand squiggles, and checkmarks.
 
-To install the developer preview, visit the Chrome Web Store and install it:
+To install the developer preview, visit the Chrome Web Store and install it: https://chrome.google.com/webstore/detail/bdagpnfldjbpckegdlbjpcigcdnmobai
 
 The top row of buttons is actions to perform. The next row of buttons it the current tool you
 have selected.
