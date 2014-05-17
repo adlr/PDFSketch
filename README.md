@@ -25,46 +25,46 @@ The core of the app is written in C++, using poppler to render
 
 If on Chome OS device, get crouton going:
 
-sudo sh -e ~/Downloads/crouton -t xfce
-sudo enter-chroot
+    sudo sh -e ~/Downloads/crouton -t xfce
+    sudo enter-chroot
 
 Make sure you have the right tools:
 
-sudo apt-get install git make lib32stdc++6 g++ zip
+    sudo apt-get install git make lib32stdc++6 g++ zip
 
-Install NaCl SDK from https://developer.chrome.com/native-client/sdk/download
+Install NaCl SDK from https://developer.chrome.com/native-client/sdk/download . use pepper_33
 
-use pepper_33
-unzip nacl_sdk.zip
-cd nacl_sdk
-./naclsdk install pepper_33
+    unzip nacl_sdk.zip
+    cd nacl_sdk
+    ./naclsdk install pepper_33
 
 Check out modified naclports from https://github.com/adlr/naclports (use branch ‘pdfsketch’)
 
 set env variables: (you probably want to make a script so you don’t need to redo these each time).
 Fix the paths to match your environment.
 
-export NACL_SDK_ROOT=$(readlink -f ~/Downloads/nacl_sdk/pepper_33)
-export NACL_ARCH=pnacl
+    export NACL_SDK_ROOT=$(readlink -f ~/Downloads/nacl_sdk/pepper_33)
+    export NACL_ARCH=pnacl
 
 Build PDFSketch dependencies:
 
-cd naclports
-make cairo
-make poppler
-make protobuf
-make libtar
+    cd naclports
+    make cairo
+    make poppler
+    make protobuf
+    make libtar
 
-# build protocol compiler locally:
-cd somewhere
-tar xzvf .../path/to/naclports/out/tarballs/protobuf*.tar.gz
-cd protobuf*
-./configure && make
-sudo make install
+build protocol compiler locally:
+
+    cd somewhere
+    tar xzvf .../path/to/naclports/out/tarballs/protobuf*.tar.gz
+    cd protobuf*
+    ./configure && make
+    sudo make install
 
 Check out PDFSketch and build it:
 
-# Note, I had to modify LD_LIBRARY_PATH to make protoc find its required libraries
-LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib make dist.zip
+    # Note, I had to modify LD_LIBRARY_PATH to make protoc find its required libraries
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib make dist.zip
 
 You can then navigate Chrome to chrome://extensions and load this as an unpacked extension.
