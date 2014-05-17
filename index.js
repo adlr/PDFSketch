@@ -237,4 +237,9 @@ window.onload = function() {
     document.getElementById('buttonToolRectangle').onclick = selectToolRectangle;
     document.getElementById('buttonToolSquiggle').onclick = selectToolSquiggle;
     document.getElementById('buttonToolCheckmark').onclick = selectToolCheckmark;
+
+    var githubLink = document.getElementById('githublink');
+    githubLink.onclick = function() {
+	window.open('https://github.com/adlr/PDFSketch');
+    }
 }
