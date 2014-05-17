@@ -47,7 +47,6 @@ EXTRA_CXX_FLAGS= -I$(NACL_SDK_ROOT)/include
 EXTRA_LD_FLAGS=-L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp
 CXX_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo protobuf poppler poppler-cpp)
 LD_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf)
-PROTOC=/usr/local/google/home/adlr/Code/protobuf-2.5.0/src/protoc
 CXX_SUFFIX=clang++
 CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
 LDTAR=-ltar
@@ -120,7 +119,7 @@ clean:
 $(OBJECTS): document.pb.cc
 
 %.pb.cc: %.proto
-	$(PROTOC) --cpp_out=. document.proto
+	protoc --cpp_out=. document.proto
 
 %.o: %.cc
 	$(CXX) -c -o $@ $< -O2 $(CXXFLAGS)
