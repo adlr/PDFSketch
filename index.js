@@ -41,7 +41,12 @@ function onPluginMessage(message_event) {
 
 	chrome.fileSystem.chooseEntry({'type': 'saveFile'}, function(entry) {
 	    entry.createWriter(function(fileWriter) {
-		fileWriter.write(new Blob([new Int8Array(message_event.data)], {type: 'application/x-pdf'}));
+		fileWriter.onwriteend = function(evt) {
+		    fileWriter.onwriteend = function(evt) { console.log('saved'); };
+		    fileWriter.write(new Blob([new Int8Array(message_event.data)], {type: 'application/x-pdf'}));
+		}
+		fileWriter.seek(0);
+		fileWriter.truncate(0);
 	    }, errorHandler);
 	});
 
@@ -93,7 +98,12 @@ function saveAs() {
 function handlePDFSketchSave(arraybuf) {
     var write = function() {
 	gSaveFileEntry.createWriter(function(fileWriter) {
-	    fileWriter.write(new Blob([new Int8Array(arraybuf)], {type: 'application/x-pdfsketch'}));
+	    fileWriter.onwriteend = function(evt) {
+		fileWriter.onwriteend = function(evt) { console.log('saved'); };
+		fileWriter.write(new Blob([new Int8Array(arraybuf)], {type: 'application/x-pdfsketch'}));
+	    }
+	    fileWriter.seek(0);
+	    fileWriter.truncate(0);
 	}, errorHandler);
     };
 
