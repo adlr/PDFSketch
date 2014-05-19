@@ -68,3 +68,26 @@ Check out PDFSketch and build it:
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib make dist.zip
 
 You can then navigate Chrome to chrome://extensions and load this as an unpacked extension.
+
+Enabling printf debugging
+-------------------------
+
+On Linux, you need to run chrome like this: (You may want to make a script called `chrome-debug.sh`).
+You can pick any location for the output files.
+
+    export NACL_EXE_STDOUT=/usr/local/nacl/stdout.txt
+    export NACL_EXE_STDERR=/usr/local/nacl/stderr.txt
+    google-chrome --enable-nacl --no-sandbox
+
+On Chrome OS, you'll need to disable rootfs verification, then edit `/sbin/session_manager_setup.sh`.
+At the end of the file you'll find a giant chrome command line. Add `--enable-nacl --no-sandbox` there.
+Then right before the call to chrome, add:
+
+    export NACL_EXE_STDOUT=/usr/local/nacl/stdout.txt
+    export NACL_EXE_STDERR=/usr/local/nacl/stderr.txt
+
+Then, restart the ui to get the new chrome:
+
+    sudo restart ui
+
+Remember that chrome need permissions to write those output files!
