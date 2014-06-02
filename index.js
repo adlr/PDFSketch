@@ -57,6 +57,10 @@ function onPluginMessage(message_event) {
 	if (stringStartsWith(message_event.data, TOOL_SELECTED_PREFIX)) {
 	    toolSelected(message_event.data.slice(TOOL_SELECTED_PREFIX.length));
 	}
+	var COLOR_SELECTED_PREFIX = 'ColorSelected:';
+	if (stringStartsWith(message_event.data, COLOR_SELECTED_PREFIX)) {
+	    colorSelected(message_event.data.slice(COLOR_SELECTED_PREFIX.length));
+	}
 	var UNDO_ENABLED_PREFIX = 'undoEnabled:';
 	if (stringStartsWith(message_event.data, UNDO_ENABLED_PREFIX)) {
 	    setUndoEnabled(message_event.data.slice(UNDO_ENABLED_PREFIX.length));
@@ -65,7 +69,7 @@ function onPluginMessage(message_event) {
 	if (stringStartsWith(message_event.data, REDO_ENABLED_PREFIX)) {
 	    setRedoEnabled(message_event.data.slice(REDO_ENABLED_PREFIX.length));
 	}
-	// console.log(message_event.data);
+	//console.log(message_event.data);
 	return;
     }
     console.log(message_event.data);
@@ -176,6 +180,10 @@ function selectToolCheckmark() {
     HelloTutorialModule.postMessage('selectTool:Checkmark');
 }
 
+function selectColor(n) {
+    HelloTutorialModule.postMessage('selectColor:' + n);
+}
+
 function toolSelected(tool) {
     var buttons = {
 	'Arrow': document.getElementById('buttonToolArrow'),
@@ -189,6 +197,19 @@ function toolSelected(tool) {
 	buttons[type].className = '';
     }
     buttons[tool].className = 'selectedButton';
+}
+
+var colorbuttons = [ '000000', 'FF0000', '00FF00', '0000FF', 'FFFF00'];
+
+function colorSelected(color) {
+    //console.log("selected " + color);
+    for (var i = 0; i < colorbuttons.length; i++) {
+	var element = document.getElementById("col" + colorbuttons[i]);
+        if (color == colorbuttons[i])
+	    element.className= 'selectedButton';
+	else
+	    element.className = '';
+    }
 }
 
 function setUndoEnabled(enabled) {
@@ -237,6 +258,19 @@ window.onload = function() {
     document.getElementById('buttonToolRectangle').onclick = selectToolRectangle;
     document.getElementById('buttonToolSquiggle').onclick = selectToolSquiggle;
     document.getElementById('buttonToolCheckmark').onclick = selectToolCheckmark;
+
+    var colspan = document.getElementById('colspan');
+    for (var i = 0; i < colorbuttons.length; i++) {
+	var element = document.createElement("button");
+	element.type = "button";
+	element.id = "col" + colorbuttons[i];
+	element.name = colorbuttons[i];
+	element.value = colorbuttons[i];
+	element.style.backgroundColor = "#" + colorbuttons[i];
+	element.onclick = function() {selectColor(this.value)};
+	element.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;"
+	colspan.appendChild(element);
+    }
 
     var githubLink = document.getElementById('githublink');
     githubLink.onclick = function() {

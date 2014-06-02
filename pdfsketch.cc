@@ -179,7 +179,8 @@ void CXX11Test() {
 
 class PDFSketchInstance;
 
-class PDFRenderer : public pdfsketch::RootViewDelegate,
+class PDFRenderer : public pdfsketch::DocumentViewDelegate,
+                    public pdfsketch::RootViewDelegate,
                     public pdfsketch::ToolboxDelegate,
                     public pdfsketch::UndoManagerDelegate {
  public:
@@ -203,6 +204,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     printf("%s:%d\n", __FILE__, __LINE__);
     document_view_.SetToolbox(&toolbox_);
     printf("%s:%d\n", __FILE__, __LINE__);
+    document_view_.SetDelegate(this);
     document_view_.SetUndoManager(&undo_manager_);
     printf("%s:%d\n", __FILE__, __LINE__);
     scroll_view_.SetDocumentView(&document_view_);
@@ -265,6 +267,14 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
     std::string message =
         std::string("ToolSelected:") + pdfsketch::Toolbox::ToolAsString(tool);
     PostMessage(message);
+    if (tool != Toolbox::ARROW) {
+      PostMessage(string("SetStrokeColor:") + toolbox_.stroke_color().String());
+    } else {
+      document_view_.ArrowToolSelected();
+    }
+  }
+  void SetUIStrokeColor(const string& color) {
+    PostMessage(string("SetStrokeColor:") + color);
   }
   void PostMessage(const std::string& message);
 
@@ -395,6 +405,13 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   }
   void SelectTool(const std::string& tool) {
     toolbox_.SelectTool(tool);
+  }
+  void SelectStrokeColor(const std::string& color) {
+    if (toolbox_.CurrentTool() != Toolbox::ARROW) {
+      toolbox_.SetStrokeColor(color);
+      return;
+    }
+    document_view_.SetStrokeColorUndo(color);
   }
   void SetSize(const pp::Size& size) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
@@ -583,6 +600,10 @@ class PDFSketchInstance : public pp::Instance {
     renderer_->SelectTool(tool);
   }
 
+  void SelectStrokeColor(int32_t result, const std::string& color) {
+    renderer_->SelectStrokeColor(color);
+  }
+
   void SaveFile(int32_t result) {
     renderer_->SaveFile();
   }
@@ -680,6 +701,14 @@ class PDFSketchInstance : public pp::Instance {
           callback_factory_.NewCallback(
               &PDFSketchInstance::SelectTool,
               message.substr(sizeof(kToolboxPrefix) - 1)));
+      return;
+    }
+    const char kColorPrefix[] = "selectStrokeColor:";
+    if (!strncmp(message.c_str(), kColorPrefix, sizeof(kColorPrefix) - 1)) {
+      render_thread_.message_loop().PostWork(
+          callback_factory_.NewCallback(
+              &PDFSketchInstance::SelectStrokeColor,
+              message.substr(sizeof(kColorPrefix) - 1)));
       return;
     }
     if (message == "save") {

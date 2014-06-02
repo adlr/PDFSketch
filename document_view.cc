@@ -368,7 +368,8 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     return this;
   }
 
-  shared_ptr<Graphic> gr = GraphicFactory::NewGraphic(toolbox_->CurrentTool());
+  shared_ptr<Graphic> gr = GraphicFactory::NewGraphic(toolbox_->CurrentTool(),
+                                                      toolbox_->stroke_color());
   AddGraphic(gr);
   int page = PageForPoint(event.position());
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
@@ -486,6 +487,36 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   }
 }
 
+void DocumentView::ArrowToolSelected() {
+  SendSelectPropertiesToUI();
+}
+
+void DocumentView::SendSelectedPropertiesToUI() {
+  if (toolbox_->CurrentTool() != Toolbox::ARROW) {
+    printf("Bug: tried to send color props when not on arrow tool\n");
+    return;
+  }
+  if (!delegate_)
+    return;
+  if (selected_graphics_.empty()) {
+    delegate_->SetUIStrokeColor("disabled");
+    return;
+  }
+  Color first_color;
+  for (set<Graphic*>::iterator it = selected_graphics_.begin(),
+           e = selected_graphics_.end(); it != e; ++it) {
+    if (it == selected_graphics_.begin()) {
+      first_color = (*it)->stroke_color_;
+      continue;
+    }
+    if ((*it)->stroke_color_ != first_color) {
+      delegate_->SetUIStrokeColor("multi");
+      return;
+    }
+  }
+  delegate_->SetUIStrokeColor(first_color.String());
+}
+
 void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,
                                     double dx, double dy) {
   for (auto it = graphics.begin(), e = graphics.end();
@@ -541,6 +572,33 @@ bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
     RemoveGraphicsUndo(selected_graphics_);
   }
   return true;
+}
+
+void DocumentView::SetStrokeColorUndo(const Color& stroke_color) {
+  deque<std::function<void ()>> undo_ops;
+  for (set<Graphic*>::iterator it = selected_graphics_.begin(),
+           e = selected_graphics_.end(); it != e; ++it) {
+    Color old_stroke_color = (*it)->stroke_color_;
+    undo_ops.push_back([*it, old_stroke_color] () {
+        (*it)->SetStrokeColor(old_stroke_color);
+      });
+    (*it)->SetStrokeColor(stroke_color);
+  }
+  if (undo_manager_) {
+    // We don't grab smart pointer ownership of these graphics b/c this
+    // operation doesn't create/delete graphics, so we can assume they're
+    // still in memory.
+    undo_manager_->AddClosure([this, undo_ops, stroke_color] () {
+        // do the undo ops:
+        for (std::function<void ()> undo_op : undo_ops) {
+          undo_op();
+        }
+        // Set up the redo:
+        undo_manager_->AddClosure([this, stroke_color] () {
+            SetStrokeColorUndo(stroke_color);
+          });
+      });
+  }
 }
 
 void DocumentView::SetNeedsDisplayInPageRect(int page, const Rect& rect) {

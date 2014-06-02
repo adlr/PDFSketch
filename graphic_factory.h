@@ -17,7 +17,8 @@ namespace pdfsketch {
 class GraphicFactory {
  public:
   static std::shared_ptr<Graphic> NewGraphic(
-      const Toolbox::Tool& type);
+      const Toolbox::Tool& type,
+      const Color& stroke_color);
   static std::shared_ptr<Graphic> NewGraphic(
       const pdfsketchproto::Graphic& msg);
 };

@@ -9,6 +9,28 @@ const double kKnobEdgeLength = 7.0;
 const double kKnobLineWidth = 1.0;
 }  // namespace {}
 
+Color::Color(const std::string& hex)
+    : red_(0.0), green_(0.0), blue_(0.0), alpha_(1.0) {  // opaque black
+  if (hex.size() != 9)
+    return;
+  unsigned long rgba = strtoul(hex.c_str() + 1, NULL, 16);
+  // Should these be /255 or /256? Use 255 to max at 1.0.
+  red_   = ((rgba & 0xFF000000ul) >> (8 * 3)) / 255.0;
+  gree_  = ((rgba & 0x00FF0000ul) >> (8 * 2)) / 255.0;
+  blue_  = ((rgba & 0x0000FF00ul) >> (8 * 1)) / 255.0;
+  alpha_ = ((rgba & 0x000000FFul) >> (8 * 0)) / 255.0;
+}
+
+string Color::String() const {
+  char buf[10];  // #rrggbbaa\0
+  snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x",
+           static_cast<int>(red_ * 255.0),
+           static_cast<int>(green_ * 255.0),
+           static_cast<int>(blue_ * 255.0),
+           static_cast<int>(alpha_ * 255.0));
+  return buf;
+}
+
 void Graphic::Serialize(pdfsketchproto::Graphic* out) const {
   printf("%s:%d\n", __FILE__, __LINE__);
   frame_.Serialize(out->mutable_frame());
@@ -113,6 +135,11 @@ void Graphic::SetNeedsDisplay(bool withKnobs) const {
                                        withKnobs ?
                                        DrawingFrameWithKnobs() :
                                        DrawingFrame());
+}
+
+void Graphic::SetStrokeColor(const Color& stroke_color) {
+  stroke_color_ = stroke_color;
+  SetNeedsDisplay(true);
 }
 
 void Graphic::Place(int page, const Point& location, bool constrain) {

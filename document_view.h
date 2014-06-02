@@ -17,11 +17,17 @@
 
 namespace pdfsketch {
 
+class DocumentViewDelegate {
+ public:
+  void SetUIStrokeColor(const string& color) = 0;
+};
+
 class DocumentView : public View,
                      public GraphicDelegate {
  public:
   DocumentView()
-      : undo_manager_(NULL),
+      : delegate_(NULL),
+        undo_manager_(NULL),
         doc_(NULL),
         cached_surface_(NULL),
         zoom_(1.0),
@@ -31,6 +37,9 @@ class DocumentView : public View,
         editing_graphic_(NULL),
         resizing_graphic_(NULL) {}
   virtual std::string Name() const { return "DocumentView"; }
+  void SetDelegate(DocumentViewDelegate* delegate) {
+    delegate_ = delegate;
+  }
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void GetPDFData(const char** out_buf, size_t* out_len) const;
@@ -61,11 +70,15 @@ class DocumentView : public View,
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
 
+  void ArrowToolSelected();
+
   void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
                         double dx, double dy);
 
   virtual bool OnKeyText(const KeyboardInputEvent& event);
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
+
+  void SetStrokeColorUndo(const Color& stroke_color);
 
  private:
   void UpdateSize();
@@ -92,6 +105,8 @@ class DocumentView : public View,
 
   std::shared_ptr<Graphic> SharedPtrForGraphic(Graphic* graphic) const;
   void RemoveGraphicsUndo(std::set<Graphic*> graphics);
+
+  DocumentViewDelegate* delegate_;
 
   UndoManager* undo_manager_;
 

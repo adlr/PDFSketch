@@ -24,9 +24,15 @@ class Toolbox {
   void SelectTool(Tool tool);
   Tool CurrentTool() const { return current_; }
 
+  void SetStrokeColor(const std::string& color);
+  const Color& stroke_color() const { return stroke_color_; }
+
  private:
   Tool current_;
   ToolboxDelegate* delegate_;
+
+  // For new graphics:
+  Color stroke_color_;
 };
 
 class ToolboxDelegate {

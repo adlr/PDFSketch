@@ -14,23 +14,32 @@ using std::shared_ptr;
 namespace pdfsketch {
 
 std::shared_ptr<Graphic> GraphicFactory::NewGraphic(
-    const Toolbox::Tool& type) {
+    const Toolbox::Tool& type,
+    const Color& stroke_color) {
+  shared_ptr<Graphic> ret;
   switch (type) {
     case Toolbox::ARROW:
-      return shared_ptr<Graphic>(NULL);
+      ret = shared_ptr<Graphic>(NULL);
+      break;
     case Toolbox::TEXT:
-      return make_shared<TextArea>();
+      break;
+      ret = make_shared<TextArea>();
     case Toolbox::CIRCLE:
-      return make_shared<Circle>();
+      ret = make_shared<Circle>();
+      break;
     case Toolbox::RECTANGLE:
-      return make_shared<Rectangle>();
+      ret = make_shared<Rectangle>();
+      break;
     case Toolbox::SQUIGGLE:
-      return make_shared<Squiggle>();
+      ret = make_shared<Squiggle>();
+      break;
     case Toolbox::CHECKMARK:
-      return make_shared<Checkmark>();
+      ret = make_shared<Checkmark>();
+      break;
   }
-  printf("%s: should not get to here\n", __func__);
-  return shared_ptr<Graphic>(NULL);
+  if (ret.get())
+    ret->SetStrokeColor(stroke_color);
+  return ret;
 }
 
 std::shared_ptr<Graphic> GraphicFactory::NewGraphic(

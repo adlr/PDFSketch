@@ -17,6 +17,7 @@ class Color {
       : red_(0.0), green_(0.0), blue_(0.0), alpha_(1.0) {}  // opaque black
   Color(double red, double green, double blue, double alpha)
       : red_(red), green_(green), blue_(blue), alpha_(alpha) {}
+  explicit Color(const std::string& hex);
   explicit Color(const pdfsketchproto::Color& msg)
       : red_(msg.red()),
         green_(msg.green()),
@@ -28,6 +29,7 @@ class Color {
     out->set_blue(blue_);
     out->set_alpha(alpha_);
   }
+  std::string String() const;
   void CairoSetSourceRGBA(cairo_t* cr) const {
     cairo_set_source_rgba(cr, red_, green_, blue_, alpha_);
   }
@@ -86,6 +88,8 @@ class Graphic {
   void SetDelegate(GraphicDelegate* delegate) {
     delegate_ = delegate;
   }
+
+  void SetStrokeColor(const Color& stroke_color);
 
   // For these, constrain means shift key is held (so aspect ratio should
   // be constrained)
