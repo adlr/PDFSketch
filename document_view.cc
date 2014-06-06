@@ -6,6 +6,8 @@
 
 #include <cairo.h>
 #include <cairo-pdf.h>
+#include <poppler-page.h>
+#include <poppler-page-renderer.h>
 
 #include "graphic_factory.h"
 #include "rectangle.h"
@@ -14,6 +16,7 @@ using std::make_pair;
 using std::pair;
 using std::set;
 using std::shared_ptr;
+using std::unique_ptr;
 using std::vector;
 
 namespace pdfsketch {
@@ -23,9 +26,15 @@ const double kSpacing = 20.0;  // between pages
 }  // namespace {}
 
 void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
-  if (doc_)
-    delete doc_;
-  doc_ = new poppler::SimpleDocument(pdf_doc, pdf_doc_length);
+  // if (doc_)
+  //   delete doc_;
+  poppler_doc_data_.clear();
+  poppler_doc_data_.insert(poppler_doc_data_.begin(),
+                           pdf_doc,
+                           pdf_doc + pdf_doc_length);
+  // doc_ = new poppler::SimpleDocument(&poppler_doc_data_[0],
+  //                                    poppler_doc_data_.size());
+  poppler_doc_.reset(poppler::document::load_from_raw_data(pdf_doc, pdf_doc_length));
 
   UpdateSize();
 
@@ -34,17 +43,19 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
 
 void DocumentView::GetPDFData(const char** out_buf,
                               size_t* out_len) const {
-  if (!doc_)
+  if (!poppler_doc_.get())
     return;
-  *out_buf = doc_->buf();
-  *out_len = doc_->buf_len();
+  // *out_buf = doc_->buf();
+  // *out_len = doc_->buf_len();
+  *out_buf = &poppler_doc_data_[0];
+  *out_len = poppler_doc_data_.size();
 }
 
 void DocumentView::UpdateSize() {
   // Update bounds
   double max_page_width = 0.0;  // w/o spacing
   double total_height = kSpacing;  // w/ spacing
-  for (int i = 1; i <= doc_->GetNumPages(); i++) {
+  for (int i = 0; i < poppler_doc_->pages(); i++) {
     Size size = PageSize(i).ScaledBy(zoom_).RoundedUp();
     max_page_width = std::max(max_page_width, size.width_);
     total_height += size.height_ + kSpacing;
@@ -72,10 +83,25 @@ void DocumentView::SetZoom(double zoom) {
  UpdateSize();
 }
 
+Size DocumentView::PageSize(int page) const {
+  if (!poppler_doc_.get())
+    return Size();
+  unique_ptr<poppler::page> ppage(poppler_doc_->create_page(page));
+  if (!ppage.get())
+    printf("Bug - null page3\n");
+  poppler::rectf rect = ppage->page_rect();
+  return Size(rect.width(), rect.height());
+  // return Size(doc_->GetPageWidth(page), doc_->GetPageHeight(page));
+}
+
 Rect DocumentView::PageRect(int page) const {
   double existing_pages_height = kSpacing;
-  for (int i = 1; i < page; i++) {
-    existing_pages_height += ceil(doc_->GetPageHeight(i) * zoom_) + kSpacing;
+  for (int i = 0; i < page; i++) {
+    unique_ptr<poppler::page> ppage(poppler_doc_->create_page(i));
+    if (!ppage.get())
+      printf("Bug - null page\n");
+    poppler::rectf rect = ppage->page_rect();
+    existing_pages_height += ceil(rect.height() * zoom_) + kSpacing;
   }
   Size page_size = PageSize(page).ScaledBy(zoom_).RoundedUp();
   double offset = static_cast<int>(size_.width_ / 2 - page_size.width_ / 2);
@@ -84,11 +110,14 @@ Rect DocumentView::PageRect(int page) const {
 }
 
 int DocumentView::PageForPoint(const Point& point) const {
-  for (int i = 1; i <= doc_->GetNumPages(); i++) {
-    if (point.y_ <= PageRect(i).Bottom())
+  for (int i = 0; i < poppler_doc_->pages(); i++) {
+    unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
+    if (!page.get())
+      printf("Bug - null page2\n");
+    if (point.y_ <= page->page_rect().bottom())
       return i;
   }
-  return doc_->GetNumPages();
+  return poppler_doc_->pages() - 1;
 }
 
 Point DocumentView::ConvertPointToPage(const Point& point, int page) const {
@@ -155,7 +184,7 @@ shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
 
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
   // Do some caching
-  if (VisibleSubrect() != cached_subrect_ && doc_) {
+  if (VisibleSubrect() != cached_subrect_ && poppler_doc_.get()) {
     cached_subrect_ = VisibleSubrect();
     if (cached_surface_) {
       cairo_surface_finish(cached_surface_);
@@ -172,8 +201,10 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
 
     cairo_t* cache_cr = cairo_create(cached_surface_);
     cairo_translate(cache_cr, -cached_subrect_.Left(), -cached_subrect_.Top());
-    for (int i = 1; i <= doc_->GetNumPages(); i++) {
+    poppler::page_renderer renderer;
+    for (int i = 0; i < poppler_doc_->pages(); i++) {
       Rect page_rect = PageRect(i);
+      printf("page rect(%d): %s\n", i, page_rect.String().c_str());
       if (!cached_subrect_.Intersects(page_rect))
         continue;
       // draw this page
@@ -190,7 +221,15 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       cairo_translate(cache_cr, page_rect.origin_.x_, page_rect.origin_.y_);
       cairo_scale(cache_cr, zoom_, zoom_);
       printf("rendering page %d\n", i);
-      doc_->RenderPage(i, false, cache_cr);
+
+      unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
+      if (!page.get())
+        printf("BUG- null page in render\n");
+      renderer.cairo_render_page(cache_cr,
+                                 page.get(),
+                                 false);  // TODO(adlr): rotation?
+      // doc_->RenderPage(i, false, cache_cr);
+
       printf("rendering page (done)\n");
       cairo_restore(cache_cr);
     }
@@ -209,7 +248,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     cairo_restore(cr);
   }
 
-  if (!doc_) {
+  if (!poppler_doc_.get()) {
     double border = 15.0;
     cairo_set_line_width(cr, 2.0);
     cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
@@ -225,7 +264,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     return;
   }
 
-  for (int i = 1; i <= doc_->GetNumPages(); i++) {
+  for (int i = 0; i < poppler_doc_->pages(); i++) {
     Rect page_rect = PageRect(i);
     if (!rect.Intersects(page_rect))
       continue;
@@ -283,20 +322,25 @@ cairo_status_t HandleCairoStreamWrite(void* closure,
 }  // namespace {}
 
 void DocumentView::ExportPDF(vector<char>* out) {
-  if (!doc_) {
+  if (!poppler_doc_.get()) {
     printf("can't export w/o a doc\n");
     return;
   }
   cairo_surface_t *surface = cairo_pdf_surface_create_for_stream(
       HandleCairoStreamWrite, out, 6 * 72, 6 * 72);
   cairo_t* cr = cairo_create(surface);
-  for (int i = 1; i <= doc_->GetNumPages(); i++) {
+  poppler::page_renderer renderer;
+  for (int i = 0; i < poppler_doc_->pages(); i++) {
     Size pg_size = PageSize(i);
     cairo_pdf_surface_set_size(surface, pg_size.width_, pg_size.height_);
     // for each page:
     cairo_save(cr);
     printf("rendering page\n");
-    doc_->RenderPage(i, true, cr);
+    unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
+    renderer.cairo_render_page(cr,
+                               page.get(),
+                               true);  // TODO(adlr): rotation?
+    // doc_->RenderPage(i, true, cr);
     printf("rendering complete\n");
     // Draw graphics
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {

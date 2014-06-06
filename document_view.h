@@ -22,7 +22,7 @@ class DocumentView : public View,
  public:
   DocumentView()
       : undo_manager_(NULL),
-        doc_(NULL),
+        // doc_(NULL),
         cached_surface_(NULL),
         zoom_(1.0),
         toolbox_(NULL),
@@ -69,11 +69,7 @@ class DocumentView : public View,
 
  private:
   void UpdateSize();
-  Size PageSize(int page) const {
-    if (!doc_)
-      return Size();
-    return Size(doc_->GetPageWidth(page), doc_->GetPageHeight(page));
-  }
+  Size PageSize(int page) const;
   Rect PageRect(int page) const;
 
   // point may be outside page
@@ -100,7 +96,9 @@ class DocumentView : public View,
   // be deleted.
   std::shared_ptr<Graphic> RemoveGraphic(Graphic* graphic);
 
-  poppler::SimpleDocument* doc_;
+  // poppler::SimpleDocument* doc_;
+  std::vector<char> poppler_doc_data_;
+  std::unique_ptr<poppler::document> poppler_doc_;
   Rect cached_subrect_;
   cairo_surface_t* cached_surface_;  // TODO(adlr): free in dtor
 

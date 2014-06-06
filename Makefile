@@ -33,7 +33,7 @@ PREFIX=
 EXTRA_CXX_FLAGS=
 EXTRA_LD_FLAGS=
 CXX_PKGCONFIG=$(shell pkg-config --cflags cairo protobuf)  -I$(shell readlink -f $$HOME)/Code/poppler-0.24.5/cpp
-LD_PKGCONFIG=-L$(shell readlink -f $$HOME)/Code/poppler-0.24.5/cpp/.libs -lpoppler-cpp $(shell pkg-config --libs cairo fontconfig pixman-1 freetype2 protobuf ) 
+LD_PKGCONFIG=-L$(shell readlink -f $$HOME)/Code/poppler-0.24.5/cpp/.libs -lpoppler-cpp $(shell pkg-config --libs cairo fontconfig pixman-1 freetype2 protobuf png) 
 PROTOC=protoc
 CXX_SUFFIX=g++
 CXXFLAGS := -pthread -std=gnu++0x $(WARNINGS)
@@ -46,7 +46,7 @@ PREFIX=pnacl-
 EXTRA_CXX_FLAGS= -I$(NACL_SDK_ROOT)/include
 EXTRA_LD_FLAGS=-L$(NACL_SDK_ROOT)/lib/pnacl/Release -lnacl_io -lppapi -lppapi_cpp
 CXX_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags cairo protobuf poppler poppler-cpp)
-LD_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf)
+LD_PKGCONFIG=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs poppler-cpp poppler cairo fontconfig pixman-1 freetype2 protobuf libpng)
 CXX_SUFFIX=clang++
 CXXFLAGS := -pthread -std=gnu++11 -stdlib=libc++ $(WARNINGS)
 LDTAR=-ltar
