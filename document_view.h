@@ -96,7 +96,6 @@ class DocumentView : public View,
   // be deleted.
   std::shared_ptr<Graphic> RemoveGraphic(Graphic* graphic);
 
-  // poppler::SimpleDocument* doc_;
   std::vector<char> poppler_doc_data_;
   std::unique_ptr<poppler::document> poppler_doc_;
   Rect cached_subrect_;
