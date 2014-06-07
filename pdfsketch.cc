@@ -373,22 +373,40 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   }
 
   void SetPDF(const char* doc, size_t doc_len) {
-    //if (doc_)
-    //  delete doc_;
-    //doc_ = new poppler::SimpleDocument(doc, doc_len);
-    //Render();
-    //page_view_ = new pdfsketch::PageView(doc, doc_len);
-    //root_view_.AddSubview(page_view_);
+    // See if this doc is a PDFSketch file, or contains an
+    // embedded PDFSketch file to open.
     const char kMagic[] = {'s', 'k', 'c', 'h'};
     if (doc_len < sizeof(kMagic))
       return;
     if (!strncmp(doc, kMagic, sizeof(kMagic))) {
       printf("loading saved file\n");
       pdfsketch::FileIO::Open(doc, doc_len, &document_view_);
-    } else {
-      printf("loading new pdf\n");
-      document_view_.LoadFromPDF(doc, doc_len);
+      return;
     }
+
+    unique_ptr<poppler::document*> poppler_doc(
+        poppler::document::load_from_raw_data(doc, doc_len));
+    if (!poppler_doc.get()) {
+      printf("Unable to load poppler doc\n");
+      return;
+    }
+    if (poppler_doc->has_embedded_files()) {
+      for (auto file : poppler_doc->embedded_files()) {
+        if (file->name() == "source.pdfsketch" &&
+            file->size() > sizeof(kMagic) &&
+            !strncmp(&file->data()[0], kMagic, sizeof(kMagic))) {
+          // Use embedded file
+          printf("opening embedded file\n");
+          pdfsketch::FileIO::Open(&file->data()[0],
+                                  file->size(),
+                                  &document_view_);
+          return;
+        }
+      }
+    }
+    
+    printf("loading new pdf\n");
+    document_view_.LoadFromPDF(doc, doc_len);
   }
   void SetZoom(double zoom) {
     document_view_.SetZoom(zoom);
@@ -808,8 +826,15 @@ void PDFRenderer::SaveFile() {
           &PDFSketchInstance::SendPDFOut, out));
 }
 void PDFRenderer::ExportPDF() {
+  // Get flattened PDF
   vector<char> pdf;
   document_view_.ExportPDF(&pdf);
+  // Get native save format:
+  vector<char> out;
+  pdfsketch::FileIO::Save(document_view_, &out);
+  // Embed native into flattened PDF
+  
+  
   pp::Module::Get()->core()->CallOnMainThread(
       0,
       instance_->callback_factory_.NewCallback(

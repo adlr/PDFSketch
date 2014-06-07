@@ -6,6 +6,7 @@
 
 #include <cairo.h>
 #include <cairo-pdf.h>
+#include <poppler-embedded-file.h>
 #include <poppler-page.h>
 #include <poppler-page-renderer.h>
 
@@ -31,6 +32,18 @@ void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
                            pdf_doc,
                            pdf_doc + pdf_doc_length);
   poppler_doc_.reset(poppler::document::load_from_raw_data(pdf_doc, pdf_doc_length));
+  if (poppler_doc_->has_embedded_files()) {
+    vector<poppler::embedded_file*> files = poppler_doc_->embedded_files();
+    printf("has %zu embedded files\n", files.size());
+    for (auto it : files) {
+      printf("name: %s, size: %d, valid: %d\n",
+             it->name().c_str(),
+             it->size(),
+             it->is_valid());
+    }
+  } else {
+    printf("no embedded files in PDF\n");
+  }
 
   UpdateSize();
 
