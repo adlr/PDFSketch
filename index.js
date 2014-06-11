@@ -4,6 +4,7 @@ function stringStartsWith(str, prefix) {
 
 HelloTutorialModule = null;  // Global application object.
 var statusText = 'NO-STATUS';
+var gOpenFileEntry = null;
 
 function updateStatus(opt_message) {
     if (opt_message)
@@ -39,6 +40,22 @@ function onPluginMessage(message_event) {
 	}
 	console.log("got PDF i assume");
 
+	if (gOpenFileEntry) {
+	    // Save to existing file
+	    gOpenFileEntry.createWriter(function(fileWriter) {
+		fileWriter.onwriteend = function(evt) {
+		    fileWriter.onwriteend = function(evt) {
+			console.log('saved');
+			document.getElementById('statusField').innerText = 'Saved';
+		    };
+		    fileWriter.write(new Blob([new Int8Array(message_event.data)], {type: 'application/x-pdf'}));
+		}
+		fileWriter.seek(0);
+		fileWriter.truncate(0);
+	    }, errorHandler);
+	    return;
+	}
+
 	chrome.fileSystem.chooseEntry({'type': 'saveFile'}, function(entry) {
 	    entry.createWriter(function(fileWriter) {
 		fileWriter.onwriteend = function(evt) {
@@ -73,6 +90,7 @@ function onPluginMessage(message_event) {
 
 function openPDF() {
     chrome.fileSystem.chooseEntry({'type': 'openFile'}, function(entry, fEntries) {
+	gOpenFileEntry = entry;
 	entry.file(function(file) {
 	    var reader = new FileReader();
 	    reader.onload = function(info) {
@@ -121,6 +139,7 @@ function handlePDFSketchSave(arraybuf) {
 }
 
 function exportPDF() {
+    document.getElementById('statusField').innerText = 'Saving...';
     HelloTutorialModule.postMessage('exportPDF');
 }
 
@@ -223,8 +242,6 @@ window.onload = function() {
     parentDiv.insertBefore(plugin, parentDiv.firstChild);
 
     document.getElementById('buttonOpen').onclick = openPDF;
-    document.getElementById('buttonSave').onclick = save;
-    document.getElementById('buttonSaveAs').onclick = saveAs;
     document.getElementById('buttonExportPDF').onclick = exportPDF;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;

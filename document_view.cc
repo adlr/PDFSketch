@@ -6,7 +6,6 @@
 
 #include <cairo.h>
 #include <cairo-pdf.h>
-#include <poppler-embedded-file.h>
 #include <poppler-page.h>
 #include <poppler-page-renderer.h>
 
@@ -27,23 +26,16 @@ const double kSpacing = 20.0;  // between pages
 }  // namespace {}
 
 void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
+  printf("called LoadFromPDF with size %zu\n", pdf_doc_length);
+  // if (doc_)
+  //   delete doc_;
   poppler_doc_data_.clear();
   poppler_doc_data_.insert(poppler_doc_data_.begin(),
                            pdf_doc,
                            pdf_doc + pdf_doc_length);
-  poppler_doc_.reset(poppler::document::load_from_raw_data(pdf_doc, pdf_doc_length));
-  if (poppler_doc_->has_embedded_files()) {
-    vector<poppler::embedded_file*> files = poppler_doc_->embedded_files();
-    printf("has %zu embedded files\n", files.size());
-    for (auto it : files) {
-      printf("name: %s, size: %d, valid: %d\n",
-             it->name().c_str(),
-             it->size(),
-             it->is_valid());
-    }
-  } else {
-    printf("no embedded files in PDF\n");
-  }
+  // doc_ = new poppler::SimpleDocument(&poppler_doc_data_[0],
+  //                                    poppler_doc_data_.size());
+  poppler_doc_.reset(poppler::document::load_from_raw_data(&poppler_doc_data_[0], poppler_doc_data_.size()));
 
   UpdateSize();
 
@@ -54,6 +46,8 @@ void DocumentView::GetPDFData(const char** out_buf,
                               size_t* out_len) const {
   if (!poppler_doc_.get())
     return;
+  // *out_buf = doc_->buf();
+  // *out_len = doc_->buf_len();
   *out_buf = &poppler_doc_data_[0];
   *out_len = poppler_doc_data_.size();
 }
@@ -98,6 +92,7 @@ Size DocumentView::PageSize(int page) const {
     printf("Bug - null page3\n");
   poppler::rectf rect = ppage->page_rect();
   return Size(rect.width(), rect.height());
+  // return Size(doc_->GetPageWidth(page), doc_->GetPageHeight(page));
 }
 
 Rect DocumentView::PageRect(int page) const {
@@ -234,6 +229,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       renderer.cairo_render_page(cache_cr,
                                  page.get(),
                                  false);  // TODO(adlr): rotation?
+      // doc_->RenderPage(i, false, cache_cr);
 
       printf("rendering page (done)\n");
       cairo_restore(cache_cr);
@@ -342,9 +338,12 @@ void DocumentView::ExportPDF(vector<char>* out) {
     cairo_save(cr);
     printf("rendering page\n");
     unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
+    if (!page.get())
+      printf("BUG: NULL page during export\n");
     renderer.cairo_render_page(cr,
                                page.get(),
                                true);  // TODO(adlr): rotation?
+    // doc_->RenderPage(i, true, cr);
     printf("rendering complete\n");
     // Draw graphics
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
