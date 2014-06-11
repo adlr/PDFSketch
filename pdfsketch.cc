@@ -36,7 +36,10 @@
 #include <unistd.h>
 #include <vector>
 
+#include <podofo/doc/PdfMemDocument.h>
+#include <podofo/doc/PdfFileSpec.h>
 #include <poppler/cpp/poppler-document.h>
+#include <poppler/cpp/poppler-embedded-file.h>
 #include <cairo.h>
 #include <cairo-pdf.h>
 #include <libtar.h>
@@ -64,6 +67,7 @@
 #include "scroll_bar_view.h"
 #include "scroll_view.h"
 
+using std::unique_ptr;
 using std::vector;
 
 class PDFSketchInstance;
@@ -386,7 +390,27 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
       printf("loading saved file\n");
       pdfsketch::FileIO::Open(doc, doc_len, &document_view_);
     } else {
-      printf("loading new pdf\n");
+      // Loading PDF. Check for embedded save file
+
+      unique_ptr<poppler::document> poppler_doc(
+          poppler::document::load_from_raw_data(doc, doc_len));
+      if (!poppler_doc.get()) {
+        printf("can't make poppler doc from data\n");
+        return;
+      }
+      if (poppler_doc->has_embedded_files()) {
+        for (auto file : poppler_doc->embedded_files()) {
+          if (file->is_valid() &&
+              file->name() == "source.pdfsketch" &&
+              file->size() > sizeof(kMagic)) {
+            printf("loading embedded save file\n");
+            vector<char> data = file->data();
+            pdfsketch::FileIO::Open(&data[0], data.size(), &document_view_);
+            return;
+          }
+        }
+      }
+      printf("no save file found. making new doc\n");
       document_view_.LoadFromPDF(doc, doc_len);
     }
   }
@@ -808,12 +832,46 @@ void PDFRenderer::SaveFile() {
           &PDFSketchInstance::SendPDFOut, out));
 }
 void PDFRenderer::ExportPDF() {
+  // Get flattened .pdf file
   vector<char> pdf;
+  // Get native .pdfsketch file
   document_view_.ExportPDF(&pdf);
+  vector<char> out;
+  pdfsketch::FileIO::Save(document_view_, &out);
+  // Insert .pdfsketch file into flattened .pdf
+
+  PoDoFo::PdfMemDocument doc;
+  doc.Load(&pdf[0], pdf.size());
+  PoDoFo::PdfFileSpec filespec(
+      "source.pdfsketch",
+      reinterpret_cast<const unsigned char*>(&out[0]),
+      out.size(), &doc);
+  printf("export line %d\n", __LINE__);
+  out.clear();
+  printf("export line %d\n", __LINE__);
+  doc.AttachFile(filespec);
+  printf("export line %d\n", __LINE__);
+
+  printf("export line %d\n", __LINE__);
+  PoDoFo::PdfRefCountedBuffer out_buf;
+  printf("export line %d\n", __LINE__);
+  PoDoFo::PdfOutputDevice out_dev(&out_buf);
+  printf("export line %d\n", __LINE__);
+  doc.Write(&out_dev);
+  printf("export line %d\n", __LINE__);
+
+  pdf.clear();
+  printf("export line %d\n", __LINE__);
+  pdf.insert(pdf.begin(),
+             out_buf.GetBuffer(),
+             out_buf.GetBuffer() + out_buf.GetSize());
+  printf("export line %d\n", __LINE__);
+
   pp::Module::Get()->core()->CallOnMainThread(
       0,
       instance_->callback_factory_.NewCallback(
           &PDFSketchInstance::SendPDFOut, pdf));
+  printf("export line %d\n", __LINE__);
 }
 void PDFRenderer::PostMessage(const std::string& message) {
   pp::Module::Get()->core()->CallOnMainThread(

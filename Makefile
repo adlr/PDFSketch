@@ -58,7 +58,7 @@ PKG_CONFIG_PATH=${TC_PATH}/usr/lib/pkgconfig
 
 FINALIZE := $(TC_PATH)/bin/$(PREFIX)finalize
 CXXFLAGS += $(EXTRA_CXX_FLAGS) $(CXX_PKGCONFIG)
-LDFLAGS := $(EXTRA_LD_FLAGS) $(LD_PKGCONFIG) -lz -lexpat $(LDTAR)
+LDFLAGS := $(EXTRA_LD_FLAGS) $(LD_PKGCONFIG) -lz -lexpat $(LDTAR) -lpodofo -lcrypto -ljpeg
 
 BCOBJECTS=\
 	pdfsketch.bc
