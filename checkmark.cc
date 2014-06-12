@@ -10,6 +10,7 @@ void Checkmark::Serialize(pdfsketchproto::Graphic* out) const {
 }
 
 void Checkmark::Place(int page, const Point& location, bool constrain) {
+  page_ = page;
   frame_.size_ = Size(9.0, 9.0);
   PlaceUpdate(location, constrain);
 }
