@@ -190,6 +190,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   PDFRenderer(PDFSketchInstance* instance)
       : setup_(false),
         doc_(NULL), instance_(instance),
+        scale_(1.0),
         image_data_(NULL),
         surface_(NULL),
         cr_(NULL) {
@@ -420,12 +421,15 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   void SelectTool(const std::string& tool) {
     toolbox_.SelectTool(tool);
   }
-  void SetSize(const pp::Size& size) {
+  void SetSize(const pp::Size& size, float scale) {
     printf("PDFRenderer got new view (doc: %d)\n", doc_ != NULL);
+    scale_ = scale;
     size_ = size;
     //if (doc_)
     //  Render();
-    root_view_.Resize(pdfsketch::Size(size_.width(), size_.height()));
+    scroll_view_.SetScale(scale_);
+    root_view_.Resize(pdfsketch::Size(size_.width() * scale_,
+                                      size_.height() * scale_));
     if (!setup_) {
       setup_ = true;
       SetupFS();
@@ -433,7 +437,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
   }
   void Render();
   void HandleInputEvent(const pp::InputEvent& event) {
-    root_view_.HandlePepperInputEvent(event);
+    root_view_.HandlePepperInputEvent(event, scale_);
   }
 
   virtual cairo_t* AllocateCairo();
@@ -451,6 +455,7 @@ class PDFRenderer : public pdfsketch::RootViewDelegate,
 
   poppler::SimpleDocument* doc_;
   PDFSketchInstance* instance_;
+  float scale_;
   pp::Size size_;
   //pp::Graphics2D* graphics_;
 
@@ -539,12 +544,22 @@ class PDFSketchInstance : public pp::Instance {
       return;
     }
     size_ = view.GetRect().size();
+    scale_ = view.GetDeviceScale();
+    pp::Size scaled_size(size_.width() * scale_,
+                         size_.height() * scale_);
     graphics_ =
-        pp::Graphics2D(this, size_, false);
+        pp::Graphics2D(this, scaled_size, false);
+    graphics_.SetScale(1.0 / scale_);
     BindGraphics(graphics_);
-    render_thread_.message_loop().PostWork(
-        callback_factory_.NewCallback(&PDFSketchInstance::SetSize,
-                                      size_));
+    PDFRenderer* renderer = renderer_;
+    float scale = scale_;
+    pp::Size size = size_;
+    RunOnRenderThread([renderer, scale, size] () {
+        renderer->SetSize(size, scale);
+      });
+    // render_thread_.message_loop().PostWork(
+    //     callback_factory_.NewCallback(&PDFSketchInstance::SetSize,
+    //                                   size_));
   }
 
   void PostStr(const char* str) {
@@ -623,9 +638,9 @@ class PDFSketchInstance : public pp::Instance {
     renderer_->Redo();
   }
 
-  void SetSize(int32_t result, const pp::Size& size) {
-    renderer_->SetSize(size);
-  }
+  // void SetSize(int32_t result, const pp::Size& size) {
+  //   renderer_->SetSize(size);
+  // }
 
   virtual bool HandleInputEvent(const pp::InputEvent& event) {
     // if (event.GetType() == PP_INPUTEVENT_TYPE_MOUSEMOVE) {
@@ -737,6 +752,7 @@ class PDFSketchInstance : public pp::Instance {
   pp::CompletionCallbackFactory<PDFSketchInstance> callback_factory_;
  private:
   pp::Size size_;
+  float scale_;
   pp::SimpleThread render_thread_;
   PDFRenderer* renderer_;
  public:
@@ -754,13 +770,14 @@ cairo_t* PDFRenderer::AllocateCairo() {
   }
   image_data_ = new pp::ImageData(instance_,
                                   PP_IMAGEDATAFORMAT_BGRA_PREMUL,
-                                  size_,
+                                  pp::Size(size_.width() * scale_,
+                                           size_.height() * scale_),
                                   true);
   surface_ =
       cairo_image_surface_create_for_data((unsigned char*)image_data_->data(),
                                           CAIRO_FORMAT_ARGB32,
-                                          size_.width(),
-                                          size_.height(),
+                                          size_.width() * scale_,
+                                          size_.height() * scale_,
                                           image_data_->stride());
   cr_ = cairo_create(surface_);
   return cr_;

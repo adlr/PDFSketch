@@ -64,12 +64,14 @@ void RootView::Resize(const Size& size) {
   SetNeedsDisplay();
 }
 
-void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
+void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
+                                      float scale) {
   switch (event.GetType()) {
     case PP_INPUTEVENT_TYPE_MOUSEDOWN: {
       pp::MouseInputEvent mouse_evt(event);
       pp::Point mouse_pos = mouse_evt.GetPosition();
-      MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+      MouseInputEvent evt(Point(mouse_pos.x() * scale,
+                                mouse_pos.y() * scale),
                           MouseInputEvent::DOWN,
                           mouse_evt.GetClickCount());
       down_mouse_handler_ = OnMouseDown(evt);
@@ -80,7 +82,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
         return;
       pp::MouseInputEvent mouse_evt(event);
       pp::Point mouse_pos = mouse_evt.GetPosition();
-      MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+      MouseInputEvent evt(Point(mouse_pos.x() * scale,
+                                mouse_pos.y() * scale),
                           MouseInputEvent::UP,
                           mouse_evt.GetClickCount());
       evt.UpdateToSubview(down_mouse_handler_, this);
@@ -93,7 +96,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
       if (mouse_evt.GetButton() == PP_INPUTEVENT_MOUSEBUTTON_LEFT) {
         if (!down_mouse_handler_)
           return;
-        MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
+        MouseInputEvent evt(Point(mouse_pos.x() * scale,
+                                  mouse_pos.y() * scale),
                             MouseInputEvent::DRAG,
                             mouse_evt.GetClickCount());
         evt.UpdateToSubview(down_mouse_handler_, this);
@@ -135,7 +139,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event) {
     }
     case PP_INPUTEVENT_TYPE_WHEEL: {
       pp::WheelInputEvent wheel_evt(event);
-      ScrollInputEvent evt(wheel_evt.GetDelta().x(), wheel_evt.GetDelta().y());
+      ScrollInputEvent evt(wheel_evt.GetDelta().x() * scale,
+                           wheel_evt.GetDelta().y() * scale);
       OnScrollEvent(evt);
       return;
     }

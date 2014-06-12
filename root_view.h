@@ -33,7 +33,8 @@ class RootView : public View {
   virtual void Resize(const Size& size);
   void HandleDrawRequest(int32_t result);
   void FlushComplete();
-  void HandlePepperInputEvent(const pp::InputEvent& event);
+  void HandlePepperInputEvent(const pp::InputEvent& event,
+                              float scale);
 
  private:
   RootViewDelegate* delegate_;

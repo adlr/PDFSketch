@@ -81,7 +81,7 @@ void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
 void DocumentView::SetZoom(double zoom) {
   zoom_ = zoom;
   printf("zoom is %f\n", zoom_);
- UpdateSize();
+  UpdateSize();
 }
 
 Size DocumentView::PageSize(int page) const {
@@ -197,19 +197,24 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     double width = cached_subrect_.size_.width_;
     double height = cached_subrect_.size_.height_;
     cairo_user_to_device_distance(cr, &width, &height);
+    // Avoid divide by zero:
+    float device_zoom = cached_subrect_.size_.width_ > 0 ?
+        (width / cached_subrect_.size_.width_) : 1.0;
+    cached_surface_device_zoom_ = device_zoom;
     cached_surface_ =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 
     cairo_t* cache_cr = cairo_create(cached_surface_);
-    cairo_translate(cache_cr, -cached_subrect_.Left(), -cached_subrect_.Top());
+    cairo_translate(cache_cr, -cached_subrect_.Left() * device_zoom, -cached_subrect_.Top() * device_zoom);
     poppler::page_renderer renderer;
     for (int i = 0; i < poppler_doc_->pages(); i++) {
       Rect page_rect = PageRect(i);
       printf("page rect(%d): %s\n", i, page_rect.String().c_str());
-      if (!cached_subrect_.Intersects(page_rect))
+      if (!cached_subrect_.Intersects(page_rect.ScaledBy(device_zoom)))
         continue;
       // draw this page
       cairo_save(cache_cr);
+      cairo_scale(cache_cr, device_zoom, device_zoom);
       cairo_set_source_rgb(cache_cr, 0.0, 0.0, 0.0);
       cairo_set_line_width(cache_cr, 1.0);
       Rect outline = page_rect.InsetBy(-0.5);
@@ -240,9 +245,11 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
   if (cached_surface_) {
     cairo_pattern_t* old_pattern = cairo_pattern_reference(cairo_get_source(cr));
     cairo_save(cr);
+    cairo_scale(cr, 1.0 / cached_surface_device_zoom_,
+                1.0 / cached_surface_device_zoom_);
     cairo_set_source_surface(cr, cached_surface_,
-                             cached_subrect_.Left(),
-                             cached_subrect_.Top());
+                             cached_subrect_.Left() * cached_surface_device_zoom_,
+                             cached_subrect_.Top() * cached_surface_device_zoom_);
     cairo_paint(cr);
     cairo_set_source(cr, old_pattern);
     cairo_pattern_destroy(old_pattern);
