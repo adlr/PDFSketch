@@ -479,16 +479,15 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
   if (resizing_graphic_) {
     resizing_graphic_->EndResize();
 
-    // if (resize_graphic_original_frame_ != resizing_graphic_->Frame()) {
-    //   // Generate undo op
-    //   undo_manager_->AddClosure(
-    //       [this, resizing_graphic_, resize_graphic_original_frame_] () {
-    //         Rect old_frame = resizing_graphic_->Frame();
-    //         resizing_graphic_->frame_ = resize_graphic_original_frame_;
-    //         SetNeedsDisplay();
-    //         // TODO(adlr): add next undo (redo)
-    //       });
-    // }
+    Rect original_frame = resize_graphic_original_frame_;
+    Graphic* resizing_graphic = resizing_graphic_;
+    if (original_frame != resizing_graphic_->Frame()) {
+      // Generate undo op
+      undo_manager_->AddClosure(
+          [this, resizing_graphic, original_frame] () {
+            SetGraphicFrameUndo(resizing_graphic, original_frame);
+          });
+    }
 
     resizing_graphic_ = NULL;
     return;
@@ -549,6 +548,16 @@ void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,
       [this, graphics, dx, dy] () {
         MoveGraphicsUndo(graphics, -dx, -dy);
       });
+}
+
+void DocumentView::SetGraphicFrameUndo(Graphic* gr, Rect frame) {
+  Rect prev_frame = gr->Frame();
+  gr->SetNeedsDisplay(true);
+  gr->frame_ = frame;
+  gr->SetNeedsDisplay(true);
+  undo_manager_->AddClosure([this, gr, prev_frame] () {
+      SetGraphicFrameUndo(gr, prev_frame);
+    });
 }
 
 void DocumentView::RemoveGraphicsUndo(set<Graphic*> graphics) {

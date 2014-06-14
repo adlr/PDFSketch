@@ -64,6 +64,7 @@ class DocumentView : public View,
 
   void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
                         double dx, double dy);
+  void SetGraphicFrameUndo(Graphic* gr, Rect frame);
 
   virtual bool OnKeyText(const KeyboardInputEvent& event);
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
