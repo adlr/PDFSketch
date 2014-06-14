@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <functional>
+#include <memory>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mount.h>
@@ -133,36 +134,7 @@ int PDFSketchInstance::SetupFS() {
 
 void PDFSketchInstance::SetPDF(const char* doc, size_t doc_len) {
   printf("calling SetPDF w/ buffer\n");
-  const char kMagic[] = {'s', 'k', 'c', 'h'};
-  if (doc_len < sizeof(kMagic))
-    return;
-  if (!strncmp(doc, kMagic, sizeof(kMagic))) {
-    printf("loading saved file\n");
-    pdfsketch::FileIO::Open(doc, doc_len, &document_view_);
-  } else {
-    // Loading PDF. Check for embedded save file
-
-    unique_ptr<poppler::document> poppler_doc(
-        poppler::document::load_from_raw_data(doc, doc_len));
-    if (!poppler_doc.get()) {
-      printf("can't make poppler doc from data\n");
-      return;
-    }
-    if (poppler_doc->has_embedded_files()) {
-      for (auto file : poppler_doc->embedded_files()) {
-        if (file->is_valid() &&
-            file->name() == "source.pdfsketch" &&
-            file->size() > sizeof(kMagic)) {
-          printf("loading embedded save file\n");
-          vector<char> data = file->data();
-          pdfsketch::FileIO::Open(&data[0], data.size(), &document_view_);
-          return;
-        }
-      }
-    }
-    printf("no save file found. making new doc\n");
-    document_view_.LoadFromPDF(doc, doc_len);
-  }
+  pdfsketch::FileIO::OpenPDF(doc, doc_len, &document_view_);
 }
 
 void PDFSketchInstance::SetSize(const pp::Size& size, float scale) {

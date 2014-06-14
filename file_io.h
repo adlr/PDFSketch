@@ -11,7 +11,10 @@ namespace pdfsketch {
 
 class FileIO {
  public:
-  static void Open(const char* buf, size_t len, DocumentView* doc);
+  static void OpenPDF(const char* doc, size_t doc_len,
+                      DocumentView* document_view);
+  static void OpenSkch(const char* buf, size_t len,
+                       DocumentView* doc);
   static void Save(const DocumentView& doc, std::vector<char>* out);
 };
 

@@ -2,12 +2,20 @@
 
 #include "file_io.h"
 
+#include <memory>
+
+#include <podofo/doc/PdfFileSpec.h>
+#include <podofo/doc/PdfMemDocument.h>
+#include <poppler/cpp/poppler-document.h>
+#include <poppler/cpp/poppler-embedded-file.h>
+
 #include "document.pb.h"
 #include "document_view.h"
 #include "graphic_factory.h"
 
 using std::make_shared;
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 // File format. Keep this synced with the code.
@@ -81,7 +89,42 @@ const char* ParseUInt64(const char* buf, uint64_t* out) {
 }
 }  // namespace {}
 
-void FileIO::Open(const char* buf, size_t len, DocumentView* doc) {
+void FileIO::OpenPDF(const char* doc, size_t doc_len,
+                     DocumentView* document_view) {
+  const char kMagic[] = {'s', 'k', 'c', 'h'};
+  if (doc_len < sizeof(kMagic))
+    return;
+  if (!strncmp(doc, kMagic, sizeof(kMagic))) {
+    printf("loading saved file\n");
+    OpenSkch(doc, doc_len, document_view);
+  } else {
+    // Loading PDF. Check for embedded save file
+
+    unique_ptr<poppler::document> poppler_doc(
+        poppler::document::load_from_raw_data(doc, doc_len));
+    if (!poppler_doc.get()) {
+      printf("can't make poppler doc from data\n");
+      return;
+    }
+    if (poppler_doc->has_embedded_files()) {
+      for (auto file : poppler_doc->embedded_files()) {
+        if (file->is_valid() &&
+            file->name() == "source.pdfsketch" &&
+            file->size() > sizeof(kMagic)) {
+          printf("loading embedded save file\n");
+          vector<char> data = file->data();
+          OpenSkch(&data[0], data.size(), document_view);
+          return;
+        }
+      }
+    }
+    printf("no save file found. making new doc\n");
+    document_view->LoadFromPDF(doc, doc_len);
+  }
+}
+
+void FileIO::OpenSkch(const char* buf, size_t len,
+                      DocumentView* doc) {
   size_t start = (size_t)buf;
   if (strncmp(buf, kMagic, sizeof(kMagic))) {
     printf("%s: Missing magic\n", __func__);
