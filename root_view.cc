@@ -47,6 +47,8 @@ void RootView::SetNeedsDisplayInRect(const Rect& rect) {
 void RootView::HandleDrawRequest(int32_t result) {
   draw_requested_ = false;
   cairo_t* cr = delegate_->AllocateCairo();
+  if (!cr)
+    return;
   DrawRect(cr, Bounds());
   if (delegate_->FlushCairo([this] (int32_t result) { FlushComplete(); }))
     flush_in_progress_ = true;

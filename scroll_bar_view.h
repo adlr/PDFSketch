@@ -20,6 +20,10 @@ class ScrollBarView : public View {
 
   ScrollBarView(bool vertical)
       : vertical_(vertical),
+        doc_min_(0.0),
+        doc_max_(0.0),
+        show_size_(0.0),
+        show_min_(0.0),
         delegate_(NULL),
         drag_start_pos_(0.0),
         drag_start_show_min_(0.0) {}
