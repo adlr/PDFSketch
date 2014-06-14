@@ -188,17 +188,12 @@ Rect View::VisibleSubrect() const {
 }
 
 void View::Resize(const Size& size) {
-    printf("%s:%d\n", __FILE__, __LINE__);
   double x_delta = size.width_ - size_.width_;
-    printf("%s:%d\n", __FILE__, __LINE__);
   double y_delta = size.height_ - size_.height_;
-    printf("%s:%d\n", __FILE__, __LINE__);
   SetSize(size);
-    printf("%s:%d\n", __FILE__, __LINE__);
 
   // Update subview frames
   for (View* child = top_child_; child; child = child->lower_sibling_) {
-    printf("%s:%d\n", __FILE__, __LINE__);
     Rect frame = child->Frame();
     if (!child->top_fixed_to_top_) {
       // Set top of rect w/o changing bottom
@@ -216,11 +211,8 @@ void View::Resize(const Size& size) {
     if (!child->right_fixed_to_left_) {
       frame.size_.width_ += x_delta;
     }
-    printf("%s:%d\n", __FILE__, __LINE__);
     child->SetFrame(frame);
-    printf("%s:%d\n", __FILE__, __LINE__);
   }
-    printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void View::SetFrame(const Rect& frame) {
@@ -233,17 +225,10 @@ void View::SetFrame(const Rect& frame) {
 }
 
 void View::SetSize(const Size& size) {
-  printf("%s:%d\n", __FILE__, __LINE__);
   size_ = size;
-  printf("%s:%d\n", __FILE__, __LINE__);
   if (delegate_) {
-    printf("%s:%d\n", __FILE__, __LINE__);
-    printf("this: 0x%08zx del: 0x%08zx\n",
-           (size_t)this, (size_t)delegate_);
     delegate_->ViewFrameChanged(this, Frame());
-    printf("%s:%d\n", __FILE__, __LINE__);
   }
-  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void View::SetScale(double scale) {

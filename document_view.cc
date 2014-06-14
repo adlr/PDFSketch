@@ -67,15 +67,10 @@ void DocumentView::UpdateSize() {
 }
 
 void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
-  printf("%s:%d\n", __FILE__, __LINE__);
   for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
-    printf("%s:%d\n", __FILE__, __LINE__);
     pdfsketchproto::Graphic* gr_msg = msg->add_graphic();
-    printf("%s:%d\n", __FILE__, __LINE__);
     gr->Serialize(gr_msg);
-    printf("%s:%d\n", __FILE__, __LINE__);
   }
-  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 void DocumentView::SetZoom(double zoom) {

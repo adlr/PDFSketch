@@ -142,19 +142,13 @@ void FileIO::Save(const DocumentView& doc, std::vector<char>* out) {
   PushUInt64(pdfdata_len, out);
   out->insert(out->end(), pdfdata, pdfdata + pdfdata_len);  // pdf data
   pdfsketchproto::Document msg;
-  printf("%s:%d\n", __FILE__, __LINE__);
   doc.Serialize(&msg);
-  printf("%s:%d\n", __FILE__, __LINE__);
   string msg_buf;
-  printf("%s:%d\n", __FILE__, __LINE__);
   if (!msg.SerializeToString(&msg_buf)) {
     printf("error serializing to string\n");
   }
-  printf("%s:%d\n", __FILE__, __LINE__);
   PushUInt64(msg_buf.size(), out);
-  printf("%s:%d\n", __FILE__, __LINE__);
   out->insert(out->end(), msg_buf.begin(), msg_buf.end());
-  printf("%s:%d\n", __FILE__, __LINE__);
 }
 
 }  // namespace pdfsketch
