@@ -1,0 +1,111 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#titlebar {
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    border: 1px dashed #ccc;
+    align-items: stretch;
+}
+
+#logo {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f00;
+    width: 100px;
+}
+
+#logospacer {
+    width: 1px;
+    background-color: #999;
+}
+
+#saveshield {
+    width: 32px;
+}
+
+#savetext {
+    width: 200px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#mainarea {
+    flex: 1;
+    border: 1px dashed #00f;
+    display: flex;
+    align-items: stretch;
+}
+
+#mainleft {
+    flex: 1;
+}
+
+#mainspacer {
+    width: 1px;
+    background-color: #999;
+    height: 80%;
+}
+
+#mainright {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #f00;
+}
+
+#openscreen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px dashed #000;
+}
+
+#openscreenheader {
+    flex: 1;
+    border: 1px solid #0f0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+#buttonOpen {
+    flex: none;
+}
+
+#openbottomspacer {
+    flex: 1;
+    border: 1px solid #0f0;
+}
+
+#mainrightspacer {
+    height: 1px;
+    background-color: #999;
+    width: 80%;
+}
+
+#dragscreen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+#dragscreen div {
+}

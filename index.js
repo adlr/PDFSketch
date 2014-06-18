@@ -259,4 +259,7 @@ window.onload = function() {
     githubLink.onclick = function() {
 	window.open('https://github.com/adlr/PDFSketch');
     }
+    document.getElementById('openscreenlink').onclick = function() {
+	chrome.app.window.create('open.html');
+    }
 }

@@ -103,6 +103,8 @@ DISTFILES=\
 	index.html \
 	index.js \
 	main.js \
+	open.html \
+	openstyle.css \
 	style.css \
 	logo16.png \
 	logo128.png \
