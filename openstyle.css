@@ -52,6 +52,18 @@ body {
 
 #mainleft {
     flex: 1;
+    margin: 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+p {
+    margin: 0 0 1em 0;
+}
+
+.lastp {
+    margin-bottom: 0;
 }
 
 #mainspacer {
