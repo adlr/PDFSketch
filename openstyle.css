@@ -1,3 +1,32 @@
+/* Light */
+@font-face {
+    font-family: 'Open Sans';
+    src: url('OpenSans-Light.ttf') format('truetype');
+    /* src fallbacks ommitted for brevity */
+    font-weight: 200;
+    font-style: normal;
+}
+/* Light Italic */
+@font-face {
+    font-family: 'Open Sans';
+    src: url('OpenSans-LightItalic.ttf') format('truetype');
+    /* src fallbacks ommitted for brevity */
+    font-weight: 200;
+    font-style: italic;
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: url('OpenSans-Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('OpenSans-Regular.ttf') format('truetype');
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -8,30 +37,60 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    font-size: 17px;
 }
 
 #titlebar {
     flex: none;
     display: flex;
     flex-direction: row;
-    border: 1px dashed #ccc;
     align-items: stretch;
+    background-color: #2e2e2e;
+    color: #fff;
+    border-top: 2px solid #47aee6;
+    border-bottom: 2px solid #616161;
+    height: 80px;
 }
 
 #logo {
     display: flex;
     flex-direction: column;
-    border: 1px solid #f00;
-    width: 100px;
+    margin-left: 17px;
+    margin-bottom: 20px;
+    margin-top: 13px;
+    margin-right: 10px;
+}
+
+#logotop {
+    font-size: 30px;
+    font-weight: 200;
+    font-family: "Open Sans";
+}
+
+#logotag {
+    font-size: 12px;
+    font-style: italic;
 }
 
 #logospacer {
     width: 1px;
-    background-color: #999;
+    background-color: #454545;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 #saveshield {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 13px;
+    padding-right: 7px;
+}
+
+#saveshield div {
     width: 32px;
+    height: 32px;
+    background: url(mock-sprite.png) -126 -50;
 }
 
 #savetext {
@@ -41,13 +100,38 @@ body {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
+    font-style: italic;
+    font-size: 12px;
+}
+
+#buttonZoomOut {
+    width: 54px;
+    height: 54px;
+    background: url(mock-sprite.png) -589 -70;
+    align-self: center;
+    margin-right: 20px;
+}
+
+#buttonZoomIn {
+    width: 54px;
+    height: 54px;
+    background: url(mock-sprite.png) -435 -70;
+    align-self: center;
+    margin-right: 35px;
+}
+
+#buttonSettings {
+    width: 54px;
+    height: 54px;
+    background: url(mock-sprite.png) -283 -70;
+    align-self: center;
 }
 
 #mainarea {
     flex: 1;
-    border: 1px dashed #00f;
     display: flex;
     align-items: stretch;
+    border-top: 1px solid #2e2e2e;
 }
 
 #mainleft {
@@ -56,6 +140,11 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+.header {
+    font-style: italic;
+    color: #888;
 }
 
 p {
@@ -69,27 +158,26 @@ p {
 #mainspacer {
     width: 1px;
     background-color: #999;
-    height: 80%;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 #mainright {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    border: 1px solid #f00;
+    align-items: stretch;
 }
 
 #openscreen {
     flex: 1;
     display: flex;
     flex-direction: column;
-    border: 1px dashed #000;
+    align-items: center;
 }
 
 #openscreenheader {
     flex: 1;
-    border: 1px solid #0f0;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -98,17 +186,20 @@ p {
 
 #buttonOpen {
     flex: none;
+    font-size: 20px;
+    color: #fff;
+    background-color: #47aee6;
 }
 
 #openbottomspacer {
     flex: 1;
-    border: 1px solid #0f0;
 }
 
 #mainrightspacer {
     height: 1px;
     background-color: #999;
-    width: 80%;
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 #dragscreen {
@@ -117,7 +208,11 @@ p {
     flex-direction: column;
     justify-content: center;
     text-align: center;
+    align-items: center;
 }
 
-#dragscreen div {
+#dragicon {
+    width: 55px;
+    height: 55px;
+    background: url(mock-sprite.png) -651 -175;
 }

@@ -108,7 +108,12 @@ DISTFILES=\
 	style.css \
 	logo16.png \
 	logo128.png \
-	pdfsketch_nexe.nmf
+	pdfsketch_nexe.nmf \
+	OpenSans-Light.ttf \
+	OpenSans-LightItalic.ttf \
+	OpenSans-Regular.ttf \
+	OpenSans-Italic.ttf \
+	mock-sprite.png
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 
@@ -146,6 +151,12 @@ pdfsketch_arm_32.nexe: $(PEXE)
 
 $(CROSFONTSTARBALL):
 	wget http://commondatastorage.googleapis.com/chromeos-localmirror/distfiles/croscorefonts-1.23.0.tar.gz
+
+OpenSans.zip:
+	wget -O $@ 'http://www.google.com/fonts/download?kit=3hvsV99qyKCBS55e5pvb3ltkqrIMaAZWyLYEoB48lSQ'
+
+OpenSans-%.ttf: OpenSans.zip
+	unzip -o $< $@
 
 system: $(CROSFONTSTARBALL)
 	mkdir -p system/usr/share/fonts
