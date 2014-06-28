@@ -104,6 +104,10 @@ body {
     font-size: 12px;
 }
 
+#statusField {
+    display: none;
+}
+
 #buttonZoomOut {
     width: 54px;
     height: 54px;
@@ -215,4 +219,16 @@ p {
     width: 55px;
     height: 55px;
     background: url(mock-sprite.png) -651 -175;
+}
+
+#naclContainer {
+    height: 0;
+    flex: none;
+    border-top: 1px solid #2e2e2e;
+    display: flex;
+    align-items: stretch;
+}
+
+#naclContainer embed {
+    flex: 1;
 }

@@ -16,6 +16,7 @@ function updateStatus(opt_message) {
 }
 
 var onPluginLoaded = function() {
+    console.log('plugin loaded');
     HelloTutorialModule = document.getElementById('naclPlugin');
     updateStatus('Loaded');
 }
@@ -96,6 +97,8 @@ function openPDF() {
 	    reader.onload = function(info) {
 		console.log('read completed ' + info.target.result.byteLength);
 		HelloTutorialModule.postMessage(info.target.result);
+		document.getElementById('naclContainer').style.flex = 1;
+		document.getElementById('mainarea').style.display = 'none';
 	    }
 	    reader.readAsArrayBuffer(file);
 	});
@@ -218,6 +221,7 @@ function setRedoEnabled(enabled) {
 }
 
 window.onload = function() {
+    console.log("window onload called");
     //console.log(chrome.runtime.getURL('datafile.txt'));
 
     var plugin = window.document.createElement('embed');
@@ -241,25 +245,37 @@ window.onload = function() {
     var parentDiv = document.getElementById('naclContainer');
     parentDiv.insertBefore(plugin, parentDiv.firstChild);
 
-    document.getElementById('buttonOpen').onclick = openPDF;
-    document.getElementById('buttonExportPDF').onclick = exportPDF;
-    document.getElementById('buttonZoomIn').onclick = zoomIn;
-    document.getElementById('buttonZoomOut').onclick = zoomOut;
-    document.getElementById('buttonUndo').onclick = undo;
-    document.getElementById('buttonRedo').onclick = redo;
-
-    document.getElementById('buttonToolArrow').onclick = selectToolArrow;
-    document.getElementById('buttonToolText').onclick = selectToolText;
-    document.getElementById('buttonToolCircle').onclick = selectToolCircle;
-    document.getElementById('buttonToolRectangle').onclick = selectToolRectangle;
-    document.getElementById('buttonToolSquiggle').onclick = selectToolSquiggle;
-    document.getElementById('buttonToolCheckmark').onclick = selectToolCheckmark;
-
-    var githubLink = document.getElementById('githublink');
-    githubLink.onclick = function() {
-	window.open('https://github.com/adlr/PDFSketch');
+    var setClickHandler = function(id, fn) {
+	var elt = document.getElementById(id);
+	if (elt) {
+	    elt.onclick = fn;
+	}
     }
-    document.getElementById('openscreenlink').onclick = function() {
-	chrome.app.window.create('open.html');
-    }
+
+    setClickHandler('buttonOpen', openPDF);
+    setClickHandler('buttonExportPDF', exportPDF);
+    setClickHandler('buttonZoomIn', zoomIn);
+    setClickHandler('buttonZoomOut', zoomOut);
+    setClickHandler('buttonUndo', undo);
+    setClickHandler('buttonRedo', redo);
+
+    setClickHandler('buttonToolArrow', selectToolArrow);
+    setClickHandler('buttonToolText', selectToolText);
+    setClickHandler('buttonToolCircle', selectToolCircle);
+    setClickHandler('buttonToolRectangle', selectToolRectangle);
+    setClickHandler('buttonToolSquiggle', selectToolSquiggle);
+    setClickHandler('buttonToolCheckmark', selectToolCheckmark);
+
+    setClickHandler('githublink', function() {
+    	window.open('https://github.com/adlr/PDFSketch');
+    });
+    setClickHandler('openscreenlink', function() {
+	chrome.app.window.create(
+	    'open.html',
+	     {'width': 700,
+	      'height': 500,
+	      'minWidth': 700,
+	      'minHeight': 500}
+	);
+    });
 }
