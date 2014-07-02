@@ -224,11 +224,69 @@ p {
 #naclContainer {
     height: 0;
     flex: none;
-    border-top: 1px solid #2e2e2e;
     display: flex;
     align-items: stretch;
 }
 
 #naclContainer embed {
     flex: 1;
+}
+
+#toolbarWrapper {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+}
+
+#toolbar {
+    position: relative;
+    left: -50%;
+    border-radius: 7px 7px 0 0;
+    border: 2px solid #47aee6;
+    border-bottom: 0;
+    box-shadow: 0 0 10px #777;
+    display: flex;
+    background-color: #2e2e2e;
+}
+
+.toolbarSpacer {
+    width: 1px;
+    background-color: #454545;
+}
+
+#buttonToolArrow {
+    background: url(mock-sprite.png) -1 -177;
+    width: 52px;
+    height: 52px;
+}
+
+#buttonToolText {
+    background: url(mock-sprite.png) -80 -177;
+    width: 52px;
+    height: 52px;
+}
+
+#buttonToolCircle {
+    background: url(mock-sprite.png) -159 -177;
+    width: 52px;
+    height: 52px;
+}
+
+#buttonToolRectangle {
+    background: url(mock-sprite.png) -238 -177;
+    width: 52px;
+    height: 52px;
+}
+
+#buttonToolSquiggle {
+    background: url(mock-sprite.png) -317 -177;
+    width: 52px;
+    height: 52px;
+}
+
+#buttonToolCheckmark {
+    background: url(mock-sprite.png) -317 -177;
+    width: 52px;
+    height: 52px;
 }

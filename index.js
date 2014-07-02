@@ -99,6 +99,7 @@ function openPDF() {
 		HelloTutorialModule.postMessage(info.target.result);
 		document.getElementById('naclContainer').style.flex = 1;
 		document.getElementById('mainarea').style.display = 'none';
+		document.getElementById('toolbarWrapper').style.display = 'block';
 	    }
 	    reader.readAsArrayBuffer(file);
 	});
