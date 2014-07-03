@@ -65,7 +65,8 @@ class Graphic {
         v_flip_(0),
         upper_sibling_(NULL),
         resizing_knob_(kKnobNone),
-        delegate_(NULL) {}
+        delegate_(NULL),
+        editing_(false) {}
   Graphic(const pdfsketchproto::Graphic& msg)
       : frame_(msg.frame()),
         natural_size_(msg.has_natural_size() ?
@@ -78,7 +79,8 @@ class Graphic {
         v_flip_(msg.v_flip()),
         upper_sibling_(NULL),
         resizing_knob_(kKnobNone),
-        delegate_(NULL) {}
+        delegate_(NULL),
+        editing_(false) {}
   virtual ~Graphic() {}
 
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
