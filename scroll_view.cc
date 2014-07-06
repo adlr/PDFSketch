@@ -6,12 +6,7 @@
 
 namespace pdfsketch {
 
-ScrollView::ScrollView()
-    : document_(NULL),
-      h_scroller_(false),
-      h_visible_(false),
-      v_scroller_(true),
-      v_visible_(false) {
+ScrollView::ScrollView() {
   h_scroller_.SetResizeParams(false, false, true, false);
   h_scroller_.SetDelegate(this);
   v_scroller_.SetResizeParams(true, false, false, false);
@@ -105,6 +100,15 @@ void ScrollView::RepositionSubviews() {
   SetNeedsDisplay();
 }
 
+void ScrollView::MoveDocPointToVisibleCenter(const Point& center) {
+  if (h_visible_) {
+    h_scroller_.CenterDocValue(center.x_);
+  }
+  if (v_visible_) {
+    v_scroller_.CenterDocValue(center.y_);
+  }
+}
+
 void ScrollView::Resize(const Size& size) {
   printf("scroll view: resize to: %f x %f\n", size.width_, size.height_);
   SetSize(size);
@@ -126,9 +130,29 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
          clip_view_.size().height_ + show_min);
 }
 
-void ScrollView::ViewFrameChanged(View* view, const Rect& frame) {
-  if (view == document_) {
+void ScrollView::ViewFrameChanged(View* view, const Rect& frame,
+                                  const Rect& old_frame) {
+  if (view && view == document_) {
     RepositionSubviews();
+    if (old_frame.size_ != frame.size_ &&
+        doc_size_.width_ && doc_size_.height_) {
+      // Zoom event
+      double x_ratio = doc_visible_center_.x_ / doc_size_.width_;
+      double y_ratio = doc_visible_center_.y_ / doc_size_.height_;
+      // Try to keep the visible center of the doc in the same place
+      Point new_center(x_ratio * document_->size().width_,
+                       y_ratio * document_->size().height_);
+      printf("Zoom from: %s %s to %s (new size %s)\n",
+             doc_visible_center_.String().c_str(),
+             doc_size_.String().c_str(),
+             new_center.String().c_str(),
+             document_->size().String().c_str());
+      MoveDocPointToVisibleCenter(new_center);
+      printf("Zoom gave me: %s\n",
+             document_->VisibleSubrect().Center().String().c_str());
+    }
+    doc_visible_center_ = document_->VisibleSubrect().Center();
+    doc_size_ = document_->size();
   }
 }
 

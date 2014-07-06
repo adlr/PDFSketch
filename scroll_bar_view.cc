@@ -69,6 +69,8 @@ void ScrollBarView::OnMouseDrag(const MouseInputEvent& event) {
 }
 
 void ScrollBarView::ScrollBy(double delta) {
+  if (delta == 0.0)
+    return;
   show_min_ += delta;
 
   // clamp show_min_ to reasonable range
@@ -81,6 +83,13 @@ void ScrollBarView::ScrollBy(double delta) {
     delegate_->ScrollBarMovedTo(this, show_min_);
 
   SetNeedsDisplay();
+}
+
+void ScrollBarView::CenterDocValue(double value) {
+  double new_min = value - show_size_ / 2.0;
+  printf("Zoom %s scroller: to %f (new min %f from %f)\n",
+         vertical_ ? "vert" : "horiz", value, new_min, show_min_);
+  ScrollBy(new_min - show_min_);
 }
 
 void ScrollBarView::OnMouseUp(const MouseInputEvent& event) {}

@@ -233,7 +233,8 @@ class KeyboardInputEvent {
 
 class ViewDelegate {
  public:
-  virtual void ViewFrameChanged(View* view, const Rect& frame) = 0;
+  virtual void ViewFrameChanged(View* view, const Rect& frame,
+                                const Rect& old_frame) = 0;
 };
 
 class View {

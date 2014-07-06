@@ -16,6 +16,7 @@ class ScrollView : public View,
   virtual std::string Name() const { return "ScrollView"; }
   // Adds document as a subview of this:
   void SetDocumentView(View* document);
+  void MoveDocPointToVisibleCenter(const Point& center);
 
   virtual void Resize(const Size& size);
 
@@ -23,18 +24,21 @@ class ScrollView : public View,
   virtual void ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min);
 
   // ViewDelegate method
-  virtual void ViewFrameChanged(View* view, const Rect& frame);
+  virtual void ViewFrameChanged(View* view, const Rect& frame,
+                                const Rect& old_frame);
 
   virtual void OnScrollEvent(const ScrollInputEvent& event);
 
  private:
   void RepositionSubviews();
 
-  View* document_;
-  ScrollBarView h_scroller_;
-  bool h_visible_;
-  ScrollBarView v_scroller_;
-  bool v_visible_;
+  View* document_{nullptr};
+  Point doc_visible_center_;
+  Size doc_size_;
+  ScrollBarView h_scroller_{false};
+  bool h_visible_{false};
+  ScrollBarView v_scroller_{true};
+  bool v_visible_{false};
 
   View clip_view_;
 };

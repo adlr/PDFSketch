@@ -43,6 +43,7 @@ class ScrollBarView : public View {
   virtual void OnMouseUp(const MouseInputEvent& event);
 
   void ScrollBy(double delta);
+  void CenterDocValue(double value);
 
  private:
   bool vertical_;

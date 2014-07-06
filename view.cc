@@ -216,25 +216,28 @@ void View::Resize(const Size& size) {
 }
 
 void View::SetFrame(const Rect& frame) {
+  Rect old_frame = Frame();
   origin_ = frame.origin_;
   Size new_size = frame.size_.ScaledBy(1 / scale_);
   if (new_size != size_)
     Resize(new_size);
   if (delegate_)
-    delegate_->ViewFrameChanged(this, frame);
+    delegate_->ViewFrameChanged(this, frame, old_frame);
 }
 
 void View::SetSize(const Size& size) {
+  Rect old_frame = Frame();
   size_ = size;
   if (delegate_) {
-    delegate_->ViewFrameChanged(this, Frame());
+    delegate_->ViewFrameChanged(this, Frame(), old_frame);
   }
 }
 
 void View::SetScale(double scale) {
+  Rect old_frame = Frame();
   scale_ = scale;
   if (delegate_)
-    delegate_->ViewFrameChanged(this, Frame());
+    delegate_->ViewFrameChanged(this, Frame(), old_frame);
 }
 
 View* View::OnMouseDown(const MouseInputEvent& event) {
