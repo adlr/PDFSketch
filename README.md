@@ -53,6 +53,7 @@ Build PDFSketch dependencies:
     make poppler
     make protobuf
     make libtar
+    make podofo
 
 build protocol compiler locally:
 
