@@ -86,8 +86,6 @@ void ScrollView::RepositionSubviews() {
            size_.height_ - (use_h ? ScrollBarView::kThickness : 0.0));
   v_scroller_.SetFrame(v_scroller_frame);
 
-  printf("v scroll frame: %s\n", v_scroller_.Frame().String().c_str());
-
   h_visible_ = use_h;
   v_visible_ = use_v;
 
@@ -97,6 +95,22 @@ void ScrollView::RepositionSubviews() {
            size_.width_ - (use_v ? ScrollBarView::kThickness : 0.0),
            size_.height_ - (use_h ? ScrollBarView::kThickness : 0.0));
   clip_view_.SetFrame(clip_frame);
+
+  if (!h_visible_) {
+    // Center doc
+    Point doc_origin = document_->origin();
+    doc_origin.x_ = (clip_view_.size().width_ -
+                     document_->size().width_) / 2.0;
+    document_->SetOrigin(doc_origin);
+  }
+  if (!v_visible_) {
+    // Center doc
+    Point doc_origin = document_->origin();
+    doc_origin.y_ = (clip_view_.size().height_ -
+                     document_->size().height_) / 2.0;
+    document_->SetOrigin(doc_origin);
+  }
+
   SetNeedsDisplay();
 }
 
@@ -132,9 +146,16 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
 
 void ScrollView::ViewFrameChanged(View* view, const Rect& frame,
                                   const Rect& old_frame) {
+  // Make a copy of the Rects, as we are modifying the view that
+  // calls into this.
+  Rect frame_copy = frame;
+  Rect old_frame_copy = old_frame;
   if (view && view == document_) {
+    if (handling_doc_frame_changed_)
+      return;
+    handling_doc_frame_changed_ = true;
     RepositionSubviews();
-    if (old_frame.size_ != frame.size_ &&
+    if (old_frame_copy.size_ != frame_copy.size_ &&
         doc_size_.width_ && doc_size_.height_) {
       // Zoom event
       double x_ratio = doc_visible_center_.x_ / doc_size_.width_;
@@ -142,17 +163,11 @@ void ScrollView::ViewFrameChanged(View* view, const Rect& frame,
       // Try to keep the visible center of the doc in the same place
       Point new_center(x_ratio * document_->size().width_,
                        y_ratio * document_->size().height_);
-      printf("Zoom from: %s %s to %s (new size %s)\n",
-             doc_visible_center_.String().c_str(),
-             doc_size_.String().c_str(),
-             new_center.String().c_str(),
-             document_->size().String().c_str());
       MoveDocPointToVisibleCenter(new_center);
-      printf("Zoom gave me: %s\n",
-             document_->VisibleSubrect().Center().String().c_str());
     }
     doc_visible_center_ = document_->VisibleSubrect().Center();
     doc_size_ = document_->size();
+    handling_doc_frame_changed_ = false;
   }
 }
 

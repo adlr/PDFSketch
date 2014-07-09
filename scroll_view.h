@@ -35,6 +35,7 @@ class ScrollView : public View,
   View* document_{nullptr};
   Point doc_visible_center_;
   Size doc_size_;
+  bool handling_doc_frame_changed_{false};
   ScrollBarView h_scroller_{false};
   bool h_visible_{false};
   ScrollBarView v_scroller_{true};

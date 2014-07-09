@@ -34,6 +34,7 @@ class ScrollBarView : public View {
     doc_max_ = max;
   }
   void SetShowSize(double size) { show_size_ = size; }
+  double show_min() { return show_min_; }
   void SetShowMin(double min) { show_min_ = min; }
   void SetDelegate(ScrollBarDelegate* delegate) {
     delegate_ = delegate;

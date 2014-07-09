@@ -281,6 +281,8 @@ class View {
     right_fixed_to_left_ = right_fixed_to_left;
   }
 
+  const Point& origin() const { return origin_; }
+  Point origin() { return origin_; }
   void SetOrigin(const Point& origin) { origin_ = origin; }
   void SetFrame(const Rect& frame);
   void SetSize(const Size& size);  // does not resize subviews
