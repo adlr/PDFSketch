@@ -72,11 +72,9 @@ bool Squiggle::PlaceComplete() {
   frame_ = Rect(Point(left, top), Point(right, bottom));
   if (frame_.size_ == Size())
     return true;  // empty, so delete
-  printf("final frame: %s\n", frame_.String().c_str());
   Point delta = frame_.origin_.Subtract(old_origin);
   for (auto it = points_.begin(), e = points_.end(); it != e; ++it) {
     *it = it->Add(delta);
-    printf("point at %s\n", it->String().c_str());
   }  
   natural_size_ = frame_.size_;
 
@@ -93,7 +91,6 @@ void Squiggle::Draw(cairo_t* cr, bool selected) {
       frame_.size_.height_ < 1.0e-7)
     return;  // too skinny to draw
   cairo_save(cr);  // transform for h/v flip
-  printf("flips: %d %d\n", h_flip_, v_flip_);
   if (h_flip_) {
     cairo_translate(cr,
                     2.0 * frame_.origin_.x_ + frame_.size_.width_,

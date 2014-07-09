@@ -5,7 +5,6 @@
 namespace pdfsketch {
 
 Rectangle::~Rectangle() {
-  printf("~Rectangle()\n");
 }
 
 void Rectangle::Serialize(pdfsketchproto::Graphic* out) const {

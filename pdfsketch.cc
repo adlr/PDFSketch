@@ -72,38 +72,31 @@ void PDFSketchInstance::SetRedoEnabled(bool enabled) {
 }
 
 int PDFSketchInstance::SetupFS() {
-  printf("calling umount\n");
   int ret = umount("/");
-  printf("umount ret: %d\n", ret);
   if (ret) {
     printf("unmounting root fs failed\n");
     return 1;
   }
   ret = mount("", "/", "memfs", 0, NULL);
-  printf("mount ret: %d\n", ret);
   if (ret) {
     printf("mounting root fs failed\n");
     return 1;
   }
 
-  printf("calling mkdirs\n");
   mkdir("/mnt", 0777);
   mkdir("/mnt/http", 0777);
   mkdir("/mnt/html5", 0777);
-  printf("calling getenv\n");
 
   const char* data_url = getenv("NACL_DATA_URL");
   if (!data_url)
     data_url = "./";
 
-  printf("mounting http\n");
   ret = mount(data_url, "/mnt/http", "httpfs", 0,
               "");
   if (ret) {
     printf("mounting http filesystem failed\n");
     return 1;
   }
-  printf("http mounted\n");
 
   ListAndRemove("/mnt/html5");
 
@@ -133,7 +126,6 @@ int PDFSketchInstance::SetupFS() {
 }
 
 void PDFSketchInstance::SetPDF(const char* doc, size_t doc_len) {
-  printf("calling SetPDF w/ buffer\n");
   pdfsketch::FileIO::OpenPDF(doc, doc_len, &document_view_);
 }
 
@@ -167,7 +159,6 @@ PDFSketchInstance::PDFSketchInstance(PP_Instance instance)
 }
 
 bool PDFSketchInstance::ListAndRemove(const char* dir) {
-  printf("ListAndRemove(%s) start\n", dir);
   DIR* dirp = opendir(dir);
   if (!dirp) {
     printf("unable to open dir %s\n", dir);
@@ -197,18 +188,15 @@ bool PDFSketchInstance::ListAndRemove(const char* dir) {
       printf("unable to stat %s\n", name);
       goto exit;
     }
-    printf("RM: %s (%s)\n", name, !S_ISDIR(stbuf.st_mode) ? "file" : "dir");
     if (!S_ISDIR(stbuf.st_mode)) {
       unlink(name);
     } else {
       ListAndRemove(name);
-      printf("RMDIR: %s\n", name);
       rmdir(name);
     }
   }
 exit:
   closedir(dirp);
-  printf("ListAndRemove(%s) end\n", dir);
   return ret;
 }
 
@@ -255,7 +243,6 @@ void PDFSketchInstance::SetCrosshairCursor() {
 bool PDFSketchInstance::Init(uint32_t argc,
                              const char *argn[],
                              const char *argv[]) {
-  printf("init called\n");
   SetCrosshairCursor();
   RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE |
                      PP_INPUTEVENT_CLASS_KEYBOARD |
@@ -279,9 +266,7 @@ bool PDFSketchInstance::Init(uint32_t argc,
 }
 
 void PDFSketchInstance::DidChangeView(const pp::View& view) {
-  printf("View did change\n");
   if (size_ == view.GetRect().size()) {
-    printf("no size change\n");
     return;
   }
   size_ = view.GetRect().size();
@@ -332,13 +317,11 @@ void PDFSketchInstance::SendPDFOut(const vector<char>& out) {
 }
 
 void PDFSketchInstance::SetPDF(const pp::Var& doc) {
-  printf("SEtPDF called\n");
   pp::VarArrayBuffer vab(doc);
   void* buf = vab.Map();
   size_t length = vab.ByteLength();
   SetPDF(reinterpret_cast<char*>(buf), length);
   vab.Unmap();
-  printf("SetPDF done\n");
 }
 
 void PDFSketchInstance::HandleMessage(const pp::Var& var_message) {
@@ -357,7 +340,6 @@ void PDFSketchInstance::HandleMessage(const pp::Var& var_message) {
   // Get the string message and compare it to "hello".
   std::string message = var_message.AsString();
   const char kZoomPrefix[] = "zoomTo:";
-  printf("got pepper message %s\n", message.c_str());
   if (!strncmp(message.c_str(),
                kZoomPrefix,
                sizeof(kZoomPrefix) - 1)) {
@@ -414,7 +396,6 @@ cairo_t* PDFSketchInstance::AllocateCairo() {
     printf("Bug: image_data_ already allocated\n");
     return NULL;
   }
-  printf("Allocate cairo: %d %d %f\n", size_.width(), size_.height(), scale_);
   image_data_ = new pp::ImageData(this,
                                   PP_IMAGEDATAFORMAT_BGRA_PREMUL,
                                   pp::Size(size_.width() * scale_,
@@ -442,7 +423,6 @@ bool PDFSketchInstance::FlushCairo(
   std::function<void(int32_t)> render_callback =
       [this, complete_callback] (int32_t result) {
     RunOnRenderThread([complete_callback, result] () {
-        printf("cairo paint is complete %s\n", __func__);
         complete_callback(result);
       });
   };
@@ -456,7 +436,6 @@ bool PDFSketchInstance::FlushCairo(
     delete callback_pointer;
     return false;
   }
-  printf("paint cairo good return\n");
   return true;
 }
 

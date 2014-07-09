@@ -124,7 +124,6 @@ void ScrollView::MoveDocPointToVisibleCenter(const Point& center) {
 }
 
 void ScrollView::Resize(const Size& size) {
-  printf("scroll view: resize to: %f x %f\n", size.width_, size.height_);
   SetSize(size);
   RepositionSubviews();
 }
@@ -140,8 +139,6 @@ void ScrollView::ScrollBarMovedTo(ScrollBarView* scroll_bar, double show_min) {
     doc_frame.origin_.y_ = -show_min;
   }
   document_->SetFrame(doc_frame);
-  printf("doc height: %f bot: %f\n", document_->size().height_,
-         clip_view_.size().height_ + show_min);
 }
 
 void ScrollView::ViewFrameChanged(View* view, const Rect& frame,

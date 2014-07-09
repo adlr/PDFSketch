@@ -87,8 +87,6 @@ void ScrollBarView::ScrollBy(double delta) {
 
 void ScrollBarView::CenterDocValue(double value) {
   double new_min = value - show_size_ / 2.0;
-  printf("Zoom %s scroller: to %f (new min %f from %f)\n",
-         vertical_ ? "vert" : "horiz", value, new_min, show_min_);
   ScrollBy(new_min - show_min_);
 }
 

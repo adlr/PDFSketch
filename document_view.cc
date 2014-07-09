@@ -26,15 +26,10 @@ const double kSpacing = 20.0;  // between pages
 }  // namespace {}
 
 void DocumentView::LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length) {
-  printf("called LoadFromPDF with size %zu\n", pdf_doc_length);
-  // if (doc_)
-  //   delete doc_;
   poppler_doc_data_.clear();
   poppler_doc_data_.insert(poppler_doc_data_.begin(),
                            pdf_doc,
                            pdf_doc + pdf_doc_length);
-  // doc_ = new poppler::SimpleDocument(&poppler_doc_data_[0],
-  //                                    poppler_doc_data_.size());
   poppler_doc_.reset(poppler::document::load_from_raw_data(&poppler_doc_data_[0], poppler_doc_data_.size()));
 
   UpdateSize();
@@ -75,7 +70,6 @@ void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
 
 void DocumentView::SetZoom(double zoom) {
   zoom_ = zoom;
-  printf("zoom is %f\n", zoom_);
   UpdateSize();
 }
 
@@ -204,7 +198,6 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     poppler::page_renderer renderer;
     for (int i = 0; i < poppler_doc_->pages(); i++) {
       Rect page_rect = PageRect(i);
-      printf("page rect(%d): %s\n", i, page_rect.String().c_str());
       if (!cached_subrect_.Intersects(page_rect.ScaledBy(device_zoom)))
         continue;
       // draw this page
@@ -221,7 +214,6 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       cairo_fill(cache_cr);
       cairo_translate(cache_cr, page_rect.origin_.x_, page_rect.origin_.y_);
       cairo_scale(cache_cr, zoom_, zoom_);
-      printf("rendering page %d\n", i);
 
       unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
       if (!page.get())
@@ -229,9 +221,6 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
       renderer.cairo_render_page(cache_cr,
                                  page.get(),
                                  false);  // TODO(adlr): rotation?
-      // doc_->RenderPage(i, false, cache_cr);
-
-      printf("rendering page (done)\n");
       cairo_restore(cache_cr);
     }
     cairo_destroy(cache_cr);
@@ -274,22 +263,8 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     // draw this page
     cairo_save(cr);
 
-    // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    // cairo_set_line_width(cr, 1.0);
-    // Rect outline = page_rect.InsetBy(-0.5);
-    // outline.CairoRectangle(cr);
-    // cairo_stroke(cr);
-
-    // cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    // page_rect.CairoRectangle(cr);
-    // cairo_fill(cr);
-
     cairo_translate(cr, page_rect.origin_.x_, page_rect.origin_.y_);
     cairo_scale(cr, zoom_, zoom_);
-
-    // printf("rendering page\n");
-    // doc_->RenderPage(i, false, cr);
-    // printf("rendering page (done)\n");
 
     // Draw graphics
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
@@ -338,15 +313,12 @@ void DocumentView::ExportPDF(vector<char>* out) {
     cairo_pdf_surface_set_size(surface, pg_size.width_, pg_size.height_);
     // for each page:
     cairo_save(cr);
-    printf("rendering page\n");
     unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
     if (!page.get())
       printf("BUG: NULL page during export\n");
     renderer.cairo_render_page(cr,
                                page.get(),
                                true);  // TODO(adlr): rotation?
-    // doc_->RenderPage(i, true, cr);
-    printf("rendering complete\n");
     // Draw graphics
     for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
       if (gr->Page() != i)
@@ -370,14 +342,12 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       Point pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                      gr->Page());
       int knob = kKnobNone;
-      printf("testing graphic for knob hit\n");
       if ((knob = gr->PointInKnob(pos)) != kKnobNone) {
         resize_graphic_original_frame_ = gr->Frame();
         resizing_graphic_ = gr;
         gr->BeginResize(pos, knob, false);
         return this;
       }
-      printf("no hit\n");
     }
   }
 
@@ -444,8 +414,6 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
 
   if (!selected_graphics_.empty()) {
     // Move
-    printf("Move from %s to %s\n", last_move_pos_.String().c_str(),
-           event.position().String().c_str());
     Point pos = event.position().ScaledBy(1.0 / zoom_);
     double dx = pos.x_ - last_move_pos_.x_;
     double dy = pos.y_ - last_move_pos_.y_;
