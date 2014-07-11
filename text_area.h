@@ -41,14 +41,11 @@ namespace pdfsketch {
 
 class TextArea : public Graphic {
  public:
-  TextArea()
-      : selection_start_(0),
-        selection_size_(0) {}
+  TextArea() {}
   TextArea(const pdfsketchproto::Graphic& msg)
       : Graphic(msg),
         text_(msg.text_area().text()),
-        selection_start_(text_.size()),
-        selection_size_(0) {}
+        selection_start_(text_.size()) {}
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);
@@ -82,8 +79,12 @@ class TextArea : public Graphic {
   std::string text_;
   std::vector<double> left_edges_;
 
-  size_t selection_start_;
-  size_t selection_size_;
+  size_t selection_start_{0};
+  size_t selection_size_{0};
+
+  // If the cursor is on the left or right end of the selection.
+  enum SelectionSide { kLeft, kRight };
+  SelectionSide cursor_side_{kLeft};
 };
 
 }  // namespace pdfsketch

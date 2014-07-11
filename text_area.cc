@@ -53,6 +53,7 @@ void TextArea::OnKeyText(const KeyboardInputEvent& event) {
 }
 
 void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
+  bool shift_down = event.modifiers() & KeyboardInputEvent::kShift;
   printf("got keydown %s%s%s%s%d\n",
          event.modifiers() & KeyboardInputEvent::kShift ? "shift-" : "",
          event.modifiers() & KeyboardInputEvent::kControl ? "ctrl-" : "",
@@ -77,35 +78,56 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
     }
   }
   if (event.keycode() == 37) {  // left arrow
-    selection_size_ = 0;
-    if (selection_start_ > 0)
-      selection_start_--;
+    if (shift_down) {
+      if (selection_start_ > 0 &&
+          (cursor_side_ == kLeft ||
+           selection_size_ == 0)) {
+        // Grow left
+        cursor_side_ = kLeft;
+        selection_start_--;
+        selection_size_++;
+      } else if (cursor_side_ == kRight &&
+                 selection_size_ > 0) {
+        // Shirk left
+        selection_size_--;
+      }
+    } else {
+      if (selection_start_ > 0 && selection_size_ == 0)
+        selection_start_--;
+      selection_size_ = 0;
+    }
   }
   if (event.keycode() == 39) {  // right arrow
-    selection_start_ += selection_size_;
-    selection_size_ = 0;
-    if (selection_start_ < text_.size())
-      selection_start_++;
+    if (shift_down) {
+      if ((cursor_side_ == kRight || selection_size_ == 0) &&
+          (selection_size_ + selection_start_ < text_.size())) {
+        // Grow right
+        cursor_side_ = kRight;
+        selection_size_++;
+      } else if (cursor_side_ == kLeft && selection_size_ > 0) {
+        // Shrink right
+        selection_size_--;
+        selection_start_++;
+      }
+    } else {
+      if (selection_start_ < text_.size() && selection_size_ == 0)
+        selection_start_++;
+      selection_start_ += selection_size_;
+      selection_size_ = 0;
+    }
   }
   if (event.keycode() == 65 &&
       (event.modifiers() & KeyboardInputEvent::kControl)) {
     // Select all
     selection_start_ = 0;
     selection_size_ = text_.size();
+    cursor_side_ = kRight;
   }
   SetNeedsDisplay(false);
 }
 
 void TextArea::OnKeyUp(const KeyboardInputEvent& event) {
 }
-
-// namespace {
-// double GetTextDisplayWidth(cairo_t* cr, const string& str) {
-//   cairo_text_extents_t ext;
-//   cairo_text_extents(cr, str.c_str(), &ext);
-//   return ext.width;
-// }
-// }  // namespace {}
 
 void TextArea::UpdateLeftEdges(cairo_t* cr) {
   const double max_width = frame_.size_.width_;
@@ -230,7 +252,8 @@ void TextArea::Draw(cairo_t* cr, bool selected) {
   if (IsEditing() && selection_size_) {
     // Draw hilight for selection
     cairo_save(cr);
-    for (size_t i = selection_start_; i < selection_size_; i++) {
+    for (size_t i = selection_start_;
+         i < (selection_start_ + selection_size_); i++) {
       Point letter_origin(left_edges_[i],
                           GetRowIndex(i) * extents.height);
       double width = left_edges_[i + 1] - left_edges_[i];
