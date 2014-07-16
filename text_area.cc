@@ -54,6 +54,8 @@ void TextArea::OnKeyText(const KeyboardInputEvent& event) {
 
 void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
   bool shift_down = event.modifiers() & KeyboardInputEvent::kShift;
+  bool control_down =
+      event.modifiers() & KeyboardInputEvent::kControl;
   printf("got keydown %s%s%s%s%d\n",
          event.modifiers() & KeyboardInputEvent::kShift ? "shift-" : "",
          event.modifiers() & KeyboardInputEvent::kControl ? "ctrl-" : "",
@@ -77,43 +79,56 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       text_.erase(text_.begin() + selection_start_);
     }
   }
-  if (event.keycode() == 37) {  // left arrow
-    if (shift_down) {
-      if (selection_start_ > 0 &&
-          (cursor_side_ == kLeft ||
-           selection_size_ == 0)) {
-        // Grow left
-        cursor_side_ = kLeft;
-        selection_start_--;
-        selection_size_++;
-      } else if (cursor_side_ == kRight &&
-                 selection_size_ > 0) {
-        // Shirk left
-        selection_size_--;
-      }
-    } else {
-      if (selection_start_ > 0 && selection_size_ == 0)
-        selection_start_--;
+  if (event.keycode() == 37 || event.keycode() == 39) {
+    // Left, right arrows. Move cursor.
+    // Special case: left or right w/o shift when there's a selection.
+    // Just move to the edge of the old selection.
+    if (!shift_down && !control_down && selection_size_ > 0) {
+      if (event.keycode() == 39)
+        selection_start_ += selection_size_;
       selection_size_ = 0;
-    }
-  }
-  if (event.keycode() == 39) {  // right arrow
-    if (shift_down) {
-      if ((cursor_side_ == kRight || selection_size_ == 0) &&
-          (selection_size_ + selection_start_ < text_.size())) {
-        // Grow right
-        cursor_side_ = kRight;
-        selection_size_++;
-      } else if (cursor_side_ == kLeft && selection_size_ > 0) {
-        // Shrink right
-        selection_size_--;
-        selection_start_++;
-      }
     } else {
-      if (selection_start_ < text_.size() && selection_size_ == 0)
-        selection_start_++;
-      selection_start_ += selection_size_;
-      selection_size_ = 0;
+      size_t new_cursor = CursorPos();
+      if (!control_down) {
+        if (event.keycode() == 37 && new_cursor > 0)
+          new_cursor--;
+        if (event.keycode() == 39 && new_cursor < text_.size())
+          new_cursor++;
+      } else {
+        if (event.keycode() == 37) {
+          // Scan backwards for word boundary
+          if (new_cursor > 0)
+            new_cursor--;
+          while (new_cursor > 0) {
+            if (isalpha(text_[new_cursor - 1]))
+              new_cursor--;
+            else
+              break;
+          }
+        }
+        if (event.keycode() == 39) {
+          // Scan forwards for word boundary
+          if (new_cursor < text_.size())
+            new_cursor++;
+          while (new_cursor < text_.size()) {
+            if (isalpha(text_[new_cursor]))
+              new_cursor++;
+            else
+              break;
+          }
+        }
+      }
+      if (!shift_down) {
+        selection_start_ = new_cursor;
+        selection_size_ = 0;
+      } else {
+        // Modify selection
+        size_t new_sel_start = std::min(NonCursorPos(), new_cursor);
+        size_t new_sel_end = std::max(NonCursorPos(), new_cursor);
+        cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
+        selection_start_ = new_sel_start;
+        selection_size_ = new_sel_end - new_sel_start;
+      }
     }
   }
   if (event.keycode() == 65 &&

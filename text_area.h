@@ -73,6 +73,16 @@ class TextArea : public Graphic {
   std::string DebugLeftEdges();
   size_t GetRowIndex(size_t index);
 
+  size_t CursorPos() const {
+    return (cursor_side_ == kLeft) ? selection_start_
+        : selection_start_ + selection_size_;
+  }
+  // returns other side of selection
+  size_t NonCursorPos() const {
+    return (cursor_side_ == kRight) ? selection_start_
+        : selection_start_ + selection_size_;
+  }
+
   void EraseSelection();
 
   // These two should have the same length:
