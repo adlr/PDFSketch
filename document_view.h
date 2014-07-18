@@ -20,24 +20,16 @@ namespace pdfsketch {
 class DocumentView : public View,
                      public GraphicDelegate {
  public:
-  DocumentView()
-      : undo_manager_(NULL),
-        // doc_(NULL),
-        cached_surface_device_zoom_(1.0),
-        cached_surface_(NULL),
-        zoom_(1.0),
-        toolbox_(NULL),
-        bottom_graphic_(NULL),
-        placing_graphic_(NULL),
-        editing_graphic_(NULL),
-        resizing_graphic_(NULL) {}
+  DocumentView() {}
   virtual std::string Name() const { return "DocumentView"; }
   virtual void DrawRect(cairo_t* cr, const Rect& rect);
   void LoadFromPDF(const char* pdf_doc, size_t pdf_doc_length);
   void GetPDFData(const char** out_buf, size_t* out_len) const;
   void SetZoom(double zoom);
   void ExportPDF(std::vector<char>* out);
-  void Serialize(pdfsketchproto::Document* msg) const;
+  void Serialize(pdfsketchproto::Document* msg) const {
+    SerializeGraphics(false, msg);
+  }
   void SetToolbox(Toolbox* toolbox) {
     toolbox_ = toolbox;
   }
@@ -62,6 +54,9 @@ class DocumentView : public View,
   virtual void OnMouseDrag(const MouseInputEvent& event);
   virtual void OnMouseUp(const MouseInputEvent& event);
 
+  virtual std::string OnCopy();
+  virtual bool OnPaste(const std::string& str);
+
   void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
                         double dx, double dy);
   void SetGraphicFrameUndo(Graphic* gr, Rect frame);
@@ -70,6 +65,9 @@ class DocumentView : public View,
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
 
  private:
+  void SerializeGraphics(bool selected_only,
+                         pdfsketchproto::Document* msg) const;
+
   void UpdateSize();
   Size PageSize(int page) const;
   Rect PageRect(int page) const;
@@ -91,7 +89,7 @@ class DocumentView : public View,
   std::shared_ptr<Graphic> SharedPtrForGraphic(Graphic* graphic) const;
   void RemoveGraphicsUndo(std::set<Graphic*> graphics);
 
-  UndoManager* undo_manager_;
+  UndoManager* undo_manager_{nullptr};
 
   // Returns the shard_ptr of the removed graphic, incase you want to
   // move it somewhere. If you ignore the return value, graphic may
@@ -101,19 +99,19 @@ class DocumentView : public View,
   // poppler::SimpleDocument* doc_;
   std::vector<char> poppler_doc_data_;
   std::unique_ptr<poppler::document> poppler_doc_;
-  float cached_surface_device_zoom_;
+  float cached_surface_device_zoom_{1.0};
   Rect cached_subrect_;
-  cairo_surface_t* cached_surface_;  // TODO(adlr): free in dtor
+  cairo_surface_t* cached_surface_{nullptr};  // TODO(adlr): free in dtor
 
-  double zoom_;
-  Toolbox* toolbox_;
+  double zoom_{1.0};
+  Toolbox* toolbox_{nullptr};
   std::shared_ptr<Graphic> top_graphic_;
-  Graphic* bottom_graphic_;
-  Graphic* placing_graphic_;
-  Graphic* editing_graphic_;
+  Graphic* bottom_graphic_{nullptr};
+  Graphic* placing_graphic_{nullptr};
+  Graphic* editing_graphic_{nullptr};
 
   std::set<Graphic*> selected_graphics_;
-  Graphic* resizing_graphic_;
+  Graphic* resizing_graphic_{nullptr};
   Point last_move_pos_;
   Point start_move_pos_;
 

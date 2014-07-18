@@ -20,6 +20,19 @@ var onPluginLoaded = function() {
     updateStatus('Loaded');
 }
 
+function copyString(str) {
+    var old_elt = document.activeElement;
+    var clipboardio = document.getElementById('clipboardio');
+    clipboardio.value = str;
+    clipboardio.select();
+    document.execCommand('copy');
+    old_elt.focus();
+}
+
+function paste() {
+    document.execCommand('paste');
+}
+
 function errorHandler(err) {
     console.log(err);
 }
@@ -81,6 +94,13 @@ function onPluginMessage(message_event) {
 	var REDO_ENABLED_PREFIX = 'redoEnabled:';
 	if (stringStartsWith(message_event.data, REDO_ENABLED_PREFIX)) {
 	    setRedoEnabled(message_event.data.slice(REDO_ENABLED_PREFIX.length));
+	}
+	var COPY_PREFIX = 'copy:';
+	if (stringStartsWith(message_event.data, COPY_PREFIX)) {
+	    copyString(message_event.data.slice(COPY_PREFIX.length));
+	}
+	if (message_event.data == 'paste') {
+	    paste();
 	}
 	// console.log(message_event.data);
 	return;
@@ -254,6 +274,25 @@ window.onload = function() {
     document.getElementById('buttonToolRectangle').onclick = selectToolRectangle;
     document.getElementById('buttonToolSquiggle').onclick = selectToolSquiggle;
     document.getElementById('buttonToolCheckmark').onclick = selectToolCheckmark;
+    document.getElementById('pasteButton').onclick = function() {
+	document.execCommand('paste');
+    }
+
+    document.body.onpaste = function(e) {
+	var items = event.clipboardData.items;
+	if (items.length == 1 && items[0].kind == 'string') {
+	    items[0].getAsString(function(value) {
+		HelloTutorialModule.postMessage('paste:' + value);
+	    });
+	    return;
+	}
+	console.log('onpaste called. ' + items.length + ' items');
+	for (var i = 0; i < items.length; i++) {
+	    console.log('kind: ' + items[i].kind +
+			' type: ' + items[i].type);
+	    console.log(items[i]);
+	}
+    }
 
     var githubLink = document.getElementById('githublink');
     githubLink.onclick = function() {

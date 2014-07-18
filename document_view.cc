@@ -6,6 +6,7 @@
 
 #include <cairo.h>
 #include <cairo-pdf.h>
+#include <google/protobuf/text_format.h>
 #include <poppler-page.h>
 #include <poppler-page-renderer.h>
 
@@ -16,6 +17,7 @@ using std::make_pair;
 using std::pair;
 using std::set;
 using std::shared_ptr;
+using std::string;
 using std::unique_ptr;
 using std::vector;
 
@@ -61,8 +63,19 @@ void DocumentView::UpdateSize() {
   cached_subrect_ = Rect();
 }
 
-void DocumentView::Serialize(pdfsketchproto::Document* msg) const {
+namespace {
+template<typename Set, typename Key>
+bool SetContainsKey(const Set& the_set, const Key& the_key) {
+  return the_set.find(the_key) != the_set.end();
+}
+}  // namespace {}
+
+void DocumentView::SerializeGraphics(
+    bool selected_only,
+    pdfsketchproto::Document* msg) const {
   for (Graphic* gr = bottom_graphic_; gr; gr = gr->upper_sibling_) {
+    if (selected_only && !SetContainsKey(selected_graphics_, gr))
+      continue;
     pdfsketchproto::Graphic* gr_msg = msg->add_graphic();
     gr->Serialize(gr_msg);
   }
@@ -500,6 +513,24 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
 
         });
   }
+}
+
+string DocumentView::OnCopy() {
+  // if (editing_graphic_)
+  //   return editing_graphic_->OnCopy();
+  printf("called doc view on copy\n");
+  string ret;
+  if (selected_graphics_.empty())
+    return ret;
+  pdfsketchproto::Document msg;
+  SerializeGraphics(true, &msg);
+  google::protobuf::TextFormat::PrintToString(msg, &ret);
+  return ret;
+}
+
+bool DocumentView::OnPaste(const string& str) {
+  printf("PASTE in doc view: [%s]\n", str.c_str());
+  return true;
 }
 
 void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,

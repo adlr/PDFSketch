@@ -46,6 +46,17 @@ void RootView::Resize(const Size& size) {
   SetNeedsDisplay();
 }
 
+namespace {
+bool IsCopy(const KeyboardInputEvent& evt) {
+  return evt.modifiers() == KeyboardInputEvent::kControl &&
+      evt.keycode() == 67;
+}
+bool IsPaste(const KeyboardInputEvent& evt) {
+  return evt.modifiers() == KeyboardInputEvent::kControl &&
+      evt.keycode() == 86;
+}
+}  // namespace {}
+
 void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
                                       float scale) {
   switch (event.GetType()) {
@@ -107,6 +118,15 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
                              key_evt.GetKeyCode(),
                              key_evt.GetModifiers() &
                              KeyboardInputEvent::kModifiersMask);
+      if (IsCopy(evt)) {
+        if (delegate_)
+          delegate_->CopyToClipboard(OnCopy());
+        return;
+      }
+      if (IsPaste(evt)) {
+        if (delegate_)
+          delegate_->RequestPaste();
+      }
       OnKeyDown(evt);
       return;
     }
@@ -116,6 +136,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
                              key_evt.GetKeyCode(),
                              key_evt.GetModifiers() &
                              KeyboardInputEvent::kModifiersMask);
+      if (IsCopy(evt) || IsPaste(evt))
+        return;
       OnKeyUp(evt);
       return;
     }

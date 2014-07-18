@@ -359,6 +359,15 @@ void PDFSketchInstance::HandleMessage(const pp::Var& var_message) {
       });
     return;
   }
+  const char kPastePrefix[] = "paste:";
+  if (!strncmp(message.c_str(),
+               kPastePrefix,
+               sizeof(kPastePrefix) - 1)) {
+    string contents = message.substr(sizeof(kPastePrefix) - 1);
+    RunOnRenderThread([this, contents] () {
+        root_view_.OnPaste(contents);
+      });
+  }
   if (message == "save") {
     RunOnRenderThread([this] () {
         SaveFile();
@@ -437,6 +446,14 @@ bool PDFSketchInstance::FlushCairo(
     return false;
   }
   return true;
+}
+
+void PDFSketchInstance::CopyToClipboard(const string& str) {
+  PostMessage(pp::Var(string("copy:") + str));
+}
+
+void PDFSketchInstance::RequestPaste() {
+  PostMessage(pp::Var("paste"));
 }
 
 void PDFSketchInstance::SaveFile() {

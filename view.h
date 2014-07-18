@@ -303,6 +303,11 @@ class View {
   // Button is up here. Returns true if consumed.
   virtual bool OnMouseMove(const MouseInputEvent& event) { return true; }
 
+  // By default, OnCopy/OnPaste pass to subviews.
+  // They return "" or false if they are unhandled.
+  virtual std::string OnCopy();
+  virtual bool OnPaste(const std::string& str);
+
   // You must pass in a direct subview of this.
   Point ConvertPointToSubview(const View& subview, Point point) const;
   Rect ConvertRectToSubview(const View& subview, const Rect& rect) const;

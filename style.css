@@ -38,3 +38,11 @@ button {
 #naclPlugin {
     flex: 1;
 }
+
+#clipboardio {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    left: -20px;
+    top: -20px;
+}

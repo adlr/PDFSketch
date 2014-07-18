@@ -60,6 +60,8 @@ class PDFSketchInstance : public pp::Instance,
   void SetSize(const pp::Size& size, float scale);
   virtual cairo_t* AllocateCairo();
   virtual bool FlushCairo(std::function<void(int32_t)> complete_callback);
+  virtual void CopyToClipboard(const std::string& str);
+  virtual void RequestPaste();
 
  public:
   pp::CompletionCallbackFactory<PDFSketchInstance> callback_factory_;

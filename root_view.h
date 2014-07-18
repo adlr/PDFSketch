@@ -15,6 +15,8 @@ class RootViewDelegate {
  public:
   virtual cairo_t* AllocateCairo() = 0;
   virtual bool FlushCairo(std::function<void(int32_t)> complete_callback) = 0;
+  virtual void CopyToClipboard(const std::string& str) = 0;
+  virtual void RequestPaste() = 0;
 };
 
 class RootView : public View {

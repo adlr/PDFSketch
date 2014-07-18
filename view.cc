@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+using std::string;
+
 namespace pdfsketch {
 
 Rect Rect::Intersect(const Rect& that) const {
@@ -278,6 +280,23 @@ void View::OnScrollEvent(const ScrollInputEvent& event) {
   // TODO(adlr): Only pass where mouse pointer is
   for (View* child = top_child_; child; child = child->lower_sibling_)
     child->OnScrollEvent(event);
+}
+
+string View::OnCopy() {
+  string ret;
+  for (View* child = top_child_; child; child = child->lower_sibling_) {
+    ret = child->OnCopy();
+    if (!ret.empty())
+      break;
+  }
+  return ret;
+}
+
+bool View::OnPaste(const string& str) {
+  for (View* child = top_child_; child; child = child->lower_sibling_)
+    if (child->OnPaste(str))
+      return true;
+  return false;
 }
 
 Point View::ConvertPointFromSubview(const View& subview, const Point& point) const {
