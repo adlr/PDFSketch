@@ -20,6 +20,8 @@ class GraphicFactory {
       const Toolbox::Tool& type);
   static std::shared_ptr<Graphic> NewGraphic(
       const pdfsketchproto::Graphic& msg);
+  static std::shared_ptr<Graphic> NewText(
+      const std::string& str);
 };
 
 }  // namespace pdfsketch

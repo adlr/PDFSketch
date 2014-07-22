@@ -10,6 +10,7 @@
 
 using std::make_shared;
 using std::shared_ptr;
+using std::string;
 
 namespace pdfsketch {
 
@@ -48,6 +49,13 @@ std::shared_ptr<Graphic> GraphicFactory::NewGraphic(
       return make_shared<Checkmark>(msg);
   }
   return shared_ptr<Graphic>(NULL);
+}
+
+std::shared_ptr<Graphic> GraphicFactory::NewText(
+    const string& str) {
+  std::shared_ptr<TextArea> ret(make_shared<TextArea>());
+  ret->set_text(str);
+  return ret;
 }
 
 }  // namespace pdfsketch

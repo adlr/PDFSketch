@@ -134,6 +134,13 @@ Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
   return point.ScaledBy(zoom_).TranslatedBy(page_rect.Left(), page_rect.Top());
 }
 
+void DocumentView::GetVisibleCenterPageAndPoint(Point* out_point,
+                                                int* out_page) const {
+  Point center = VisibleSubrect().Center();
+  *out_page = PageForPoint(center);
+  *out_point = ConvertPointToPage(center, *out_page);
+}
+
 void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
                                       Graphic* upper_sibling) {
   graphic->SetDelegate(this);
@@ -155,6 +162,16 @@ void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
     upper_sibling->lower_sibling_ = graphic;
   }
   graphic->SetNeedsDisplay(GraphicIsSelected(graphic.get()));
+}
+
+void DocumentView::InsertGraphicAfterUndo(shared_ptr<Graphic> graphic,
+                                          Graphic* upper_sibling) {
+  InsertGraphicAfter(graphic, upper_sibling);
+  set<Graphic*> gr;
+  gr.insert(graphic.get());
+  undo_manager_->AddClosure([this, gr] () {
+      RemoveGraphicsUndo(gr);
+    });
 }
 
 shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
@@ -530,6 +547,32 @@ string DocumentView::OnCopy() {
 
 bool DocumentView::OnPaste(const string& str) {
   printf("PASTE in doc view: [%s]\n", str.c_str());
+  pdfsketchproto::Document msg;
+  if (google::protobuf::TextFormat::ParseFromString(str, &msg)) {
+    // Success in parsing
+    printf("parse success\n");
+    for (int i = 0; i < msg.graphic_size(); i++) {
+      const pdfsketchproto::Graphic& gr = msg.graphic(i);
+      shared_ptr<Graphic> new_graphic(GraphicFactory::NewGraphic(gr));
+      // Move the graphic a tad when pasting
+      new_graphic->frame_ = new_graphic->frame_.TranslatedBy(10.0, 10.0);
+      InsertGraphicAfterUndo(new_graphic, NULL);
+    }
+  } else {
+    // Create a new text graphic or pass to editing.
+    // if (editing_graphic_)
+    //   return editing_graphic_->OnPaste(str);
+    shared_ptr<Graphic> new_text(GraphicFactory::NewText(str));
+    Point page_center;
+    int page = 0;
+    GetVisibleCenterPageAndPoint(&page_center, &page);
+    new_text->page_ = page;
+    new_text->frame_.origin_ = page_center.TranslatedBy(
+        -new_text->frame_.size_.width_ / 2.0,
+        -new_text->frame_.size_.height_ / 2.0);
+    InsertGraphicAfterUndo(new_text, NULL);
+  }
+
   return true;
 }
 

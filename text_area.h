@@ -41,11 +41,15 @@ namespace pdfsketch {
 
 class TextArea : public Graphic {
  public:
-  TextArea() {}
+  TextArea() {
+    frame_.size_.width_ = 150.0;
+  }
   TextArea(const pdfsketchproto::Graphic& msg)
       : Graphic(msg),
         text_(msg.text_area().text()),
-        selection_start_(text_.size()) {}
+        selection_start_(text_.size()) {
+    frame_.size_.width_ = 150.0;
+  }
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
   virtual void Place(int page, const Point& location, bool constrain);
   virtual void PlaceUpdate(const Point& location, bool constrain);
@@ -57,6 +61,10 @@ class TextArea : public Graphic {
   virtual void OnKeyText(const KeyboardInputEvent& event);
   virtual void OnKeyDown(const KeyboardInputEvent& event);
   virtual void OnKeyUp(const KeyboardInputEvent& event);
+
+  void set_text(const std::string& str) {
+    text_ = str;
+  }
 
   // virtual void BeginResize(const Point& location, int knob, bool constrain);
   // virtual void UpdateResize(const Point& location, bool constrain);

@@ -79,8 +79,13 @@ class DocumentView : public View,
   Point ConvertPointToPage(const Point& point, int page) const;
   Point ConvertPointFromPage(const Point& point, int page) const;
 
+  void GetVisibleCenterPageAndPoint(Point* out_point,
+                                    int* out_page) const;
+
   void InsertGraphicAfter(std::shared_ptr<Graphic> graphic,
                           Graphic* upper_sibling);
+  void InsertGraphicAfterUndo(std::shared_ptr<Graphic> graphic,
+                              Graphic* upper_sibling);
 
   bool GraphicIsSelected(Graphic* graphic) {
     return selected_graphics_.find(graphic) != selected_graphics_.end();
