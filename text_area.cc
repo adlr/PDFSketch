@@ -144,6 +144,16 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
 void TextArea::OnKeyUp(const KeyboardInputEvent& event) {
 }
 
+bool TextArea::OnPaste(const std::string& str) {
+  if (str.empty())
+    return false;
+  text_.replace(selection_start_, selection_size_, str);
+  selection_start_ += str.size();
+  selection_size_ = 0;
+  SetNeedsDisplay(false);
+  return true;
+}
+
 void TextArea::UpdateLeftEdges(cairo_t* cr) {
   const double max_width = frame_.size_.width_;
   double left_edge = 0.0;

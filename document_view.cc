@@ -550,6 +550,7 @@ bool DocumentView::OnPaste(const string& str) {
   pdfsketchproto::Document msg;
   if (google::protobuf::TextFormat::ParseFromString(str, &msg)) {
     // Success in parsing
+    selected_graphics_.clear();
     printf("parse success\n");
     for (int i = 0; i < msg.graphic_size(); i++) {
       const pdfsketchproto::Graphic& gr = msg.graphic(i);
@@ -557,11 +558,12 @@ bool DocumentView::OnPaste(const string& str) {
       // Move the graphic a tad when pasting
       new_graphic->frame_ = new_graphic->frame_.TranslatedBy(10.0, 10.0);
       InsertGraphicAfterUndo(new_graphic, NULL);
+      selected_graphics_.insert(new_graphic.get());
     }
   } else {
     // Create a new text graphic or pass to editing.
-    // if (editing_graphic_)
-    //   return editing_graphic_->OnPaste(str);
+    if (editing_graphic_)
+      return editing_graphic_->OnPaste(str);
     shared_ptr<Graphic> new_text(GraphicFactory::NewText(str));
     Point page_center;
     int page = 0;
@@ -571,6 +573,8 @@ bool DocumentView::OnPaste(const string& str) {
         -new_text->frame_.size_.width_ / 2.0,
         -new_text->frame_.size_.height_ / 2.0);
     InsertGraphicAfterUndo(new_text, NULL);
+    selected_graphics_.clear();
+    selected_graphics_.insert(new_text.get());
   }
 
   return true;

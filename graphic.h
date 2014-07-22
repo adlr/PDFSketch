@@ -108,6 +108,9 @@ class Graphic {
   virtual void OnKeyDown(const KeyboardInputEvent& event) {}
   virtual void OnKeyUp(const KeyboardInputEvent& event) {}
 
+  // Return true if handled
+  virtual bool OnPaste(const std::string& str) { return false; }
+
   virtual void BeginResize(const Point& location, int knob, bool constrain);
   virtual void UpdateResize(const Point& location, bool constrain);
   virtual void EndResize();

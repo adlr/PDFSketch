@@ -62,6 +62,8 @@ class TextArea : public Graphic {
   virtual void OnKeyDown(const KeyboardInputEvent& event);
   virtual void OnKeyUp(const KeyboardInputEvent& event);
 
+  virtual bool OnPaste(const std::string& str);
+
   void set_text(const std::string& str) {
     text_ = str;
   }
