@@ -66,7 +66,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
       MouseInputEvent evt(Point(mouse_pos.x() * scale,
                                 mouse_pos.y() * scale),
                           MouseInputEvent::DOWN,
-                          mouse_evt.GetClickCount());
+                          mouse_evt.GetClickCount(),
+                          mouse_evt.GetModifiers());
       down_mouse_handler_ = OnMouseDown(evt);
       return;
     }
@@ -78,7 +79,8 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
       MouseInputEvent evt(Point(mouse_pos.x() * scale,
                                 mouse_pos.y() * scale),
                           MouseInputEvent::UP,
-                          mouse_evt.GetClickCount());
+                          mouse_evt.GetClickCount(),
+                          mouse_evt.GetModifiers());
       evt.UpdateToSubview(down_mouse_handler_, this);
       down_mouse_handler_->OnMouseUp(evt);
       return;
@@ -92,13 +94,15 @@ void RootView::HandlePepperInputEvent(const pp::InputEvent& event,
         MouseInputEvent evt(Point(mouse_pos.x() * scale,
                                   mouse_pos.y() * scale),
                             MouseInputEvent::DRAG,
-                            mouse_evt.GetClickCount());
+                            mouse_evt.GetClickCount(),
+                            mouse_evt.GetModifiers());
         evt.UpdateToSubview(down_mouse_handler_, this);
         down_mouse_handler_->OnMouseDrag(evt);
       } else {
         MouseInputEvent evt(Point(mouse_pos.x(), mouse_pos.y()),
                             MouseInputEvent::MOVE,
-                            mouse_evt.GetClickCount());
+                            mouse_evt.GetClickCount(),
+                            mouse_evt.GetModifiers());
         OnMouseMove(evt);
       }
       return;

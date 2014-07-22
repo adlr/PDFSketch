@@ -177,19 +177,23 @@ class MouseInputEvent {
     DOWN, DRAG, UP, MOVE
   };
   MouseInputEvent(Point position, Type type,
-                  int32_t click_count)
+                  int32_t click_count,
+                  int32_t modifiers)
       : position_(position),
         type_(type),
-        click_count_(click_count) {}
+        click_count_(click_count),
+        modifiers_(modifiers) {}
   void UpdateToSubview(View* subview, View* from_superview);
   void UpdateFromSubview(View* subview);
   const Point& position() const { return position_; }
+  uint32_t modifiers() const { return modifiers_; }
   int32_t ClickCount() const { return click_count_; }
 
  private:
   Point position_;
   Type type_;
   int32_t click_count_;
+  uint32_t modifiers_;  // Same from KeyboardInputEvent
 };
 
 class ScrollInputEvent {

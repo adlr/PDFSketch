@@ -381,7 +381,8 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     }
   }
 
-  if (!selected_graphics_.empty()) {
+  if (!selected_graphics_.empty() &&
+      !(event.modifiers() & KeyboardInputEvent::kShift)) {
     for (auto gr : selected_graphics_)
       gr->SetNeedsDisplay(true);
     selected_graphics_.clear();
