@@ -381,7 +381,11 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     }
   }
 
-  selected_graphics_.clear();
+  if (!selected_graphics_.empty()) {
+    for (auto gr : selected_graphics_)
+      gr->SetNeedsDisplay(true);
+    selected_graphics_.clear();
+  }
 
   if (editing_graphic_) {
     editing_graphic_->EndEditing();
