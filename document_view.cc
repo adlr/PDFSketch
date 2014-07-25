@@ -557,6 +557,7 @@ bool DocumentView::OnPaste(const string& str) {
     // Success in parsing
     selected_graphics_.clear();
     printf("parse success\n");
+    ScopedUndoAggregator undo_aggregator(undo_manager_);
     for (int i = 0; i < msg.graphic_size(); i++) {
       const pdfsketchproto::Graphic& gr = msg.graphic(i);
       shared_ptr<Graphic> new_graphic(GraphicFactory::NewGraphic(gr));
