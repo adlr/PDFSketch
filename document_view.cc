@@ -114,10 +114,8 @@ Rect DocumentView::PageRect(int page) const {
 
 int DocumentView::PageForPoint(const Point& point) const {
   for (int i = 0; i < poppler_doc_->pages(); i++) {
-    unique_ptr<poppler::page> page(poppler_doc_->create_page(i));
-    if (!page.get())
-      printf("Bug - null page2\n");
-    if (point.y_ <= page->page_rect().bottom())
+    Rect page_rect = PageRect(i);
+    if (point.y_ <= page_rect.Bottom())
       return i;
   }
   return poppler_doc_->pages() - 1;
@@ -551,12 +549,10 @@ string DocumentView::OnCopy() {
 }
 
 bool DocumentView::OnPaste(const string& str) {
-  printf("PASTE in doc view: [%s]\n", str.c_str());
   pdfsketchproto::Document msg;
   if (google::protobuf::TextFormat::ParseFromString(str, &msg)) {
     // Success in parsing
     selected_graphics_.clear();
-    printf("parse success\n");
     ScopedUndoAggregator undo_aggregator(undo_manager_);
     for (int i = 0; i < msg.graphic_size(); i++) {
       const pdfsketchproto::Graphic& gr = msg.graphic(i);
