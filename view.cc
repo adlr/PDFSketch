@@ -2,47 +2,23 @@
 
 #include "view.h"
 
+#include <algorithm>
 #include <stdio.h>
 
+using std::max;
+using std::min;
 using std::string;
 
 namespace pdfsketch {
 
 Rect Rect::Intersect(const Rect& that) const {
-  // Based on http://svn.gna.org/svn/gnustep/libs/java/trunk/Java/gnu/gnustep/base/NSRect.java
-  double maxX1 = origin_.x_ + size_.width_;
-  double maxY1 = origin_.y_ + size_.height_;
-  double maxX2 = that.origin_.x_ + that.size_.width_;
-  double maxY2 = that.origin_.y_ + that.size_.height_;
-
-  if ((maxX1 <= that.origin_.x_) || (maxX2 <= origin_.x_) || (maxY1 <= that.origin_.y_) 
-      || (maxY2 <= origin_.y_)) {
-    return Rect();
-  } else {
-    float newX, newY, newWidth, newHeight;
-
-    if (that.origin_.x_ <= origin_.x_)
-      newX = origin_.x_;
-    else
-      newX = that.origin_.x_;
-    
-    if (that.origin_.y_ <= origin_.y_)
-      newY = origin_.y_;
-    else
-      newY = that.origin_.y_;
-    
-    if (maxX2 >= maxX1)
-      newWidth = size_.width_;
-    else
-      newWidth = maxX2 - newX;
-    
-    if (maxY2 >= maxY1)
-      newHeight = size_.height_;
-    else
-      newHeight = maxY2 - newY;
-    
-    return Rect(newX, newY, newWidth, newHeight);
-  }
+  Rect ret = Rect(Point(max(Left(), that.Left()),
+                        max(Top(), that.Top())),
+                  Point(min(Right(), that.Right()),
+                        min(Bottom(), that.Bottom())));
+  ret.size_.width_ = max(ret.size_.width_, 0.0);
+  ret.size_.height_ = max(ret.size_.height_, 0.0);
+  return ret;
 }
 bool Rect::Intersects(const Rect& that) const {
   // todo: optimize
