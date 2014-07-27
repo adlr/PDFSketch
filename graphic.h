@@ -118,6 +118,7 @@ class Graphic {
   virtual void Draw(cairo_t* cr, bool selected) {}
   void DrawKnobs(cairo_t* cr);
   int Page() const { return page_; }
+  void SetPage(int page) { page_ = page; }
 
   // returns the knob hit, or kKnobNone if none.
   int PointInKnob(const Point& location) const;

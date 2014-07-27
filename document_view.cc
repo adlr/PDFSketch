@@ -135,8 +135,12 @@ Point DocumentView::ConvertPointFromPage(const Point& point, int page) const {
 void DocumentView::GetVisibleCenterPageAndPoint(Point* out_point,
                                                 int* out_page) const {
   Point center = VisibleSubrect().Center();
+  int placeholder;
+  if (!out_page)
+    out_page = &placeholder;
   *out_page = PageForPoint(center);
-  *out_point = ConvertPointToPage(center, *out_page);
+  if (out_point)
+    *out_point = ConvertPointToPage(center, *out_page);
 }
 
 void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
@@ -551,14 +555,32 @@ string DocumentView::OnCopy() {
 bool DocumentView::OnPaste(const string& str) {
   pdfsketchproto::Document msg;
   if (google::protobuf::TextFormat::ParseFromString(str, &msg)) {
+    // When pasting graphics, they all go onto the currently visible
+    // page and if necessary will be moved to somewhere visible.
+    int page = 0;
+    GetVisibleCenterPageAndPoint(nullptr, &page);
+    Rect visible = ConvertRectToPage(VisibleSubrect(), page);
+    Rect page_rect(PageSize(page));
+    Rect safe_rect = visible.Intersect(page_rect);
+
     // Success in parsing
     selected_graphics_.clear();
     ScopedUndoAggregator undo_aggregator(undo_manager_);
     for (int i = 0; i < msg.graphic_size(); i++) {
       const pdfsketchproto::Graphic& gr = msg.graphic(i);
       shared_ptr<Graphic> new_graphic(GraphicFactory::NewGraphic(gr));
+      // Set to current page
+      new_graphic->SetPage(page);
       // Move the graphic a tad when pasting
       new_graphic->frame_ = new_graphic->frame_.TranslatedBy(10.0, 10.0);
+      if (!new_graphic->frame_.Intersects(safe_rect)) {
+        Point gr_center = new_graphic->frame_.Center();
+        gr_center.x_ = std::min(gr_center.x_, safe_rect.Right());
+        gr_center.x_ = std::max(gr_center.x_, safe_rect.Left());
+        gr_center.y_ = std::min(gr_center.y_, safe_rect.Bottom());
+        gr_center.y_ = std::max(gr_center.y_, safe_rect.Top());
+        new_graphic->frame_.SetCenter(gr_center);
+      }
       InsertGraphicAfterUndo(new_graphic, NULL);
       selected_graphics_.insert(new_graphic.get());
     }

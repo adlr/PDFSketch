@@ -69,8 +69,8 @@ class DocumentView : public View,
                          pdfsketchproto::Document* msg) const;
 
   void UpdateSize();
-  Size PageSize(int page) const;
-  Rect PageRect(int page) const;
+  Size PageSize(int page) const;  // graphic/PDF coords
+  Rect PageRect(int page) const;  // view coords
 
   // point may be outside page
   int PageForPoint(const Point& point) const;
@@ -78,6 +78,10 @@ class DocumentView : public View,
   // Convert from local view coordinates to/from page coordinates
   Point ConvertPointToPage(const Point& point, int page) const;
   Point ConvertPointFromPage(const Point& point, int page) const;
+  Rect ConvertRectToPage(const Rect& rect, int page) const {
+    return Rect(ConvertPointToPage(rect.UpperLeft(), page),
+                ConvertPointToPage(rect.LowerRight(), page));
+  }
 
   void GetVisibleCenterPageAndPoint(Point* out_point,
                                     int* out_page) const;
