@@ -295,6 +295,9 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     // draw this page
     cairo_save(cr);
 
+    page_rect.CairoRectangle(cr);
+    cairo_clip(cr);
+
     cairo_translate(cr, page_rect.origin_.x_, page_rect.origin_.y_);
     cairo_scale(cr, zoom_, zoom_);
 
