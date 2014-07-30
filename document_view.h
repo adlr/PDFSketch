@@ -122,7 +122,9 @@ class DocumentView : public View,
   std::set<Graphic*> selected_graphics_;
   Graphic* resizing_graphic_{nullptr};
   Point last_move_pos_;
+  int last_move_page_{0};
   Point start_move_pos_;
+  int start_move_page_{0};
 
   Rect resize_graphic_original_frame_;
 };

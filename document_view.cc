@@ -386,13 +386,6 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
     }
   }
 
-  if (!selected_graphics_.empty() &&
-      !(event.modifiers() & KeyboardInputEvent::kShift)) {
-    for (auto gr : selected_graphics_)
-      gr->SetNeedsDisplay(true);
-    selected_graphics_.clear();
-  }
-
   if (editing_graphic_) {
     editing_graphic_->EndEditing();
     editing_graphic_ = NULL;
@@ -408,9 +401,15 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
                                           gr->Page());
       if (gr->frame_.Contains(page_pos)) {
         if (event.ClickCount() == 1) {
-          selected_graphics_.insert(gr);
+          if (!GraphicIsSelected(gr)) {
+            if (!(event.modifiers() & KeyboardInputEvent::kShift))
+              selected_graphics_.clear();
+            selected_graphics_.insert(gr);
+          }
           start_move_pos_ = last_move_pos_ =
               event.position().ScaledBy(1.0 / zoom_);
+          start_move_page_ = last_move_page_ =
+              PageForPoint(event.position());
         } else if (event.ClickCount() == 2 &&
                    gr->Editable()) {
           if (editing_graphic_) {
@@ -425,6 +424,13 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       }
     }
     return this;
+  }
+
+  if (!selected_graphics_.empty() &&
+      !(event.modifiers() & KeyboardInputEvent::kShift)) {
+    for (auto gr : selected_graphics_)
+      gr->SetNeedsDisplay(true);
+    selected_graphics_.clear();
   }
 
   shared_ptr<Graphic> gr = GraphicFactory::NewGraphic(toolbox_->CurrentTool());
@@ -453,6 +459,27 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
   }
 
   if (!selected_graphics_.empty()) {
+    // Did page change?
+    int new_page = PageForPoint(event.position());
+    if (new_page != last_move_page_) {
+      Point old_page_point =
+          ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                             last_move_page_);
+      Point new_page_point =
+          ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                             new_page);
+      float dx = new_page_point.x_ - old_page_point.x_;
+      float dy = new_page_point.y_ - old_page_point.y_;
+
+      // Move graphics to new page
+      for (auto gr : selected_graphics_) {
+        gr->SetNeedsDisplay(true);
+        gr->SetFrame(gr->Frame().TranslatedBy(dx, dy));
+        gr->SetPage(new_page);
+      }
+      last_move_page_ = new_page;
+    }
+
     // Move
     Point pos = event.position().ScaledBy(1.0 / zoom_);
     double dx = pos.x_ - last_move_pos_.x_;

@@ -124,6 +124,7 @@ class Graphic {
   int PointInKnob(const Point& location) const;
 
   const Rect& Frame() const { return frame_; }
+  void SetFrame(const Rect& frame) { frame_ = frame; }
 
   // Drawing frames are for the regions that need to be redrawn
   Rect DrawingFrame() const;
