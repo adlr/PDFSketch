@@ -58,7 +58,7 @@ class DocumentView : public View,
   virtual bool OnPaste(const std::string& str);
 
   void MoveGraphicsUndo(const std::set<Graphic*>& graphics,
-                        double dx, double dy);
+                        double dx, double dy, int dpage);
   void SetGraphicFrameUndo(Graphic* gr, Rect frame);
 
   virtual bool OnKeyText(const KeyboardInputEvent& event);

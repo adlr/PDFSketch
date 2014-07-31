@@ -406,10 +406,10 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
               selected_graphics_.clear();
             selected_graphics_.insert(gr);
           }
-          start_move_pos_ = last_move_pos_ =
-              event.position().ScaledBy(1.0 / zoom_);
           start_move_page_ = last_move_page_ =
               PageForPoint(event.position());
+          start_move_pos_ = last_move_pos_ =
+              ConvertPointToPage(event.position(), start_move_page_);
         } else if (event.ClickCount() == 2 &&
                    gr->Editable()) {
           if (editing_graphic_) {
@@ -462,26 +462,18 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
     // Did page change?
     int new_page = PageForPoint(event.position());
     if (new_page != last_move_page_) {
-      Point old_page_point =
-          ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
-                             last_move_page_);
-      Point new_page_point =
-          ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
-                             new_page);
-      float dx = new_page_point.x_ - old_page_point.x_;
-      float dy = new_page_point.y_ - old_page_point.y_;
+      float dpage = new_page - last_move_page_;
 
       // Move graphics to new page
       for (auto gr : selected_graphics_) {
         gr->SetNeedsDisplay(true);
-        gr->SetFrame(gr->Frame().TranslatedBy(dx, dy));
-        gr->SetPage(new_page);
+        gr->SetPage(gr->Page() + dpage);
       }
       last_move_page_ = new_page;
     }
 
     // Move
-    Point pos = event.position().ScaledBy(1.0 / zoom_);
+    Point pos = ConvertPointToPage(event.position(), new_page);
     double dx = pos.x_ - last_move_pos_.x_;
     double dy = pos.y_ - last_move_pos_.y_;
     for (set<Graphic*>::iterator it = selected_graphics_.begin(),
@@ -551,7 +543,8 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     //toolbox_->SelectTool(Toolbox::ARROW);
   } else {
     // Moving
-    if (last_move_pos_ == start_move_pos_)
+    if (last_move_pos_ == start_move_pos_ &&
+        last_move_page_ == start_move_page_)
       return;
     if (!undo_manager_) {
       printf("no undo manager\n");
@@ -560,10 +553,11 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
     // Generate undo op
     double dx = start_move_pos_.x_ - last_move_pos_.x_;
     double dy = start_move_pos_.y_ - last_move_pos_.y_;
+    int dpage = start_move_page_ - last_move_page_;
     auto current_selected_graphics = selected_graphics_;
     undo_manager_->AddClosure(
-        [this, current_selected_graphics, dx, dy] () {
-          MoveGraphicsUndo(current_selected_graphics, dx, dy);
+        [this, current_selected_graphics, dx, dy, dpage] () {
+          MoveGraphicsUndo(current_selected_graphics, dx, dy, dpage);
 
         });
   }
@@ -635,18 +629,20 @@ bool DocumentView::OnPaste(const string& str) {
 }
 
 void DocumentView::MoveGraphicsUndo(const std::set<Graphic*>& graphics,
-                                    double dx, double dy) {
+                                    double dx, double dy, int dpage) {
+  printf("MoveGraphicsUndo: %f %f %d\n", dx, dy, dpage);
   for (auto it = graphics.begin(), e = graphics.end();
        it != e; ++it) {
     (*it)->SetNeedsDisplay(true);
     (*it)->frame_.origin_ = (*it)->frame_.origin_.TranslatedBy(dx, dy);
+    (*it)->SetPage((*it)->Page() + dpage);
     (*it)->SetNeedsDisplay(true);
   }
   if (!undo_manager_)
     return;
   undo_manager_->AddClosure(
-      [this, graphics, dx, dy] () {
-        MoveGraphicsUndo(graphics, -dx, -dy);
+      [this, graphics, dx, dy, dpage] () {
+        MoveGraphicsUndo(graphics, -dx, -dy, -dpage);
       });
 }
 
