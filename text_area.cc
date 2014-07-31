@@ -18,11 +18,11 @@ void TextArea::Serialize(pdfsketchproto::Graphic* out) const {
   *msg->mutable_text() = text_;
 }
 
-void TextArea::Place(int page, const Point& location, bool constrain) {
+void TextArea::Place(int page, const Point& location) {
   page_ = page;
-  PlaceUpdate(location, constrain);
+  PlaceUpdate(location);
 }
-void TextArea::PlaceUpdate(const Point& location, bool constrain) {
+void TextArea::PlaceUpdate(const Point& location) {
   frame_ = Rect(location, Size(150.0, 72.0));
 }
 bool TextArea::PlaceComplete() {

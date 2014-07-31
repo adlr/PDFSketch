@@ -9,13 +9,13 @@ void Checkmark::Serialize(pdfsketchproto::Graphic* out) const {
   out->set_type(pdfsketchproto::Graphic::CHECKMARK);
 }
 
-void Checkmark::Place(int page, const Point& location, bool constrain) {
+void Checkmark::Place(int page, const Point& location) {
   page_ = page;
   frame_.size_ = Size(9.0, 9.0);
-  PlaceUpdate(location, constrain);
+  PlaceUpdate(location);
 }
 
-void Checkmark::PlaceUpdate(const Point& location, bool constrain) {
+void Checkmark::PlaceUpdate(const Point& location) {
   SetNeedsDisplay(false);
   frame_.SetCenter(location);
   SetNeedsDisplay(false);

@@ -106,32 +106,34 @@ void Graphic::SetNeedsDisplay(bool withKnobs) const {
                                        DrawingFrame());
 }
 
-void Graphic::Place(int page, const Point& location, bool constrain) {
+void Graphic::Place(int page, const Point& location) {
   page_ = page;
   frame_ = Rect(location);
   resizing_knob_ = kKnobLowerRight;
 }
-void Graphic::PlaceUpdate(const Point& location, bool constrain) {
-  UpdateResize(location, constrain);
+void Graphic::PlaceUpdate(const Point& location) {
+  UpdateResize(location);
 }
 bool Graphic::PlaceComplete() {
   resizing_knob_ = kKnobNone;
   return frame_.size_ == Size();
 }
 
-void Graphic::BeginResize(const Point& location, int knob, bool constrain) {
+void Graphic::BeginResize(const Point& location, int knob) {
   resizing_knob_ = knob;
-  UpdateResize(location, constrain);
+  UpdateResize(location);
 }
-void Graphic::UpdateResize(const Point& location, bool constrain) {
+void Graphic::UpdateResize(const Point& location) {
   // Structure from https://github.com/adlr/formulatepro/blob/master/FPGraphic.m
 
-  //double shift_slope = 0.0;
-  // if (frame_.size_.width_ > 0.0 &&
-  //     frame_.size_.height_ > 0.0)
-  //   shift_slope = frame_.size_.height_ / frame_.size_.width_;
-  // else
-  //   shift_slope = natural_size_.height_ / natural_size_.width_;
+  bool constrain = KnobIsCorner(resizing_knob_);
+
+  double shift_slope = 0.0;
+  if (frame_.size_.width_ > 0.0 &&
+      frame_.size_.height_ > 0.0)
+    shift_slope = frame_.size_.height_ / frame_.size_.width_;
+  else
+    shift_slope = natural_size_.height_ / natural_size_.width_;
 
   if (delegate_) {
     delegate_->SetNeedsDisplayInPageRect(Page(), DrawingFrameWithKnobs());
@@ -178,25 +180,18 @@ void Graphic::UpdateResize(const Point& location, bool constrain) {
     }
   }
 
-  if (constrain) {
-    /*
+  if (constrain && fabsf(shift_slope) > 0.00001) {
+    float new_width = frame_.size_.height_ / shift_slope;
     switch (resizing_knob_) {
       case kKnobUpperRight:
       case kKnobLowerRight:
-        didFlip = FPRectSetRightAbs(&_bounds,
-                                    _bounds.origin.x +
-                                    (_bounds.size.height /
-                                     shiftSlope));
+        frame_.size_.width_ = new_width;
         break;
       case kKnobLowerLeft:
       case kKnobUpperLeft:
-        didFlip = FPRectSetLeftAbs(&_bounds,
-                                   _bounds.origin.x +
-                                   _bounds.size.width -
-                                   (_bounds.size.height /
-                                    shiftSlope));
+        frame_.SetLeftAbs(frame_.Right() - new_width);
         break;
-        }*/
+    }
   }
   if (delegate_) {
     delegate_->SetNeedsDisplayInPageRect(Page(), DrawingFrameWithKnobs());

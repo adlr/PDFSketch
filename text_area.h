@@ -51,8 +51,8 @@ class TextArea : public Graphic {
     frame_.size_.width_ = 150.0;
   }
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
-  virtual void Place(int page, const Point& location, bool constrain);
-  virtual void PlaceUpdate(const Point& location, bool constrain);
+  virtual void Place(int page, const Point& location);
+  virtual void PlaceUpdate(const Point& location);
   virtual bool PlaceComplete();
 
   virtual bool Editable() const { return true; }
@@ -67,10 +67,6 @@ class TextArea : public Graphic {
   void set_text(const std::string& str) {
     text_ = str;
   }
-
-  // virtual void BeginResize(const Point& location, int knob, bool constrain);
-  // virtual void UpdateResize(const Point& location, bool constrain);
-  // virtual void EndResize();
 
   virtual void Draw(cairo_t* cr, bool selected);
 

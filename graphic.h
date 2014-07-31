@@ -45,6 +45,17 @@ const int kKnobLowerMiddle = 1 << 6;
 const int kKnobLowerRight  = 1 << 7;
 const int kAllKnobs = 0xff;
 
+inline bool KnobIsCorner(int knob) {
+  switch (knob) {
+    case kKnobUpperLeft:  // fallthough
+    case kKnobUpperRight:  // fallthough
+    case kKnobLowerLeft:  // fallthough
+    case kKnobLowerRight:
+      return true;
+  }
+  return false;
+}
+
 class GraphicDelegate {
  public:
   virtual void SetNeedsDisplayInPageRect(int page, const Rect& rect) = 0;
@@ -89,12 +100,9 @@ class Graphic {
     delegate_ = delegate;
   }
 
-  // For these, constrain means shift key is held (so aspect ratio should
-  // be constrained)
-
   // Placement
-  virtual void Place(int page, const Point& location, bool constrain);
-  virtual void PlaceUpdate(const Point& location, bool constrain);
+  virtual void Place(int page, const Point& location);
+  virtual void PlaceUpdate(const Point& location);
   // Returns true if this graphic should be deleted.
   // By default, graphics with 0 size are deleted.
   virtual bool PlaceComplete();
@@ -111,8 +119,8 @@ class Graphic {
   // Return true if handled
   virtual bool OnPaste(const std::string& str) { return false; }
 
-  virtual void BeginResize(const Point& location, int knob, bool constrain);
-  virtual void UpdateResize(const Point& location, bool constrain);
+  virtual void BeginResize(const Point& location, int knob);
+  virtual void UpdateResize(const Point& location);
   virtual void EndResize();
 
   virtual void Draw(cairo_t* cr, bool selected) {}

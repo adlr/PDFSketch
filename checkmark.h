@@ -14,8 +14,8 @@ class Checkmark : public Graphic {
       : Graphic(msg) {}
   ~Checkmark() {}
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
-  virtual void Place(int page, const Point& location, bool constrain);
-  virtual void PlaceUpdate(const Point& location, bool constrain);
+  virtual void Place(int page, const Point& location);
+  virtual void PlaceUpdate(const Point& location);
   virtual bool PlaceComplete() { return false; }
   virtual void Draw(cairo_t* cr, bool selected);
 };

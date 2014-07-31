@@ -380,7 +380,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       if ((knob = gr->PointInKnob(pos)) != kKnobNone) {
         resize_graphic_original_frame_ = gr->Frame();
         resizing_graphic_ = gr;
-        gr->BeginResize(pos, knob, false);
+        gr->BeginResize(pos, knob);
         return this;
       }
     }
@@ -438,7 +438,7 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
   int page = PageForPoint(event.position());
   Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                       page);
-  gr->Place(page, page_pos, false);
+  gr->Place(page, page_pos);
   placing_graphic_ = gr.get();
   return this;
 }
@@ -447,14 +447,14 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
   if (resizing_graphic_) {
     Point pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                    resizing_graphic_->Page());
-    resizing_graphic_->UpdateResize(pos, false);
+    resizing_graphic_->UpdateResize(pos);
     return;
   }
 
   if (placing_graphic_) {
     Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                         placing_graphic_->Page());
-    placing_graphic_->PlaceUpdate(page_pos, false);
+    placing_graphic_->PlaceUpdate(page_pos);
     return;
   }
 

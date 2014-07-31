@@ -27,14 +27,14 @@ void Squiggle::Serialize(pdfsketchproto::Graphic* out) const {
   }
 }
 
-void Squiggle::Place(int page, const Point& location, bool constrain) {
+void Squiggle::Place(int page, const Point& location) {
   page_ = page;
   points_.push_back(location);
   frame_ = Rect(location);
   original_origin_ = location;
 }
 
-void Squiggle::PlaceUpdate(const Point& location, bool constrain) {
+void Squiggle::PlaceUpdate(const Point& location) {
   if (points_.back() == location)
     return;
   points_.push_back(location);
