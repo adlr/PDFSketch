@@ -416,6 +416,10 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
             printf("Already editing!\n");
             return this;
           }
+          for (auto sel_gr : selected_graphics_) {
+            sel_gr->SetNeedsDisplay(false);
+          }
+          selected_graphics_.clear();
           editing_graphic_ = gr;
           gr->BeginEditing();
         }
