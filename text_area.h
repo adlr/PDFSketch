@@ -101,6 +101,8 @@ class TextArea : public Graphic {
   // If the cursor is on the left or right end of the selection.
   enum SelectionSide { kLeft, kRight };
   SelectionSide cursor_side_{kLeft};
+
+  bool alt_down_{false};
 };
 
 }  // namespace pdfsketch

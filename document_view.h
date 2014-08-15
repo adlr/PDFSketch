@@ -63,6 +63,7 @@ class DocumentView : public View,
 
   virtual bool OnKeyText(const KeyboardInputEvent& event);
   virtual bool OnKeyDown(const KeyboardInputEvent& event);
+  virtual bool OnKeyUp(const KeyboardInputEvent& event);
 
  private:
   void SerializeGraphics(bool selected_only,

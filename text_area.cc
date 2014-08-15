@@ -53,20 +53,57 @@ void TextArea::OnKeyText(const KeyboardInputEvent& event) {
 }
 
 void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
+  KeyboardInputEvent use_event = event;
   bool shift_down = event.modifiers() & KeyboardInputEvent::kShift;
   bool control_down =
       event.modifiers() & KeyboardInputEvent::kControl;
-  printf("got keydown %s%s%s%s%d\n",
-         event.modifiers() & KeyboardInputEvent::kShift ? "shift-" : "",
-         event.modifiers() & KeyboardInputEvent::kControl ? "ctrl-" : "",
-         event.modifiers() & KeyboardInputEvent::kAlt ? "alt-" : "",
-         event.modifiers() & KeyboardInputEvent::kMeta ? "meta-" : "",
-         event.keycode());
-  if (event.keycode() == 8 || event.keycode() == 46) {
+  bool alt_down =
+      event.modifiers() & KeyboardInputEvent::kAlt;
+  if (alt_down && event.keycode() == 18) {
+    alt_down_ = true;
+    return;
+  }
+  if (alt_down_ && !alt_down && event.keycode() == 33) {
+    // switch to 38
+    use_event = KeyboardInputEvent(event.type(),
+                                   38,
+                                   event.modifiers() |
+                                   KeyboardInputEvent::kAlt);
+    alt_down = true;
+  }
+  // Hack: Chrome OS replaces alt-up/down with page up/down.
+  // We detect this and put alt-up/down back
+  if (alt_down_ && !alt_down && event.keycode() == 34) {
+    // switch to 40
+    use_event = KeyboardInputEvent(event.type(),
+                                   40,
+                                   event.modifiers() |
+                                   KeyboardInputEvent::kAlt);
+    alt_down = true;
+  }
+  // Shift the frame
+  if (alt_down && (use_event.keycode() == 37 ||
+                   use_event.keycode() == 38 ||
+                   use_event.keycode() == 39 ||
+                   use_event.keycode() == 40)) {
+    float dx = use_event.keycode() == 37 ? -1.0 :
+        (use_event.keycode() == 39 ? 1.0 : 0.0);
+    float dy = use_event.keycode() == 38 ? -1.0 :
+        (use_event.keycode() == 40 ? 1.0 : 0.0);
+    if (shift_down) {
+      dx *= 10.0;
+      dy *= 10.0;
+    }
+    SetNeedsDisplay(false);
+    frame_ = frame_.TranslatedBy(dx, dy);
+    SetNeedsDisplay(false);
+    return;
+  }
+  if (use_event.keycode() == 8 || use_event.keycode() == 46) {
     // backspace, delete
     if (selection_size_ > 0) {
       EraseSelection();
-    } else if (event.keycode() == 8) {
+    } else if (use_event.keycode() == 8) {
       // do backspace
       if (selection_start_ == 0)
         return;
@@ -79,23 +116,23 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       text_.erase(text_.begin() + selection_start_);
     }
   }
-  if (event.keycode() == 37 || event.keycode() == 39) {
+  if (use_event.keycode() == 37 || use_event.keycode() == 39) {
     // Left, right arrows. Move cursor.
     // Special case: left or right w/o shift when there's a selection.
     // Just move to the edge of the old selection.
     if (!shift_down && !control_down && selection_size_ > 0) {
-      if (event.keycode() == 39)
+      if (use_event.keycode() == 39)
         selection_start_ += selection_size_;
       selection_size_ = 0;
     } else {
       size_t new_cursor = CursorPos();
       if (!control_down) {
-        if (event.keycode() == 37 && new_cursor > 0)
+        if (use_event.keycode() == 37 && new_cursor > 0)
           new_cursor--;
-        if (event.keycode() == 39 && new_cursor < text_.size())
+        if (use_event.keycode() == 39 && new_cursor < text_.size())
           new_cursor++;
       } else {
-        if (event.keycode() == 37) {
+        if (use_event.keycode() == 37) {
           // Scan backwards for word boundary
           if (new_cursor > 0)
             new_cursor--;
@@ -106,7 +143,7 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
               break;
           }
         }
-        if (event.keycode() == 39) {
+        if (use_event.keycode() == 39) {
           // Scan forwards for word boundary
           if (new_cursor < text_.size())
             new_cursor++;
@@ -131,8 +168,8 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       }
     }
   }
-  if (event.keycode() == 65 &&
-      (event.modifiers() & KeyboardInputEvent::kControl)) {
+  if (use_event.keycode() == 65 &&
+      (use_event.modifiers() & KeyboardInputEvent::kControl)) {
     // Select all
     selection_start_ = 0;
     selection_size_ = text_.size();
@@ -142,6 +179,10 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
 }
 
 void TextArea::OnKeyUp(const KeyboardInputEvent& event) {
+  if (alt_down_ && event.keycode() == 18) {
+    alt_down_ = false;
+    return;
+  }
 }
 
 bool TextArea::OnPaste(const std::string& str) {

@@ -694,6 +694,32 @@ bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
     // delete selected graphics
     RemoveGraphicsUndo(selected_graphics_);
   }
+  if (!selected_graphics_.empty() && (event.keycode() == 37 ||
+                                      event.keycode() == 38 ||
+                                      event.keycode() == 39 ||
+                                      event.keycode() == 40)) {
+    float dx = event.keycode() == 37 ? -1.0 :
+        (event.keycode() == 39 ? 1.0 : 0.0);
+    float dy = event.keycode() == 38 ? -1.0 :
+        (event.keycode() == 40 ? 1.0 : 0.0);
+    if (event.modifiers() & KeyboardInputEvent::kShift) {
+      dx *= 10.0;
+      dy *= 10.0;
+    }
+    for (auto gr : selected_graphics_) {
+      gr->SetNeedsDisplay(true);
+      gr->SetFrame(gr->Frame().TranslatedBy(dx, dy));
+      gr->SetNeedsDisplay(true);
+    }
+  }
+  return true;
+}
+
+bool DocumentView::OnKeyUp(const KeyboardInputEvent& event) {
+  if (editing_graphic_) {
+    editing_graphic_->OnKeyUp(event);
+    return true;
+  }
   return true;
 }
 
