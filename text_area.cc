@@ -2,10 +2,12 @@
 
 #include "text_area.h"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 
 using std::string;
+using std::vector;
 
 namespace pdfsketch {
 
@@ -49,6 +51,7 @@ void TextArea::OnKeyText(const KeyboardInputEvent& event) {
     use = &newline;
   text_.insert(selection_start_, *use);
   selection_start_ += event.text().size();
+  cursor_x_ = -1.0;
   SetNeedsDisplay(false);
 }
 
@@ -116,7 +119,46 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       text_.erase(text_.begin() + selection_start_);
     }
   }
+  if (use_event.keycode() == 36 || use_event.keycode() == 35) {
+    // home, end. TODO(adlr): Move to beginning/end of line.
+  }
+  if (use_event.keycode() == 38 || use_event.keycode() == 40) {
+    // Up, down arrows. Move cursor.
+    size_t idx = GetRowIndex(CursorPos());
+    size_t new_cursor = CursorPos();
+    size_t last_row_idx = GetRowIndex(text_.size());
+    if (idx == 0 && use_event.keycode() == 38) {
+      // move to beginning of line
+      new_cursor = 0;
+      cursor_x_ = -1.0;
+    } else if (idx == last_row_idx && use_event.keycode() == 40) {
+      // move to end of line
+      new_cursor = text_.size();
+      cursor_x_ = -1.0;
+    } else {
+      if (use_event.keycode() == 38)
+        idx--;
+      else
+        idx++;
+      if (cursor_x_ < 0.0)
+        cursor_x_ = left_edges_[CursorPos()];
+      // Find index for offset of cursor_x_ in row idx
+      new_cursor = IndexForRowAndOffset(idx, cursor_x_);
+    }
+    if (!shift_down) {
+      selection_start_ = new_cursor;
+      selection_size_ = 0;
+    } else {
+      // Modify selection
+      size_t new_sel_start = std::min(NonCursorPos(), new_cursor);
+      size_t new_sel_end = std::max(NonCursorPos(), new_cursor);
+      cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
+      selection_start_ = new_sel_start;
+      selection_size_ = new_sel_end - new_sel_start;
+    }
+  }
   if (use_event.keycode() == 37 || use_event.keycode() == 39) {
+    cursor_x_ = -1.0;
     // Left, right arrows. Move cursor.
     // Special case: left or right w/o shift when there's a selection.
     // Just move to the edge of the old selection.
@@ -174,6 +216,7 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
     selection_start_ = 0;
     selection_size_ = text_.size();
     cursor_side_ = kRight;
+    cursor_x_ = -1.0;
   }
   SetNeedsDisplay(false);
 }
@@ -200,6 +243,7 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
   double left_edge = 0.0;
   //double cursor_pos = 0.0;
   left_edges_.resize(text_.size() + 1, 0.0);
+  new_row_indexes_.clear();
   size_t start_of_word = 0;  // index into text_
   for (size_t i = 0, e = text_.size(); i != e; ++i) {
     // TODO(adlr): handle UTF-8
@@ -208,6 +252,7 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
     if (text_[i] == '\n') {
       left_edges_[i] = left_edge;
       left_edge = 0.0;
+      new_row_indexes_.push_back(i + 1);
       continue;
     }
 
@@ -300,6 +345,35 @@ void TextArea::EraseSelection() {
     selection_size_ = 0;
   }
 }
+
+size_t TextArea::IndexForRowAndOffset(size_t row,
+                                      double x_offset) const {
+  // Left edge of first_in_row is 0
+  size_t first_in_row = row == 0 ? 0 : new_row_indexes_[row - 1];
+  if (left_edges_[first_in_row] != 0.0) {
+    printf("Err: first_in_row has bad left edge! (%zu %f) %zu (%f)\n",
+           row, x_offset, first_in_row, left_edges_[first_in_row]);
+  }
+  size_t last_in_row = 0;
+  if (row >= new_row_indexes_.size()) {
+    // use end of doc
+    last_in_row = text_.size();
+  } else {
+    last_in_row = new_row_indexes_[row] - 1;
+  }
+  if (last_in_row == first_in_row) {
+    return last_in_row;
+  }
+  vector<double>::const_iterator needle =
+      std::lower_bound(left_edges_.begin() + first_in_row,
+                       left_edges_.begin() + last_in_row,
+                       x_offset);
+  if ((*needle - x_offset == 0.0) ||
+      (*needle - x_offset < x_offset - *(needle - 1)))
+    return needle - left_edges_.begin();
+  return needle - left_edges_.begin() - 1;
+}
+
 
 void TextArea::Draw(cairo_t* cr, bool selected) {
   stroke_color_.CairoSetSourceRGBA(cr);

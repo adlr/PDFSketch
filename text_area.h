@@ -91,9 +91,14 @@ class TextArea : public Graphic {
 
   void EraseSelection();
 
-  // These two should have the same length:
+  size_t IndexForRowAndOffset(size_t row, double x_offset) const;
+
+  // Left edges is one longer than text_
   std::string text_;
   std::vector<double> left_edges_;
+  // These cursor positions are the start of new rows.
+  // Index 0 is implied, not stored in new_row_indexes_.
+  std::vector<size_t> new_row_indexes_;
 
   size_t selection_start_{0};
   size_t selection_size_{0};
@@ -101,6 +106,10 @@ class TextArea : public Graphic {
   // If the cursor is on the left or right end of the selection.
   enum SelectionSide { kLeft, kRight };
   SelectionSide cursor_side_{kLeft};
+
+  // When moving cursor up/down, the ideal x offset of the cursor.
+  // If negative, it's unset.
+  double cursor_x_{-1.0};
 
   bool alt_down_{false};
 };
