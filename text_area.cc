@@ -121,6 +121,44 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
   }
   if (use_event.keycode() == 36 || use_event.keycode() == 35) {
     // home, end. TODO(adlr): Move to beginning/end of line.
+    size_t new_cursor = CursorPos();
+    if (new_row_indexes_.empty()) {
+      if (use_event.keycode() == 35)
+        new_cursor = text_.size();
+      else
+        new_cursor = 0;
+    } else {
+      vector<size_t>::const_iterator needle =
+          std::upper_bound(new_row_indexes_.begin(),
+                           new_row_indexes_.end(),
+                           CursorPos());
+      if (needle == new_row_indexes_.end()) {
+        // on last line.
+        if (use_event.keycode() == 36)
+          new_cursor = *(needle - 1);
+        else
+          new_cursor = text_.size();
+      } else {
+        if (use_event.keycode() == 35) {
+          new_cursor = *needle - 1;
+        } else if (needle == new_row_indexes_.begin()) {
+          new_cursor = 0;
+        } else {
+          new_cursor = *(needle - 1);
+        }
+      }
+    }
+    if (!shift_down) {
+      selection_start_ = new_cursor;
+      selection_size_ = 0;
+    } else {
+      // Modify selection
+      size_t new_sel_start = std::min(NonCursorPos(), new_cursor);
+      size_t new_sel_end = std::max(NonCursorPos(), new_cursor);
+      cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
+      selection_start_ = new_sel_start;
+      selection_size_ = new_sel_end - new_sel_start;
+    }
   }
   if (use_event.keycode() == 38 || use_event.keycode() == 40) {
     // Up, down arrows. Move cursor.
@@ -329,13 +367,14 @@ string TextArea::GetLine(size_t start_idx, size_t* out_advance) {
   return ret;
 }
 
-size_t TextArea::GetRowIndex(size_t index) {
-  size_t ret = 0;
-  for (size_t i = 1; i <= index; i++) {
-    if (left_edges_[i] <= left_edges_[i - 1])
-      ret++;
-  }
-  return ret;
+size_t TextArea::GetRowIndex(size_t index) const {
+  vector<size_t>::const_iterator needle =
+      std::upper_bound(new_row_indexes_.begin(),
+                       new_row_indexes_.end(),
+                       index);
+  if (needle == new_row_indexes_.end())
+    return new_row_indexes_.size();
+  return needle - new_row_indexes_.begin();
 }
 
 void TextArea::EraseSelection() {

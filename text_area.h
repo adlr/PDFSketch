@@ -77,7 +77,7 @@ class TextArea : public Graphic {
   void UpdateLeftEdges(cairo_t* cr);
   std::string GetLine(size_t start_idx, size_t* out_advance);
   std::string DebugLeftEdges();
-  size_t GetRowIndex(size_t index);
+  size_t GetRowIndex(size_t index) const;
 
   size_t CursorPos() const {
     return (cursor_side_ == kLeft) ? selection_start_
