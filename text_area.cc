@@ -119,34 +119,26 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       text_.erase(text_.begin() + selection_start_);
     }
   }
-  if (use_event.keycode() == 36 || use_event.keycode() == 35) {
-    // home, end. TODO(adlr): Move to beginning/end of line.
-    size_t new_cursor = CursorPos();
-    if (new_row_indexes_.empty()) {
-      if (use_event.keycode() == 35)
-        new_cursor = text_.size();
-      else
-        new_cursor = 0;
+  if (use_event.keycode() == 36 || use_event.keycode() == 35 ||
+      use_event.keycode() == 38 || use_event.keycode() == 40 ||
+      use_event.keycode() == 37 || use_event.keycode() == 39) {
+    size_t new_cursor = 0;
+    if (use_event.keycode() == 36 || use_event.keycode() == 35) {
+      new_cursor = GetNewCursorPositionForHomeEnd(
+          use_event.keycode() == 36);
+    }
+    if (use_event.keycode() == 38 || use_event.keycode() == 40) {
+      new_cursor = GetNewCursorPositionForUpDownArrow(
+          use_event.keycode() == 38);
+      cursor_x_ = left_edges_[new_cursor];
     } else {
-      vector<size_t>::const_iterator needle =
-          std::upper_bound(new_row_indexes_.begin(),
-                           new_row_indexes_.end(),
-                           CursorPos());
-      if (needle == new_row_indexes_.end()) {
-        // on last line.
-        if (use_event.keycode() == 36)
-          new_cursor = *(needle - 1);
-        else
-          new_cursor = text_.size();
-      } else {
-        if (use_event.keycode() == 35) {
-          new_cursor = *needle - 1;
-        } else if (needle == new_row_indexes_.begin()) {
-          new_cursor = 0;
-        } else {
-          new_cursor = *(needle - 1);
-        }
-      }
+      cursor_x_ = -1.0;
+    }
+    if (use_event.keycode() == 37 || use_event.keycode() == 39) {
+      new_cursor = GetNewCursorPositionForLeftRightArrow(
+          use_event.keycode() == 37,
+          shift_down,
+          control_down);
     }
     if (!shift_down) {
       selection_start_ = new_cursor;
@@ -158,94 +150,6 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
       cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
       selection_start_ = new_sel_start;
       selection_size_ = new_sel_end - new_sel_start;
-    }
-  }
-  if (use_event.keycode() == 38 || use_event.keycode() == 40) {
-    // Up, down arrows. Move cursor.
-    size_t idx = GetRowIndex(CursorPos());
-    size_t new_cursor = CursorPos();
-    size_t last_row_idx = GetRowIndex(text_.size());
-    if (idx == 0 && use_event.keycode() == 38) {
-      // move to beginning of line
-      new_cursor = 0;
-      cursor_x_ = -1.0;
-    } else if (idx == last_row_idx && use_event.keycode() == 40) {
-      // move to end of line
-      new_cursor = text_.size();
-      cursor_x_ = -1.0;
-    } else {
-      if (use_event.keycode() == 38)
-        idx--;
-      else
-        idx++;
-      if (cursor_x_ < 0.0)
-        cursor_x_ = left_edges_[CursorPos()];
-      // Find index for offset of cursor_x_ in row idx
-      new_cursor = IndexForRowAndOffset(idx, cursor_x_);
-    }
-    if (!shift_down) {
-      selection_start_ = new_cursor;
-      selection_size_ = 0;
-    } else {
-      // Modify selection
-      size_t new_sel_start = std::min(NonCursorPos(), new_cursor);
-      size_t new_sel_end = std::max(NonCursorPos(), new_cursor);
-      cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
-      selection_start_ = new_sel_start;
-      selection_size_ = new_sel_end - new_sel_start;
-    }
-  }
-  if (use_event.keycode() == 37 || use_event.keycode() == 39) {
-    cursor_x_ = -1.0;
-    // Left, right arrows. Move cursor.
-    // Special case: left or right w/o shift when there's a selection.
-    // Just move to the edge of the old selection.
-    if (!shift_down && !control_down && selection_size_ > 0) {
-      if (use_event.keycode() == 39)
-        selection_start_ += selection_size_;
-      selection_size_ = 0;
-    } else {
-      size_t new_cursor = CursorPos();
-      if (!control_down) {
-        if (use_event.keycode() == 37 && new_cursor > 0)
-          new_cursor--;
-        if (use_event.keycode() == 39 && new_cursor < text_.size())
-          new_cursor++;
-      } else {
-        if (use_event.keycode() == 37) {
-          // Scan backwards for word boundary
-          if (new_cursor > 0)
-            new_cursor--;
-          while (new_cursor > 0) {
-            if (isalpha(text_[new_cursor - 1]))
-              new_cursor--;
-            else
-              break;
-          }
-        }
-        if (use_event.keycode() == 39) {
-          // Scan forwards for word boundary
-          if (new_cursor < text_.size())
-            new_cursor++;
-          while (new_cursor < text_.size()) {
-            if (isalpha(text_[new_cursor]))
-              new_cursor++;
-            else
-              break;
-          }
-        }
-      }
-      if (!shift_down) {
-        selection_start_ = new_cursor;
-        selection_size_ = 0;
-      } else {
-        // Modify selection
-        size_t new_sel_start = std::min(NonCursorPos(), new_cursor);
-        size_t new_sel_end = std::max(NonCursorPos(), new_cursor);
-        cursor_side_ = new_cursor < NonCursorPos() ? kLeft : kRight;
-        selection_start_ = new_sel_start;
-        selection_size_ = new_sel_end - new_sel_start;
-      }
     }
   }
   if (use_event.keycode() == 65 &&
@@ -257,6 +161,96 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
     cursor_x_ = -1.0;
   }
   SetNeedsDisplay(false);
+}
+
+size_t TextArea::GetNewCursorPositionForHomeEnd(bool is_home) const {
+  // home (36), end (35).
+  if (new_row_indexes_.empty()) {
+    if (!is_home)
+      return text_.size();
+    return 0;
+  }
+  vector<size_t>::const_iterator needle =
+      std::upper_bound(new_row_indexes_.begin(),
+                       new_row_indexes_.end(),
+                       CursorPos());
+  if (needle == new_row_indexes_.end()) {
+    // on last line.
+    if (is_home)
+      return *(needle - 1);
+    return text_.size();
+  }
+  if (!is_home)
+    return *needle - 1;
+  if (needle == new_row_indexes_.begin())
+    return 0;
+  return *(needle - 1);
+}
+
+size_t TextArea::GetNewCursorPositionForUpDownArrow(
+    bool is_up) const {
+  size_t idx = GetRowIndex(CursorPos());
+  //size_t new_cursor = CursorPos();
+  size_t last_row_idx = GetRowIndex(text_.size());
+  if (idx == 0 && is_up) {
+    // move to beginning of line
+    return 0;
+  }
+  if (idx == last_row_idx && !is_up) {
+    // move to end of line
+    return text_.size();
+  }
+  if (is_up)
+    idx--;
+  else
+    idx++;
+  double offset = cursor_x_ >= 0.0 ?
+      cursor_x_ : left_edges_[CursorPos()];
+  // Find index for offset in row idx
+  return IndexForRowAndOffset(idx, offset);
+}
+
+size_t TextArea::GetNewCursorPositionForLeftRightArrow(
+    bool is_left, bool shift_down, bool control_down) const {
+  // Left, right arrows. Move cursor.
+  // Special case: left or right w/o shift when there's a selection.
+  // Just move to the edge of the old selection.
+  if (!shift_down && !control_down && selection_size_ > 0) {
+    if (is_left)
+      return selection_start_;
+    return selection_start_ + selection_size_;
+  }
+  size_t cursor = CursorPos();
+  if (!control_down) {
+    if (is_left && cursor > 0)
+      return cursor - 1;
+    if (!is_left && cursor < text_.size())
+      return cursor + 1;
+    return cursor;
+  }
+  // control is down
+  if (is_left) {
+    // Scan backwards for word boundary
+    if (cursor > 0)
+      cursor--;
+    while (cursor > 0) {
+      if (isalpha(text_[cursor - 1]))
+        cursor--;
+      else
+        break;
+    }
+    return cursor;
+  }
+  // Scan forwards for word boundary
+  if (cursor < text_.size())
+    cursor++;
+  while (cursor < text_.size()) {
+    if (isalpha(text_[cursor]))
+      cursor++;
+    else
+      break;
+  }
+  return cursor;
 }
 
 void TextArea::OnKeyUp(const KeyboardInputEvent& event) {

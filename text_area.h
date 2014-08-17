@@ -64,6 +64,11 @@ class TextArea : public Graphic {
 
   virtual bool OnPaste(const std::string& str);
 
+  size_t GetNewCursorPositionForHomeEnd(bool is_home) const;
+  size_t GetNewCursorPositionForUpDownArrow(bool is_up) const;
+  size_t GetNewCursorPositionForLeftRightArrow(
+      bool is_left, bool shift_down, bool control_down) const;
+
   void set_text(const std::string& str) {
     text_ = str;
   }
