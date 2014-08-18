@@ -116,6 +116,12 @@ class Graphic {
   virtual void OnKeyDown(const KeyboardInputEvent& event) {}
   virtual void OnKeyUp(const KeyboardInputEvent& event) {}
 
+  // Return true if handling this drag event. Only called when a graphic
+  // is being edited.
+  virtual bool OnMouseDown(const Point& position) { return false; }
+  virtual void OnMouseDrag(const Point& position) {}
+  virtual void OnMouseUp() {}
+
   // Return true if handled
   virtual bool OnPaste(const std::string& str) { return false; }
 

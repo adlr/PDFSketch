@@ -120,6 +120,9 @@ class DocumentView : public View,
   Graphic* placing_graphic_{nullptr};
   Graphic* editing_graphic_{nullptr};
 
+  // If true, the editing graphic is handling the current mouse drag event.
+  bool editing_graphic_handling_drag_{false};
+
   std::set<Graphic*> selected_graphics_;
   Graphic* resizing_graphic_{nullptr};
   Point last_move_pos_;

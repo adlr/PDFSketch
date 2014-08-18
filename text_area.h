@@ -64,6 +64,10 @@ class TextArea : public Graphic {
 
   virtual bool OnPaste(const std::string& str);
 
+  virtual bool OnMouseDown(const Point& position);
+  virtual void OnMouseDrag(const Point& position);
+  virtual void OnMouseUp();
+
   size_t GetNewCursorPositionForHomeEnd(bool is_home) const;
   size_t GetNewCursorPositionForUpDownArrow(bool is_up) const;
   size_t GetNewCursorPositionForLeftRightArrow(
@@ -94,9 +98,11 @@ class TextArea : public Graphic {
         : selection_start_ + selection_size_;
   }
 
+  void SetSelection(size_t non_cursor_pos, size_t cursor_pos);
   void EraseSelection();
 
   size_t IndexForRowAndOffset(size_t row, double x_offset) const;
+  size_t IndexForPoint(const Point& point) const;
 
   // Left edges is one longer than text_
   std::string text_;

@@ -387,6 +387,14 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
   }
 
   if (editing_graphic_) {
+    // See if we hit the editing graphic
+    Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                        editing_graphic_->Page());
+    if (editing_graphic_->frame_.Contains(page_pos) &&
+        editing_graphic_->OnMouseDown(page_pos)) {
+      editing_graphic_handling_drag_ = true;
+      return this;
+    }
     editing_graphic_->EndEditing();
     editing_graphic_ = NULL;
   }
@@ -459,6 +467,13 @@ void DocumentView::OnMouseDrag(const MouseInputEvent& event) {
     Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
                                         placing_graphic_->Page());
     placing_graphic_->PlaceUpdate(page_pos);
+    return;
+  }
+
+  if (editing_graphic_ && editing_graphic_handling_drag_) {
+    Point page_pos = ConvertPointToPage(event.position().TranslatedBy(0.5, 0.5),
+                                        editing_graphic_->Page());
+    editing_graphic_->OnMouseDrag(page_pos);
     return;
   }
 
@@ -537,34 +552,42 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
               RemoveGraphicsUndo(gr);
             });
       }
-      selected_graphics_.insert(placing_graphic_);
       if (placing_graphic_->Editable()) {
         placing_graphic_->BeginEditing();
         editing_graphic_ = placing_graphic_;
+      } else {
+        selected_graphics_.insert(placing_graphic_);
       }
     }
     placing_graphic_ = NULL;
     //toolbox_->SelectTool(Toolbox::ARROW);
-  } else {
-    // Moving
-    if (last_move_pos_ == start_move_pos_ &&
-        last_move_page_ == start_move_page_)
-      return;
-    if (!undo_manager_) {
-      printf("no undo manager\n");
-      return;
-    }
-    // Generate undo op
-    double dx = start_move_pos_.x_ - last_move_pos_.x_;
-    double dy = start_move_pos_.y_ - last_move_pos_.y_;
-    int dpage = start_move_page_ - last_move_page_;
-    auto current_selected_graphics = selected_graphics_;
-    undo_manager_->AddClosure(
-        [this, current_selected_graphics, dx, dy, dpage] () {
-          MoveGraphicsUndo(current_selected_graphics, dx, dy, dpage);
-
-        });
+    return;
   }
+
+  if (editing_graphic_ && editing_graphic_handling_drag_) {
+    editing_graphic_->OnMouseUp();
+    editing_graphic_handling_drag_ = false;
+    return;
+  }
+
+  // Moving
+  if (last_move_pos_ == start_move_pos_ &&
+      last_move_page_ == start_move_page_)
+    return;
+  if (!undo_manager_) {
+    printf("no undo manager\n");
+    return;
+  }
+  // Generate undo op
+  double dx = start_move_pos_.x_ - last_move_pos_.x_;
+  double dy = start_move_pos_.y_ - last_move_pos_.y_;
+  int dpage = start_move_page_ - last_move_page_;
+  auto current_selected_graphics = selected_graphics_;
+  undo_manager_->AddClosure(
+      [this, current_selected_graphics, dx, dy, dpage] () {
+        MoveGraphicsUndo(current_selected_graphics, dx, dy, dpage);
+
+      });
 }
 
 string DocumentView::OnCopy() {

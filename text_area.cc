@@ -3,6 +3,7 @@
 #include "text_area.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <string>
 
@@ -260,6 +261,29 @@ void TextArea::OnKeyUp(const KeyboardInputEvent& event) {
   }
 }
 
+bool TextArea::OnMouseDown(const Point& position) {
+  selection_start_ = IndexForPoint(position);
+  selection_size_ = 0;
+  SetNeedsDisplay(false);
+  return true;
+}
+
+void TextArea::SetSelection(size_t non_cursor_pos, size_t cursor_pos) {
+  selection_start_ = std::min(non_cursor_pos, cursor_pos);
+  selection_size_ = labs(static_cast<ssize_t>(non_cursor_pos) -
+                         static_cast<ssize_t>(cursor_pos));
+  cursor_side_ = cursor_pos < non_cursor_pos ? kLeft : kRight;
+}
+
+void TextArea::OnMouseDrag(const Point& position) {
+  size_t drag_start = NonCursorPos();
+  size_t drag_end = IndexForPoint(position);
+  SetSelection(drag_start, drag_end);
+  SetNeedsDisplay(false);
+}
+
+void TextArea::OnMouseUp() {}
+
 bool TextArea::OnPaste(const std::string& str) {
   if (str.empty())
     return false;
@@ -407,6 +431,20 @@ size_t TextArea::IndexForRowAndOffset(size_t row,
   return needle - left_edges_.begin() - 1;
 }
 
+size_t TextArea::IndexForPoint(const Point& point) const {
+  // get row height
+  if (frame_.size_.height_ < 0.0001) {
+    // avoid divide by zero
+    return 0;
+  }
+  double y_fraction = (point.y_ - frame_.origin_.y_) / frame_.size_.height_;
+  if (y_fraction < 0)
+    return 0;
+  if (y_fraction >= 1.0)
+    return text_.size();
+  size_t row = static_cast<size_t>(y_fraction * (new_row_indexes_.size() + 1));
+  return IndexForRowAndOffset(row, point.x_ - frame_.origin_.x_);
+}
 
 void TextArea::Draw(cairo_t* cr, bool selected) {
   stroke_color_.CairoSetSourceRGBA(cr);
