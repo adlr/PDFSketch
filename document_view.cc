@@ -435,6 +435,10 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
         return this;
       }
     }
+    // Didn't hit any graphics. Select none.
+    for (auto gr : selected_graphics_)
+      gr->SetNeedsDisplay(true);
+    selected_graphics_.clear();
     return this;
   }
 
