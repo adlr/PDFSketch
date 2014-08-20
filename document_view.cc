@@ -395,7 +395,9 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       editing_graphic_handling_drag_ = true;
       return this;
     }
+    // didn't hit editing graphic. stop editing.
     editing_graphic_->EndEditing();
+    editing_graphic_->SetNeedsDisplay(false);
     editing_graphic_ = NULL;
   }
 
