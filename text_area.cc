@@ -307,8 +307,9 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
     
     if (text_[i] == '\n') {
       left_edges_[i] = left_edge;
+      if (left_edge == 0.0 && i != 0)
+        new_row_indexes_.push_back(i);
       left_edge = 0.0;
-      new_row_indexes_.push_back(i + 1);
       continue;
     }
 
@@ -340,6 +341,8 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
       }
     }
     left_edges_[i] = left_edge;
+    if (left_edge == 0.0 && i != 0)
+      new_row_indexes_.push_back(i);
 
     if ((i + 1) < text_.size() &&
         (text_[i] == ' ' || text_[i] == '\n') &&
@@ -350,6 +353,8 @@ void TextArea::UpdateLeftEdges(cairo_t* cr) {
     left_edge = right_edge;  // update for next iteration
   }
   left_edges_[left_edges_.size() - 1] = left_edge;
+  if (left_edge == 0.0 && left_edges_.size() != 1)
+    new_row_indexes_.push_back(left_edges_.size() - 1);
 }
 
 string TextArea::DebugLeftEdges() {
