@@ -7,6 +7,7 @@
 
 #include <cairo.h>
 
+#include "undo_manager.h"
 #include "view.h"
 
 namespace pdfsketch {
@@ -69,32 +70,24 @@ class Graphic {
   Graphic()
       : frame_(30.0, 30.0, 10.0, 20.0),
         natural_size_(1.0, 1.0),
-        page_(1),
         fill_color_(0.0, 0.0, 0.0, 0.0),
-        line_width_(1.0),
-        h_flip_(0),
-        v_flip_(0),
-        upper_sibling_(NULL),
-        resizing_knob_(kKnobNone),
-        delegate_(NULL),
-        editing_(false) {}
-  Graphic(const pdfsketchproto::Graphic& msg)
-      : frame_(msg.frame()),
-        natural_size_(msg.has_natural_size() ?
-                      Size(msg.natural_size()) : Size(1.0, 1.0)),
-        page_(msg.page()),
-        fill_color_(msg.fill_color()),
-        stroke_color_(msg.stroke_color()),
-        line_width_(msg.line_width()),
-        h_flip_(msg.h_flip()),
-        v_flip_(msg.v_flip()),
-        upper_sibling_(NULL),
-        resizing_knob_(kKnobNone),
-        delegate_(NULL),
-        editing_(false) {}
+        h_flip_(false),
+        v_flip_(false) {}
+  Graphic(const pdfsketchproto::Graphic& msg) { Restore(msg); }
   virtual ~Graphic() {}
 
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
+  virtual void Restore(const pdfsketchproto::Graphic& msg) {
+    frame_ = Rect(msg.frame());
+    natural_size_ = msg.has_natural_size() ?
+                  Size(msg.natural_size()) : Size(1.0, 1.0);
+    page_ = msg.page();
+    fill_color_ = Color(msg.fill_color());
+    stroke_color_ = Color(msg.stroke_color());
+    line_width_ = msg.line_width();
+    h_flip_ = msg.h_flip();
+    v_flip_ = msg.v_flip();
+  }
 
   void SetDelegate(GraphicDelegate* delegate) {
     delegate_ = delegate;
@@ -108,7 +101,7 @@ class Graphic {
   virtual bool PlaceComplete();
 
   virtual bool Editable() const { return false; }
-  virtual void BeginEditing() { editing_ = true; }
+  virtual void BeginEditing(UndoManager* undo_manager) { editing_ = true; }
   virtual void EndEditing() { editing_ = false; }
   bool IsEditing() const { return editing_; }
   // These keyboard events arrive only when editing is in progress:
@@ -150,10 +143,10 @@ class Graphic {
   void SetNeedsDisplay(bool withKnobs) const;
   Rect frame_;  // location in page
   Size natural_size_;
-  int page_;
+  int page_{1};
   Color fill_color_;
   Color stroke_color_;
-  double line_width_;
+  double line_width_{1.0};
 
   // if should be drawn horizontall/vertically flipped
   bool h_flip_:1;
@@ -161,17 +154,17 @@ class Graphic {
 
   // We only need one shared pointer here to keep these all "owned"
   // by the containing DocumentView.
-  Graphic* upper_sibling_;
+  Graphic* upper_sibling_{nullptr};
   std::shared_ptr<Graphic> lower_sibling_;
 
  protected:
   virtual int Knobs() const { return kAllKnobs; }
 
  private:
-  int resizing_knob_;  // kKnobNone if no resize in progress
-  GraphicDelegate* delegate_;
+  int resizing_knob_{kKnobNone};  // kKnobNone if no resize in progress
+  GraphicDelegate* delegate_{nullptr};
 
-  bool editing_;  // is being edited
+  bool editing_{false};  // is being edited
 };
 
 }  // namespace pdfsketch

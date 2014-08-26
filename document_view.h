@@ -99,6 +99,9 @@ class DocumentView : public View,
   std::shared_ptr<Graphic> SharedPtrForGraphic(Graphic* graphic) const;
   void RemoveGraphicsUndo(std::set<Graphic*> graphics);
 
+  // Apply proto_msg to gr
+  void RestoreGraphicUndo(Graphic* gr, const std::string& proto_msg);
+
   UndoManager* undo_manager_{nullptr};
 
   // Returns the shard_ptr of the removed graphic, incase you want to
@@ -119,6 +122,8 @@ class DocumentView : public View,
   Graphic* bottom_graphic_{nullptr};
   Graphic* placing_graphic_{nullptr};
   Graphic* editing_graphic_{nullptr};
+  // When editing starts, we keep a checkpoint here for undo purposes:
+  std::unique_ptr<pdfsketchproto::Graphic> editing_checkpoint_;
 
   // If true, the editing graphic is handling the current mouse drag event.
   bool editing_graphic_handling_drag_{false};

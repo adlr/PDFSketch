@@ -204,6 +204,24 @@ shared_ptr<Graphic> DocumentView::RemoveGraphic(Graphic* graphic) {
   return ret;
 }
 
+void DocumentView::RestoreGraphicUndo(Graphic* gr, const string& proto_msg) {
+  pdfsketchproto::Graphic old_msg;
+  gr->Serialize(&old_msg);
+  string old_str;
+  if (!old_msg.SerializeToString(&old_str)) {
+    printf("Graphic serialize protobuf error\n");
+  }
+  if (proto_msg != old_str)
+    undo_manager_->AddClosure([this, gr, old_str] () {
+        RestoreGraphicUndo(gr, old_str);
+      });
+
+  pdfsketchproto::Graphic msg;
+  msg.ParseFromString(proto_msg);
+  gr->Restore(msg);
+  gr->SetNeedsDisplay(false);
+}
+
 void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
   // Do some caching
   if (VisibleSubrect() != cached_subrect_ && poppler_doc_.get()) {
@@ -396,7 +414,25 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
       return this;
     }
     // didn't hit editing graphic. stop editing.
+    // Make an undo op if there was a change
+    pdfsketchproto::Graphic temp_msg;
+    editing_graphic_->Serialize(&temp_msg);
     editing_graphic_->EndEditing();
+    string old_graphic_state;
+    if (!editing_checkpoint_->SerializeToString(&old_graphic_state)) {
+      printf("error serializing!\n");
+    }
+    string new_graphic_state;
+    if (!temp_msg.SerializeToString(&new_graphic_state)) {
+      printf("error serializing!\n");
+    }
+    if (old_graphic_state != new_graphic_state) {
+      Graphic* editing_graphic = editing_graphic_;
+      undo_manager_->AddClosure([this, editing_graphic, old_graphic_state] () {
+          RestoreGraphicUndo(editing_graphic, old_graphic_state);
+
+        });
+    }
     editing_graphic_->SetNeedsDisplay(false);
     editing_graphic_ = NULL;
   }
@@ -431,7 +467,9 @@ View* DocumentView::OnMouseDown(const MouseInputEvent& event) {
           }
           selected_graphics_.clear();
           editing_graphic_ = gr;
-          gr->BeginEditing();
+          editing_checkpoint_.reset(new pdfsketchproto::Graphic);
+          gr->Serialize(editing_checkpoint_.get());
+          gr->BeginEditing(undo_manager_);
         }
         gr->SetNeedsDisplay(true);
         return this;
@@ -559,7 +597,9 @@ void DocumentView::OnMouseUp(const MouseInputEvent& event) {
             });
       }
       if (placing_graphic_->Editable()) {
-        placing_graphic_->BeginEditing();
+        editing_checkpoint_.reset(new pdfsketchproto::Graphic);
+        placing_graphic_->Serialize(editing_checkpoint_.get());
+        placing_graphic_->BeginEditing(undo_manager_);
         editing_graphic_ = placing_graphic_;
       } else {
         selected_graphics_.insert(placing_graphic_);
@@ -719,6 +759,16 @@ bool DocumentView::OnKeyText(const KeyboardInputEvent& event) {
 }
 
 bool DocumentView::OnKeyDown(const KeyboardInputEvent& event) {
+  if ((event.modifiers() & KeyboardInputEvent::kControl) &&
+      (event.keycode() == 90)) {
+    // Ctrl-Z hit
+    if (event.modifiers() & KeyboardInputEvent::kShift)
+      undo_manager_->PerformRedo();
+    else
+      undo_manager_->PerformUndo();
+    return true;
+  }
+
   if (editing_graphic_) {
     editing_graphic_->OnKeyDown(event);
     return true;

@@ -39,16 +39,20 @@ namespace pdfsketch {
 //   selection_;
 // };
 
+class TextAreaTransformUndoOp;
+
 class TextArea : public Graphic {
  public:
   TextArea() {
     frame_.size_.width_ = 150.0;
   }
   TextArea(const pdfsketchproto::Graphic& msg)
-      : Graphic(msg),
-        text_(msg.text_area().text()),
-        selection_start_(text_.size()) {
+      : Graphic(msg) {
     frame_.size_.width_ = 150.0;
+  }
+  virtual void Restore(const pdfsketchproto::Graphic& msg) {
+    Graphic::Restore(msg);
+    text_ = msg.text_area().text();
   }
   virtual void Serialize(pdfsketchproto::Graphic* out) const;
   virtual void Place(int page, const Point& location);
@@ -56,7 +60,7 @@ class TextArea : public Graphic {
   virtual bool PlaceComplete();
 
   virtual bool Editable() const { return true; }
-  virtual void BeginEditing();
+  virtual void BeginEditing(UndoManager* undo_manager);
   virtual void EndEditing();
   virtual void OnKeyText(const KeyboardInputEvent& event);
   virtual void OnKeyDown(const KeyboardInputEvent& event);
@@ -78,6 +82,9 @@ class TextArea : public Graphic {
   }
 
   virtual void Draw(cairo_t* cr, bool selected);
+
+  void ApplyUndoOp(const TextAreaTransformUndoOp& op,
+                   UndoManager* undo_manager);
 
  protected:
   virtual int Knobs() const { return kKnobMiddleLeft | kKnobMiddleRight; }
@@ -111,6 +118,9 @@ class TextArea : public Graphic {
   // Index 0 is implied, not stored in new_row_indexes_.
   std::vector<size_t> new_row_indexes_;
 
+  // For use while editing
+  UndoManager* undo_manager_{nullptr};
+
   size_t selection_start_{0};
   size_t selection_size_{0};
 
@@ -123,6 +133,44 @@ class TextArea : public Graphic {
   double cursor_x_{-1.0};
 
   bool alt_down_{false};
+};
+
+class TextAreaTransformUndoOp : public UndoOp {
+ public:
+  TextAreaTransformUndoOp(TextArea* text_area,
+                          size_t remove_start,
+                          size_t remove_size,
+                          std::string insert,
+                          size_t final_selection_start,
+                          size_t final_selection_size)
+      : text_area_(text_area),
+        remove_start_(remove_start),
+        remove_size_(remove_size),
+        insert_(insert),
+        final_selection_start_(final_selection_start),
+        final_selection_size_(final_selection_size) {}
+  virtual ~TextAreaTransformUndoOp() {}
+  // On Exec(), removes characters in remove_*_ range, inserts insert_
+  // into that space, and finally sets the selection to the
+  // final_selection_*_ values.
+  virtual void Exec(UndoManager* manager) override;
+  virtual UndoType Type() const override { return TextAreaTransform; }
+  virtual bool Merge(const UndoOp& that) override;
+
+  std::string String() const;
+  size_t remove_start() const { return remove_start_; }
+  size_t remove_size() const { return remove_size_; }
+  const std::string& insert() const { return insert_; }
+  size_t final_selection_start() const { return final_selection_start_; }
+  size_t final_selection_size() const { return final_selection_size_; }
+
+ private:
+  TextArea* text_area_{nullptr};
+  size_t remove_start_{0};
+  size_t remove_size_{0};
+  std::string insert_;
+  size_t final_selection_start_{0};
+  size_t final_selection_size_{0};
 };
 
 }  // namespace pdfsketch

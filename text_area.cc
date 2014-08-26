@@ -8,6 +8,7 @@
 #include <string>
 
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 namespace pdfsketch {
@@ -32,19 +33,27 @@ bool TextArea::PlaceComplete() {
   return false;
 }
 
-void TextArea::BeginEditing() {
-  Graphic::BeginEditing();
+void TextArea::BeginEditing(UndoManager* undo_manager) {
+  Graphic::BeginEditing(undo_manager);
+  undo_manager_ = undo_manager;
+  undo_manager_->SetMarker();
   selection_start_ = text_.size();
   selection_size_ = 0;
 }
 
 void TextArea::EndEditing() {
   Graphic::EndEditing();
+  undo_manager_->ClearFromMarker();
+  undo_manager_ = nullptr;
 }
 
 void TextArea::OnKeyText(const KeyboardInputEvent& event) {
   if (event.modifiers() & KeyboardInputEvent::kShortcutMask)
     return;
+  size_t old_sel_start = selection_start_;
+  size_t old_sel_size = selection_size_;
+  string old_selected_text = text_.substr(selection_start_,
+                                          selection_size_);
   EraseSelection();
   const string* use = &event.text();
   const string newline("\n");
@@ -54,6 +63,15 @@ void TextArea::OnKeyText(const KeyboardInputEvent& event) {
   selection_start_ += event.text().size();
   cursor_x_ = -1.0;
   SetNeedsDisplay(false);
+
+  unique_ptr<UndoOp> op(
+      new TextAreaTransformUndoOp(this,
+                                  selection_start_ - event.text().size(),
+                                  event.text().size(),
+                                  old_selected_text,
+                                  old_sel_start,
+                                  old_sel_size));
+  undo_manager_->AddUndoOp(std::move(op));
 }
 
 void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
@@ -106,18 +124,47 @@ void TextArea::OnKeyDown(const KeyboardInputEvent& event) {
   if (use_event.keycode() == 8 || use_event.keycode() == 46) {
     // backspace, delete
     if (selection_size_ > 0) {
+      string trimmed = text_.substr(selection_start_, selection_size_);
+      unique_ptr<UndoOp> op(
+          new TextAreaTransformUndoOp(this,
+                                      selection_start_,
+                                      0,
+                                      trimmed,
+                                      selection_start_,
+                                      selection_size_));
+      undo_manager_->AddUndoOp(std::move(op));
       EraseSelection();
     } else if (use_event.keycode() == 8) {
       // do backspace
       if (selection_start_ == 0)
         return;
+      string trimmed = text_.substr(selection_start_ - 1, 1);
       text_.erase(text_.begin() + selection_start_ - 1);
       selection_start_--;
+
+      unique_ptr<UndoOp> op(
+          new TextAreaTransformUndoOp(this,
+                                      selection_start_,
+                                      0,
+                                      trimmed,
+                                      selection_start_ + 1,
+                                      0));
+      undo_manager_->AddUndoOp(std::move(op));
     } else {
       // do delete
       if (selection_start_ >= text_.size())
         return;
+      string trimmed = text_.substr(selection_start_, 1);
       text_.erase(text_.begin() + selection_start_);
+
+      unique_ptr<UndoOp> op(
+          new TextAreaTransformUndoOp(this,
+                                      selection_start_,
+                                      0,
+                                      trimmed,
+                                      selection_start_,
+                                      0));
+      undo_manager_->AddUndoOp(std::move(op));
     }
   }
   if (use_event.keycode() == 36 || use_event.keycode() == 35 ||
@@ -523,6 +570,61 @@ void TextArea::Draw(cairo_t* cr, bool selected) {
       cairo_stroke(cr);
     }
   }
+}
+
+void TextArea::ApplyUndoOp(const TextAreaTransformUndoOp& op,
+                           UndoManager* undo_manager) {
+  size_t pre_sel_start = selection_start_;
+  size_t pre_sel_size = selection_size_;
+  string trimmed = text_.substr(op.remove_start(), op.remove_size());
+
+  text_.erase(op.remove_start(), op.remove_size());
+  text_.insert(op.remove_start(), op.insert());
+  selection_start_ = op.final_selection_start();
+  selection_size_ = op.final_selection_size();
+  SetNeedsDisplay(false);
+  
+  unique_ptr<UndoOp> reverse(
+      new TextAreaTransformUndoOp(this,
+                                  op.remove_start(),
+                                  op.insert().size(),
+                                  trimmed,
+                                  pre_sel_start,
+                                  pre_sel_size));
+  undo_manager->AddUndoOp(std::move(reverse));
+}
+
+void TextAreaTransformUndoOp::Exec(UndoManager* undo_manager) {
+  printf("doing text edit undo: %s\n", String().c_str());
+  text_area_->ApplyUndoOp(*this, undo_manager);
+}
+
+bool TextAreaTransformUndoOp::Merge(const UndoOp& that) {
+  if (that.Type() != UndoOp::UndoType::TextAreaTransform)
+    return false;
+
+  const TextAreaTransformUndoOp* op =
+      reinterpret_cast<const TextAreaTransformUndoOp*>(&that);
+  if (text_area_ == op->text_area_ &&
+      insert_.empty() && op->insert_.empty() &&
+      op->remove_start_ == (remove_start_ + remove_size_)) {
+    remove_size_ += op->remove_size_;
+    return true;
+  }
+  return false;
+}
+
+string TextAreaTransformUndoOp::String() const {
+  char buf[200];
+  snprintf(buf, sizeof(buf),
+           "remove[%zu, size %zu] ins[%s](size %zu) sel[%zu, size %zu]",
+           remove_start_,
+           remove_size_,
+           insert_.c_str(),
+           insert_.size(),
+           final_selection_start_,
+           final_selection_size_);
+  return buf;
 }
 
 }  // namespace pdfsketch
