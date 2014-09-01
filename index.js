@@ -87,6 +87,10 @@ function onPluginMessage(message_event) {
 	if (stringStartsWith(message_event.data, TOOL_SELECTED_PREFIX)) {
 	    toolSelected(message_event.data.slice(TOOL_SELECTED_PREFIX.length));
 	}
+	var COLOR_SELECTED_PREFIX = 'ColorSelected:';
+	if (stringStartsWith(message_event.data, COLOR_SELECTED_PREFIX)) {
+	    colorSelected(message_event.data.slice(COLOR_SELECTED_PREFIX.length));
+	}
 	var UNDO_ENABLED_PREFIX = 'undoEnabled:';
 	if (stringStartsWith(message_event.data, UNDO_ENABLED_PREFIX)) {
 	    setUndoEnabled(message_event.data.slice(UNDO_ENABLED_PREFIX.length));
@@ -214,6 +218,9 @@ function selectToolSquiggle() {
 function selectToolCheckmark() {
     HelloTutorialModule.postMessage('selectTool:Checkmark');
 }
+function selectColor(n) {
+    HelloTutorialModule.postMessage('selectColor:' + n);
+}
 
 function toolSelected(tool) {
     var buttons = {
@@ -228,6 +235,19 @@ function toolSelected(tool) {
 	buttons[type].className = '';
     }
     buttons[tool].className = 'selectedButton';
+}
+
+var colorbuttons = [ '000000', 'FF0000', '00FF00', '0000FF', 'FFFF00'];
+
+function colorSelected(color) {
+    //console.log("selected " + color);
+    for (var i = 0; i < colorbuttons.length; i++) {
+	var element = document.getElementById("col" + colorbuttons[i]);
+        if (color == colorbuttons[i])
+	    element.style.backgroundColor= "#"+color;
+	else
+	    element.style.backgroundColor= "#DDDDDD";
+    }
 }
 
 function setUndoEnabled(enabled) {
@@ -292,6 +312,24 @@ window.onload = function() {
 			' type: ' + items[i].type);
 	    console.log(items[i]);
 	}
+    }
+
+    var colspan = document.getElementById('colspan');
+    for (var i = 0; i < colorbuttons.length; i++) {
+	var element = document.createElement("button");
+	element.type = "button";
+	element.id = "col" + colorbuttons[i];
+	element.name = colorbuttons[i];
+	element.value = colorbuttons[i];
+	element.style.borderColor = "#" + colorbuttons[i];
+	if (i == 0)
+	    element.style.backgroundColor = "#"+colorbuttons[i];
+	else
+	    element.style.backgroundColor = "#DDDDDD";
+
+	element.onclick = function() {selectColor(this.value)};
+	element.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;"
+	colspan.appendChild(element);
     }
 
     var githubLink = document.getElementById('githublink');

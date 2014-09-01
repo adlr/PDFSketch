@@ -65,12 +65,14 @@ class GraphicDelegate {
   virtual double GetZoom() = 0;
 };
 
+extern Color create_color_;
 class Graphic {
  public:
   Graphic()
       : frame_(30.0, 30.0, 10.0, 20.0),
         natural_size_(1.0, 1.0),
         fill_color_(0.0, 0.0, 0.0, 0.0),
+        stroke_color_(create_color_),
         h_flip_(false),
         v_flip_(false) {}
   Graphic(const pdfsketchproto::Graphic& msg) { Restore(msg); }
