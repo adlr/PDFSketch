@@ -30,7 +30,7 @@ If on Chome OS device, get crouton going:
 
 Make sure you have the right tools:
 
-    sudo apt-get install git make lib32stdc++6 g++ zip
+    sudo apt-get install git make lib32stdc++6 g++ zip cmake
 
 Install NaCl SDK from https://developer.chrome.com/native-client/sdk/download . use pepper_33
 
