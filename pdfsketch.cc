@@ -38,6 +38,10 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
+namespace pdfsketch {
+  Color *create_color_;
+}
+
 cairo_status_t HandleCairoStreamWrite(void* closure,
                                       const unsigned char *data,
                                       unsigned int length) {
@@ -249,7 +253,7 @@ bool PDFSketchInstance::Init(uint32_t argc,
                      PP_INPUTEVENT_CLASS_WHEEL);
   nacl_io_init_ppapi(pp::Instance::pp_instance(),
                      pp::Module::Get()->get_browser_interface());
-
+  pdfsketch::create_color_ = new pdfsketch::Color(0.0, 0.0, 0.0, 1.0);
   toolbox_.SetDelegate(this);
   undo_manager_.SetDelegate(this);
   root_view_.SetDelegate(this);
@@ -357,6 +361,23 @@ void PDFSketchInstance::HandleMessage(const pp::Var& var_message) {
     RunOnRenderThread([this, tool] () {
         toolbox_.SelectTool(tool);
       });
+    return;
+  }
+  const char kColorPrefix[] = "selectColor:";
+  if (!strncmp(message.c_str(),
+               kColorPrefix,
+               sizeof(kColorPrefix) - 1)) {
+    string color = message.substr(sizeof(kColorPrefix) - 1);
+    int rgb = strtoul(color.c_str(), NULL, 16);
+    // Should these be /255 or /256? Use 255 to max at 1.0
+    double r = ((rgb & 0xFF0000)>>16) / 255;
+    double g = ((rgb & 0x00FF00)>> 8) / 255;
+    double b = ((rgb & 0x0000FF)    ) / 255;
+
+    *pdfsketch::create_color_ = pdfsketch::Color(r, g, b, 1.0);
+
+    PostMessage(std::string("ColorSelected:" + color));
+
     return;
   }
   const char kPastePrefix[] = "paste:";
