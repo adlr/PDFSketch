@@ -243,6 +243,10 @@ void PDFSketchInstance::SetCrosshairCursor() {
 bool PDFSketchInstance::Init(uint32_t argc,
                              const char *argn[],
                              const char *argv[]) {
+  // For fontconfig
+  setenv("FONTCONFIG_FILE", "/etc/fonts/fonts.conf", 1);
+  setenv("FONTCONFIG_PATH", "/etc/fonts", 1);
+
   SetCrosshairCursor();
   RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE |
                      PP_INPUTEVENT_CLASS_KEYBOARD |

@@ -500,7 +500,7 @@ size_t TextArea::IndexForPoint(const Point& point) const {
 
 void TextArea::Draw(cairo_t* cr, bool selected) {
   stroke_color_.CairoSetSourceRGBA(cr);
-  cairo_select_font_face(cr, "serif",
+  cairo_select_font_face(cr, "Helvetica",
                          CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(cr, 13);
