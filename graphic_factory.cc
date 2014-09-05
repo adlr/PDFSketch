@@ -4,6 +4,7 @@
 
 #include "circle.h"
 #include "checkmark.h"
+#include "image.h"
 #include "rectangle.h"
 #include "squiggle.h"
 #include "text_area.h"
@@ -47,6 +48,8 @@ std::shared_ptr<Graphic> GraphicFactory::NewGraphic(
       return make_shared<Squiggle>(msg);
     case pdfsketchproto::Graphic::CHECKMARK:
       return make_shared<Checkmark>(msg);
+    case pdfsketchproto::Graphic::IMAGE:
+      return make_shared<Image>(msg);
   }
   return shared_ptr<Graphic>(NULL);
 }
@@ -56,6 +59,11 @@ std::shared_ptr<Graphic> GraphicFactory::NewText(
   std::shared_ptr<TextArea> ret(make_shared<TextArea>());
   ret->set_text(str);
   return ret;
+}
+
+std::shared_ptr<Graphic> GraphicFactory::NewImage(
+    const char* data, size_t length) {
+  return make_shared<Image>(data, length);
 }
 
 }  // namespace pdfsketch

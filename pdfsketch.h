@@ -46,6 +46,7 @@ class PDFSketchInstance : public pp::Instance,
   void SetPDF(const pp::Var& doc);
   void SaveFile();
   void ExportPDF();
+  void InsertImage(const pp::Var& img);
   virtual bool HandleInputEvent(const pp::InputEvent& event);
   virtual void HandleMessage(const pp::Var& var_message);
   void RunOnMainThread(std::function<void ()> func);

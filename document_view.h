@@ -40,6 +40,7 @@ class DocumentView : public View,
   void AddGraphic(std::shared_ptr<Graphic> graphic) {
     InsertGraphicAfter(graphic, NULL);
   }
+  void InsertImage(const char* data, size_t length);
   // GraphicDelegate methods
   virtual void SetNeedsDisplayInPageRect(int page, const Rect& rect);
   virtual Point ConvertPointFromGraphic(int page, const Point& point) {

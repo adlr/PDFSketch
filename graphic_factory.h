@@ -22,6 +22,8 @@ class GraphicFactory {
       const pdfsketchproto::Graphic& msg);
   static std::shared_ptr<Graphic> NewText(
       const std::string& str);
+  static std::shared_ptr<Graphic> NewImage(
+      const char* data, size_t length);
 };
 
 }  // namespace pdfsketch

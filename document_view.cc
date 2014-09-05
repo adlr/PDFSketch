@@ -81,6 +81,20 @@ void DocumentView::SerializeGraphics(
   }
 }
 
+void DocumentView::InsertImage(const char* data, size_t length) {
+  shared_ptr<Graphic> new_graphic(GraphicFactory::NewImage(data, length));
+  Point page_center;
+  int page = 0;
+  GetVisibleCenterPageAndPoint(&page_center, &page);
+  new_graphic->page_ = page;
+  new_graphic->frame_.origin_ = page_center.TranslatedBy(
+      -new_graphic->frame_.size_.width_ / 2.0,
+      -new_graphic->frame_.size_.height_ / 2.0);
+  InsertGraphicAfterUndo(new_graphic, NULL);
+  selected_graphics_.clear();
+  selected_graphics_.insert(new_graphic.get());
+}
+
 void DocumentView::SetZoom(double zoom) {
   zoom_ = zoom;
   UpdateSize();
@@ -164,6 +178,8 @@ void DocumentView::InsertGraphicAfter(shared_ptr<Graphic> graphic,
     upper_sibling->lower_sibling_ = graphic;
   }
   graphic->SetNeedsDisplay(GraphicIsSelected(graphic.get()));
+  printf("inserted graphic at page %d loc %s\n", graphic->Page(),
+         graphic->Frame().String().c_str());
 }
 
 void DocumentView::InsertGraphicAfterUndo(shared_ptr<Graphic> graphic,

@@ -332,12 +332,42 @@ void PDFSketchInstance::SetPDF(const pp::Var& doc) {
   vab.Unmap();
 }
 
+void PDFSketchInstance::InsertImage(const pp::Var& img) {
+  pp::VarArrayBuffer vab(img);
+  void* buf = vab.Map();
+  size_t length = vab.ByteLength();
+  document_view_.InsertImage(reinterpret_cast<char*>(buf), length);
+  vab.Unmap();
+}
+
 void PDFSketchInstance::HandleMessage(const pp::Var& var_message) {
   if (var_message.is_array_buffer()) {
     pp::Var var_message_copy = var_message;
     RunOnRenderThread([this, var_message_copy] () {
         SetPDF(var_message_copy);
       });
+    return;
+  }
+
+  if (var_message.is_dictionary()) {
+    pp::VarDictionary dict(var_message);
+    if (dict.HasKey(pp::Var("cmd")) && dict.Get(pp::Var("cmd")).is_string()) {
+      const string cmd = dict.Get(pp::Var("cmd")).AsString();
+      if (cmd == "insertImage") {
+        pp::Var value = dict.Get(pp::Var("data"));
+        if (value.is_array_buffer()) {
+          RunOnRenderThread([this, value] () {
+              InsertImage(value);
+            });
+        } else {
+          printf("insertImage without array buffer\n");
+        }
+      } else {
+        printf("Unknown command: %s\n", cmd.c_str());
+      }
+    } else {
+      printf("no cmd key found\n");
+    }
     return;
   }
 

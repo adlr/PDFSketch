@@ -167,6 +167,20 @@ function exportPDF() {
     HelloTutorialModule.postMessage('exportPDF');
 }
 
+function insertImage() {
+    chrome.fileSystem.chooseEntry({'type': 'openFile'}, function(entry, fEntries) {
+	entry.file(function(file) {
+	    var reader = new FileReader();
+	    reader.onload = function(info) {
+		console.log('image read completed ' + info.target.result.byteLength);
+		var cmd = {cmd: 'insertImage', data: info.target.result};
+		HelloTutorialModule.postMessage(cmd);
+	    }
+	    reader.readAsArrayBuffer(file);
+	});
+    });
+}
+
 gZoom = 1.0;
 
 function zoomIn() {
@@ -283,6 +297,7 @@ window.onload = function() {
 
     document.getElementById('buttonOpen').onclick = openPDF;
     document.getElementById('buttonExportPDF').onclick = exportPDF;
+    document.getElementById('buttonInsertImage').onclick = insertImage;
     document.getElementById('buttonZoomIn').onclick = zoomIn;
     document.getElementById('buttonZoomOut').onclick = zoomOut;
     document.getElementById('buttonUndo').onclick = undo;

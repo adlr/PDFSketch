@@ -87,7 +87,8 @@ OBJECTS=\
 	file_io.o \
 	graphic_factory.o \
 	circle.o \
-	squiggle.o
+	squiggle.o \
+	image.o
 
 NACL_OBJECTS=\
 	pdfsketch.o \

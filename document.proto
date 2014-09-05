@@ -31,6 +31,10 @@ message Squiggle {
   required Point original_origin = 2;
 }
 
+message Image {
+  required bytes data = 1;
+}
+
 message Graphic {
   required Rect frame = 1;
   optional Size natural_size = 2;
@@ -47,10 +51,12 @@ message Graphic {
     RECTANGLE = 2;
     SQUIGGLE = 3;
     CHECKMARK = 4;
+    IMAGE = 5;
   }  
   required Type type = 9;
   optional TextArea text_area = 10;
   optional Squiggle squiggle = 11;
+  optional Image image = 12;
 }
 
 message Document {
