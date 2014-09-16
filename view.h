@@ -112,7 +112,10 @@ struct Rect {
     size_.Serialize(out->mutable_size());
   }
   Rect Intersect(const Rect& that) const;
-  bool Intersects(const Rect& that) const;
+  bool Intersects(const Rect& that) const {
+    return !(that.Top() >= Bottom() || Top() >= that.Bottom() ||
+             that.Left() >= Right() || Left() >= that.Right());
+  }
   bool Contains(const Point& point) const;
   Rect TranslatedBy(double x, double y) const {
     return Rect(origin_.TranslatedBy(x, y), size_);

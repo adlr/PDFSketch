@@ -20,11 +20,6 @@ Rect Rect::Intersect(const Rect& that) const {
   ret.size_.height_ = max(ret.size_.height_, 0.0);
   return ret;
 }
-bool Rect::Intersects(const Rect& that) const {
-  // todo: optimize
-  Rect intersect = Intersect(that);
-  return intersect.size_.width_ > 0 && intersect.size_.height_ > 0;
-}
 
 bool Rect::Contains(const Point& point) const {
   return origin_.x_ <= point.x_ && point.x_ < (origin_.x_ + size_.width_) &&
