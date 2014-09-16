@@ -271,6 +271,70 @@ function setRedoEnabled(enabled) {
     document.getElementById('buttonRedo').disabled = enabled != 'true';
 }
 
+var gStrokeSelect = null;
+var gFillSelect = null;
+
+function rgb2hex(r,g,b) {
+    // from http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript
+    if (g !== undefined) 
+        return '#' + Number(0x1000000 + r*0x10000 + g*0x100 + b).toString(16).substring(1);
+    else 
+        return '#' + Number(0x1000000 + r[0]*0x10000 + r[1]*0x100 + r[2]).toString(16).substring(1);
+}
+
+function createColorSelectDiv(callback, currentColor) {
+    var ret = document.createElement('div');
+    ret.className = 'colorPopup';
+    ret.style.display = 'flex';
+    ret.style.flexDirection = 'column';
+    for (rowIdx in gColors) {
+	var row = gColors[rowIdx];
+	var rowDiv = document.createElement('div');
+	rowDiv.style.display = 'flex';
+	for (colIdx in row) {
+	    var color = row[colIdx];
+	    var colorDiv = document.createElement('div');
+	    var newColor = rgb2hex(color.color);
+	    colorDiv.style.backgroundColor = rgb2hex(color.color);
+	    colorDiv.className = 'colorPopupCell';
+	    if (newColor == currentColor) {
+		colorDiv.className += ' colorPopupCellSelected';
+	    }
+
+	    (function(newColorCopy) {
+		colorDiv.onclick = function() {
+		    callback(newColorCopy);
+		}
+	    })(newColor);
+
+	    rowDiv.appendChild(colorDiv);
+	}
+	ret.appendChild(rowDiv);
+    }
+    return ret;
+}
+
+function strokeSelected(color) {
+    console.log("stroke color: " + color);
+    toggleStrokeSelect();
+}
+
+function toggleStrokeSelect() {
+    if (gStrokeSelect) {
+	// hide div
+	gStrokeSelect.remove();
+	gStrokeSelect = null;
+	return;
+    }
+    gStrokeSelect = createColorSelectDiv(strokeSelected, '#ffffff');
+    var pos = document.getElementById('strokeColor').getBoundingClientRect();
+    gStrokeSelect.style.position = 'absolute';
+    gStrokeSelect.style.left = pos.left + 'px';
+    gStrokeSelect.style.top = pos.bottom + 'px';
+    gStrokeSelect.style.visibility = 'visible';
+    document.body.appendChild(gStrokeSelect);
+}
+
 window.onload = function() {
     //console.log(chrome.runtime.getURL('datafile.txt'));
 
@@ -313,6 +377,8 @@ window.onload = function() {
 	document.execCommand('paste');
     }
 
+    document.getElementById('strokeColor').onclick = toggleStrokeSelect;
+
     document.body.onpaste = function(e) {
 	var items = event.clipboardData.items;
 	if (items.length == 1 && items[0].kind == 'string') {
@@ -331,20 +397,20 @@ window.onload = function() {
 
     var colspan = document.getElementById('colspan');
     for (var i = 0; i < colorbuttons.length; i++) {
-	var element = document.createElement("button");
-	element.type = "button";
-	element.id = "col" + colorbuttons[i];
-	element.name = colorbuttons[i];
-	element.value = colorbuttons[i];
-	element.style.borderColor = "#" + colorbuttons[i];
-	if (i == 0)
-	    element.style.backgroundColor = "#"+colorbuttons[i];
-	else
-	    element.style.backgroundColor = "#DDDDDD";
+    	var element = document.createElement("button");
+    	element.type = "button";
+    	element.id = "col" + colorbuttons[i];
+    	element.name = colorbuttons[i];
+    	element.value = colorbuttons[i];
+    	element.style.borderColor = "#" + colorbuttons[i];
+    	if (i == 0)
+    	    element.style.backgroundColor = "#"+colorbuttons[i];
+    	else
+    	    element.style.backgroundColor = "#DDDDDD";
 
-	element.onclick = function() {selectColor(this.value)};
-	element.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;"
-	colspan.appendChild(element);
+    	element.onclick = function() {selectColor(this.value)};
+    	element.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;"
+    	colspan.appendChild(element);
     }
 
     var githubLink = document.getElementById('githublink');

@@ -29,6 +29,44 @@ button {
     flex: none;
 }
 
+.colorButton {
+    display: flex;
+}
+
+#strokeChip {
+    width: 10px;
+    height: 10px;
+    border: 1px solid #000;
+    background-color: #f00;
+    margin: 2px;
+}
+
+#fillChip {
+    width: 10px;
+    height: 10px;
+    border: 1px solid #000;
+    background-color: #0f0;
+    margin: 2px;
+}
+
+.colorPopup {
+    background-color: #fff;
+    border: 1px solid #999;
+}
+
+.colorPopupCell {
+    width: 15px;
+    height: 15px;
+    margin: 1px;
+}
+
+.colorPopupCellSelected {
+    width: 15px;
+    height: 15px;
+    border: 1px solid #000;
+    margin: 0;
+}
+
 #naclContainer {
     flex: 1;
     display: flex;
