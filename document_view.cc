@@ -53,8 +53,10 @@ void DocumentView::UpdateSize() {
   // Update bounds
   double max_page_width = 0.0;  // w/o spacing
   double total_height = kSpacing;  // w/ spacing
+  page_y_.clear();
   for (int i = 0; i < poppler_doc_->pages(); i++) {
     Size size = PageSize(i).ScaledBy(zoom_).RoundedUp();
+    page_y_.push_back(make_pair(total_height, total_height + size.height_));
     max_page_width = std::max(max_page_width, size.width_);
     total_height += size.height_ + kSpacing;
   }
@@ -112,18 +114,28 @@ Size DocumentView::PageSize(int page) const {
 }
 
 Rect DocumentView::PageRect(int page) const {
-  double existing_pages_height = kSpacing;
-  for (int i = 0; i < page; i++) {
-    unique_ptr<poppler::page> ppage(poppler_doc_->create_page(i));
-    if (!ppage.get())
-      printf("Bug - null page\n");
-    poppler::rectf rect = ppage->page_rect();
-    existing_pages_height += ceil(rect.height() * zoom_) + kSpacing;
-  }
   Size page_size = PageSize(page).ScaledBy(zoom_).RoundedUp();
   double offset = static_cast<int>(size_.width_ / 2 - page_size.width_ / 2);
-  return Rect(offset, existing_pages_height,
+  return Rect(offset, page_y_[page].first,
               page_size.width_, page_size.height_);
+}
+
+int DocumentView::MinPageForRect(const Rect& rect) const {
+  vector<pair<double, double>>::const_iterator it =
+      std::upper_bound(page_y_.begin(), page_y_.end(), rect.Top(),
+                       [] (double left, const pair<double, double>& right) {
+                         return left < right.second;
+                       });
+  return it - page_y_.begin();
+}
+
+int DocumentView::MaxPageForRect(const Rect& rect) const {
+  vector<pair<double, double>>::const_reverse_iterator it =
+      std::upper_bound(page_y_.rbegin(), page_y_.rend(), rect.Bottom(),
+                       [] (double left, const pair<double, double>& right) {
+                         return left > right.first;
+                       });
+  return it - page_y_.rbegin();
 }
 
 int DocumentView::PageForPoint(const Point& point) const {
@@ -262,7 +274,8 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     cairo_t* cache_cr = cairo_create(cached_surface_);
     cairo_translate(cache_cr, -cached_subrect_.Left() * device_zoom, -cached_subrect_.Top() * device_zoom);
     poppler::page_renderer renderer;
-    for (int i = 0; i < poppler_doc_->pages(); i++) {
+    for (int i = MinPageForRect(cached_subrect_),
+             e = MaxPageForRect(cached_subrect_); i <= e; i++) {
       Rect page_rect = PageRect(i);
       if (!cached_subrect_.Intersects(page_rect.ScaledBy(device_zoom)))
         continue;
@@ -322,7 +335,7 @@ void DocumentView::DrawRect(cairo_t* cr, const Rect& rect) {
     return;
   }
 
-  for (int i = 0; i < poppler_doc_->pages(); i++) {
+  for (int i = MinPageForRect(rect), e = MaxPageForRect(rect); i <= e; i++) {
     Rect page_rect = PageRect(i);
     if (!rect.Intersects(page_rect))
       continue;

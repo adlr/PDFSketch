@@ -73,6 +73,9 @@ class DocumentView : public View,
   void UpdateSize();
   Size PageSize(int page) const;  // graphic/PDF coords
   Rect PageRect(int page) const;  // view coords
+  // Returns the lowest/hightest page number that may intersect with 'rect'
+  int MinPageForRect(const Rect& rect) const;
+  int MaxPageForRect(const Rect& rect) const;
 
   // point may be outside page
   int PageForPoint(const Point& point) const;
@@ -116,6 +119,9 @@ class DocumentView : public View,
   float cached_surface_device_zoom_{1.0};
   Rect cached_subrect_;
   cairo_surface_t* cached_surface_{nullptr};  // TODO(adlr): free in dtor
+
+  // Cached page top/bottoms
+  std::vector<std::pair<double, double>> page_y_;
 
   double zoom_{1.0};
   Toolbox* toolbox_{nullptr};
