@@ -402,6 +402,7 @@ window.onload = function() {
     var fill = new ColorPicker('Fill: ', function(color) {
 	console.log('setFill(' + color + ')');
     });
+    fill.setColor([0, 0, 0, 0]);
     insertAfter(fill.getButtonDiv(), stroke.getButtonDiv());
 
     // document.getElementById('strokeColor').onclick = toggleStrokeSelect;

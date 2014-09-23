@@ -22,6 +22,7 @@ ColorPicker.prototype.colorClicked_ = function(color) {
 
 ColorPicker.prototype.updateChip_ = function() {
   this.colorChip.style.backgroundColor = 'rgba(' + this.currentColor.join(',') + ')';
+  this.opacityInput.value = parseInt(this.currentColor[3]);
 }
 
 ColorPicker.prototype.opacityTextChanged_ = function(evt) {
@@ -123,6 +124,9 @@ ColorPicker.prototype.hide = function() {
 }
 
 ColorPicker.prototype.setColor = function(color) {
-
+  for (var i = 0; i < 4; i++) {
+    this.currentColor[i] = color[i];
+  }
+  this.updateChip_();
 };
 
