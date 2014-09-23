@@ -5,6 +5,7 @@
     <title>PDFSketch</title>
     <link href="style.css" rel="stylesheet">
     <script type="text/javascript" src="colors.js"></script>
+    <script type="text/javascript" src="color_picker.js"></script>
     <script type="text/javascript" src="index.js"></script>
 </head>
 <body>
@@ -35,10 +36,13 @@
       <option value="Helvetica" selected>Helvetica</option>
       <option value="Times">Times</option>
     </select>
+    <select id="fontSizeSelect">
+    </select>
     <button id="fontBold"><b>B</b></button>
     <button id="fontItalics"><i>I</i></button>
-    <button class="colorButton" id="strokeColor">Stroke: <div id="strokeChip"></div></button>
-    <button class="colorButton" id="fillColor">Fill: <div id="fillChip"></div></button>
+    <!--
+    <button class="colorButton" id="strokeColor">Stroke: <div class="colorChipBackground"></div><div id="strokeChip"></div></button>
+    <button class="colorButton" id="fillColor">Fill: <div class="colorChipBackground"></div><div id="fillChip"></div></button> -->
   </div>
   <div id="naclContainer"></div>
   <textarea id="clipboardio"></textarea>

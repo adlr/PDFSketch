@@ -311,6 +311,15 @@ function createColorSelectDiv(callback, currentColor) {
 	}
 	ret.appendChild(rowDiv);
     }
+    var opacityDiv = document.createElement('div');
+    opacityDiv.appendChild(document.createTextNode('Opacity: '));
+    input = document.createElement('input');
+    input.value = '100';
+    input.style.width = '1.9em';
+    input.style.textAlign = 'right';
+    opacityDiv.appendChild(input);
+    opacityDiv.appendChild(document.createTextNode('%'));
+    ret.appendChild(opacityDiv);
     return ret;
 }
 
@@ -333,6 +342,15 @@ function toggleStrokeSelect() {
     gStrokeSelect.style.top = pos.bottom + 'px';
     gStrokeSelect.style.visibility = 'visible';
     document.body.appendChild(gStrokeSelect);
+}
+
+function insertAfter(newNode, sibling) {
+    // from http://stackoverflow.com/questions/4793604/how-to-do-insert-after-in-javascript-without-using-a-library
+    if (sibling.parentNode.lastChild == sibling) {
+	sibling.parentNode.appendChild(newNode);
+    } else {
+	sibling.parentNode.insertBefore(newNode, sibling.nextSibling);
+    }
 }
 
 window.onload = function() {
@@ -377,7 +395,16 @@ window.onload = function() {
 	document.execCommand('paste');
     }
 
-    document.getElementById('strokeColor').onclick = toggleStrokeSelect;
+    var stroke = new ColorPicker('Stroke: ', function(color) {
+	console.log('setStroke(' + color + ')');
+    });
+    insertAfter(stroke.getButtonDiv(), document.getElementById('fontItalics'));
+    var fill = new ColorPicker('Fill: ', function(color) {
+	console.log('setFill(' + color + ')');
+    });
+    insertAfter(fill.getButtonDiv(), stroke.getButtonDiv());
+
+    // document.getElementById('strokeColor').onclick = toggleStrokeSelect;
 
     document.body.onpaste = function(e) {
 	var items = event.clipboardData.items;
@@ -393,6 +420,13 @@ window.onload = function() {
 			' type: ' + items[i].type);
 	    console.log(items[i]);
 	}
+    }
+
+    var fontSizes = [8, 9, 10, 11, 12, 13, 14, 18, 24, 30, 36, 48, 60, 72, 96];
+    for (var index in fontSizes) {
+	var option = document.createElement('option');
+	option.value = option.text = fontSizes[index];
+	document.getElementById('fontSizeSelect').appendChild(option);
     }
 
     var colspan = document.getElementById('colspan');

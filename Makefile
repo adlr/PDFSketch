@@ -108,7 +108,9 @@ DISTFILES=\
 	logo16.png \
 	logo128.png \
 	pdfsketch_nexe.nmf \
-	colors.js
+	colors.js \
+	color_picker.js \
+	color_chip_background.svg
 
 CROSFONTSTARBALL=croscorefonts-1.23.0.tar.gz
 

@@ -29,24 +29,51 @@ button {
     flex: none;
 }
 
+#fontBold {
+    width: 20px;
+}
+
+#fontItalics {
+    width: 20px;
+    font-family: serif;
+}
+
 .colorButton {
     display: flex;
 }
 
-#strokeChip {
+.colorChipBackground {
     width: 10px;
     height: 10px;
     border: 1px solid #000;
-    background-color: #f00;
     margin: 2px;
+    background: url(color_chip_background.svg);
+}
+
+.colorChip {
+    position: relative;
+    left: -3px;
+    opacity: 1.0;
+    top: 1px;
+    border: 0;
+    width: 10px;
+    height: 10px;
+    background-color: #000;
+    margin: 2px;
+    margin-left: -10px;
 }
 
 #fillChip {
+    position: relative;
+    left: -3px;
+    opacity: 0.7;
+    top: 1px;
+    border: 0;
     width: 10px;
     height: 10px;
-    border: 1px solid #000;
     background-color: #0f0;
     margin: 2px;
+    margin-left: -10px;
 }
 
 .colorPopup {
