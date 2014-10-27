@@ -22,7 +22,6 @@ ColorPicker.prototype.colorClicked_ = function(color) {
 
 ColorPicker.prototype.updateChip_ = function() {
   this.colorChip.style.backgroundColor = 'rgba(' + this.currentColor.join(',') + ')';
-  this.opacityInput.value = parseInt(this.currentColor[3]);
 }
 
 ColorPicker.prototype.opacityTextChanged_ = function(evt) {
@@ -128,5 +127,9 @@ ColorPicker.prototype.setColor = function(color) {
     this.currentColor[i] = color[i];
   }
   this.updateChip_();
+  this.opacityInput.value = parseInt(this.currentColor[3]);
 };
 
+ColorPicker.prototype.setButtonVisible = function(visible) {
+  this.button.style.display = visible == '0' ? 'none' : 'visible';
+}

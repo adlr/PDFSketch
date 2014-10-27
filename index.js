@@ -33,6 +33,22 @@ function paste() {
     document.execCommand('paste');
 }
 
+function setFontOptionsVisible(visible) {
+    var value = visible == '0' ? 'none' : 'visible';
+    fontSelect.style.display = value;
+    fontSizeSelect.style.display = value;
+    fontBold.style.display = value;
+    fontItalics.style.display = value;
+}
+
+function setStrokeOptionVisible(visible) {
+    gStrokeSelect.setButtonVisible(visible);
+}
+
+function setFillOptionVisible(visible) {
+    gFillSelect.setButtonVisible(visible);
+}
+
 function errorHandler(err) {
     console.log(err);
 }
@@ -105,6 +121,21 @@ function onPluginMessage(message_event) {
 	}
 	if (message_event.data == 'paste') {
 	    paste();
+	}
+	var SET_FONT_OPTIONS_VISIBLE = 'setFontOptionsVisible:';
+	if (stringStartsWith(message_event.data, SET_FONT_OPTIONS_VISIBLE)) {
+	    setFontOptionsVisible(
+		message_event.data.slice(SET_FONT_OPTIONS_VISIBLE.length));
+	}
+	var SET_STROKE_OPTION_VISIBLE = 'setStrokeOptionVisible:';
+	if (stringStartsWith(message_event.data, SET_STROKE_OPTION_VISIBLE)) {
+	    setStrokeOptionVisible(
+		message_event.data.slice(SET_STROKE_OPTION_VISIBLE.length));
+	}
+	var SET_FILL_OPTION_VISIBLE = 'setFillOptionVisible:';
+	if (stringStartsWith(message_event.data, SET_FILL_OPTION_VISIBLE)) {
+	    setFillOptionVisible(
+		message_event.data.slice(SET_FILL_OPTION_VISIBLE.length));
 	}
 	// console.log(message_event.data);
 	return;
@@ -323,27 +354,6 @@ function createColorSelectDiv(callback, currentColor) {
     return ret;
 }
 
-function strokeSelected(color) {
-    console.log("stroke color: " + color);
-    toggleStrokeSelect();
-}
-
-function toggleStrokeSelect() {
-    if (gStrokeSelect) {
-	// hide div
-	gStrokeSelect.remove();
-	gStrokeSelect = null;
-	return;
-    }
-    gStrokeSelect = createColorSelectDiv(strokeSelected, '#ffffff');
-    var pos = document.getElementById('strokeColor').getBoundingClientRect();
-    gStrokeSelect.style.position = 'absolute';
-    gStrokeSelect.style.left = pos.left + 'px';
-    gStrokeSelect.style.top = pos.bottom + 'px';
-    gStrokeSelect.style.visibility = 'visible';
-    document.body.appendChild(gStrokeSelect);
-}
-
 function insertAfter(newNode, sibling) {
     // from http://stackoverflow.com/questions/4793604/how-to-do-insert-after-in-javascript-without-using-a-library
     if (sibling.parentNode.lastChild == sibling) {
@@ -395,17 +405,15 @@ window.onload = function() {
 	document.execCommand('paste');
     }
 
-    var stroke = new ColorPicker('Stroke: ', function(color) {
+    gStrokeSelect = new ColorPicker('Stroke: ', function(color) {
 	console.log('setStroke(' + color + ')');
     });
     insertAfter(stroke.getButtonDiv(), document.getElementById('fontItalics'));
-    var fill = new ColorPicker('Fill: ', function(color) {
+    gFillSelect = new ColorPicker('Fill: ', function(color) {
 	console.log('setFill(' + color + ')');
     });
     fill.setColor([0, 0, 0, 0]);
     insertAfter(fill.getButtonDiv(), stroke.getButtonDiv());
-
-    // document.getElementById('strokeColor').onclick = toggleStrokeSelect;
 
     document.body.onpaste = function(e) {
 	var items = event.clipboardData.items;
